@@ -1,0 +1,6 @@
+/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:275:34: error: cannot find 'set' in scope
+/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:275:74: error: cannot find 'set' in scope
+/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:276:40: error: cannot find 'set' in scope
+/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:277:45: error: cannot find 'set' in scope
+/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:411:22: error: cannot find 'firstColumn' in scope
+** TEST FAILED **
