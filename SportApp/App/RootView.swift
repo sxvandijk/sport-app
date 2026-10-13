@@ -1,29 +1,5 @@
 import SwiftUI
 
-enum AppTab: Int, CaseIterable, Identifiable {
-    case training, progress, gym, profile
-
-    var id: Int { rawValue }
-
-    var title: String {
-        switch self {
-        case .training: return "Training"
-        case .progress: return "Progressie"
-        case .gym: return "Gym"
-        case .profile: return "Profiel"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .training: return "dumbbell.fill"
-        case .progress: return "chart.bar.fill"
-        case .gym: return "mappin.circle.fill"
-        case .profile: return "person.fill"
-        }
-    }
-}
-
 /// Zet de gekozen modus (Systeem, Donker, Licht) om in `preferredColorScheme`.
 extension AppearanceMode {
     var preferredColorScheme: ColorScheme? {
@@ -36,34 +12,31 @@ extension AppearanceMode {
 }
 
 struct RootView: View {
-    @EnvironmentObject private var store: WorkoutStore
-    let initialTab: AppTab
+    @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        // `preferredColorScheme` staat hier, buiten `ThemedTabs`, zodat `ThemedTabs` het effectieve schema ziet.
-        ThemedTabs(initialTab: initialTab)
-            .preferredColorScheme(store.settings.appearance.preferredColorScheme)
+        // `preferredColorScheme` staat hier, buiten `ThemedRoot`, zodat `ThemedRoot` het effectieve schema ziet.
+        ThemedRoot()
+            .preferredColorScheme(model.themeMode.preferredColorScheme)
     }
 }
 
-private struct ThemedTabs: View {
-    @EnvironmentObject private var store: WorkoutStore
+private struct ThemedRoot: View {
+    @EnvironmentObject private var model: AppModel
     @Environment(\.colorScheme) private var colorScheme
-    @State private var selection: AppTab
-
-    init(initialTab: AppTab) {
-        _selection = State(initialValue: initialTab)
-    }
 
     var body: some View {
-        let accent = AccentColors.make(accent: store.settings.accentID, scheme: colorScheme)
-
-        TabView(selection: $selection) {
-            ForEach(AppTab.allCases) { tab in
-                PlaceholderScreen(tab: tab)
-                    .tabItem { Label(tab.title, systemImage: tab.systemImage) }
-                    .tag(tab)
+        let accent = AccentColors.make(accent: model.accent, scheme: colorScheme)
+        ZStack {
+            Tokens.bg.ignoresSafeArea()
+            switch model.screen {
+            case .home: HomeContainer()
+            case .workout: WorkoutScreen()
+            case .overview: OverviewScreen()
+            case .editor: EditorScreen()
+            case .summary: SummaryScreen()
             }
+            SheetOverlay()
         }
         .tint(accent.accentText)
         .environment(\.accentColors, accent)

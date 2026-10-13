@@ -2,29 +2,24 @@ import SwiftUI
 
 @main
 struct SportAppApp: App {
-    @StateObject private var store: WorkoutStore
-    private let config: LaunchConfig
+    @StateObject private var model: AppModel
 
     init() {
         let config = LaunchConfig()
-        self.config = config
-
         if config.isScreenshotRun {
             // Voor screenshots: voorbeelddata in het geheugen, zodat elke run hetzelfde laat zien en niets wordt bewaard.
-            var seed = MockData.appData()
-            if let appearance = config.appearance { seed.settings.appearance = appearance }
-            if let accent = config.accent { seed.settings.accentID = accent }
-            _store = StateObject(wrappedValue: WorkoutStore(fileURL: nil, seed: seed))
+            let model = AppModel(fileURL: nil)
+            config.apply(to: model)
+            _model = StateObject(wrappedValue: model)
         } else {
-            _store = StateObject(wrappedValue: WorkoutStore())
+            _model = StateObject(wrappedValue: AppModel(fileURL: AppModel.defaultFileURL()))
         }
-        TabBarStyle.apply()
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView(initialTab: config.tab ?? .training)
-                .environmentObject(store)
+            RootView()
+                .environmentObject(model)
         }
     }
 }
