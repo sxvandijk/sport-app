@@ -411,7 +411,7 @@ struct LiveSession: Codable, Hashable {
             let km = done.reduce(0) { $0 + $1.w }
             let min = done.reduce(0) { $0 + $1.r }
             if done.isEmpty { return "\(Format.setText(kind, work[0].w, work[0].r))" }
-            return "\(Format.weight(km)) km · \(min) min"
+            return "\(Format.km(km)) km · \(min) min"
         }
         if done.count == work.count {
             let weights = done.map { $0.w }
@@ -461,7 +461,7 @@ enum Format {
         switch kind {
         case .weights: return weight(w) + " kg × " + String(r)
         case .bodyweight: return w == 0 ? String(r) + " reps" : "+" + weight(w) + " kg × " + String(r)
-        case .cardio: return weight(w) + " km · " + String(r) + " min"
+        case .cardio: return km(w) + " km · " + String(r) + " min"
         }
     }
 
@@ -469,6 +469,15 @@ enum Format {
     static func reps(_ r: Int, _ rmax: Int?) -> String {
         if let m = rmax, m > r { return "\(r)–\(m)" }
         return String(r)
+    }
+
+    /// Kilometers met maximaal twee decimalen: 2.37 → "2,37", 2.5 → "2,5"
+    static func km(_ v: Double) -> String {
+        let r = (v * 100).rounded() / 100
+        if r == r.rounded() { return String(Int(r)) }
+        var t = String(format: "%.2f", r)
+        if t.hasSuffix("0") { t.removeLast() }
+        return t.replacingOccurrences(of: ".", with: ",")
     }
 
     /// 7.5 → "7,5", 55 → "55"

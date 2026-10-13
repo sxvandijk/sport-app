@@ -331,7 +331,7 @@ struct EditorScreen: View {
             }
             if Catalog.kind(it.name) == .cardio {
                 HStack(spacing: 8) {
-                    counter(value: Format.weight(it.w), unit: " km", minus: "Minder kilometers", plus: "Meer kilometers",
+                    counter(value: Format.km(it.w), unit: " km", minus: "Minder kilometers", plus: "Meer kilometers",
                             onMinus: { edit(i) { $0.w = max(0, (($0.w - 0.1) * 100).rounded() / 100) } },
                             onPlus: { edit(i) { $0.w = (($0.w + 0.1) * 100).rounded() / 100 } })
                     counter(value: String(it.reps), unit: " min", minus: "Minder minuten", plus: "Meer minuten",

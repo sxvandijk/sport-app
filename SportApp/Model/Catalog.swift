@@ -128,7 +128,7 @@ enum Catalog {
             }
             return list.last(where: { $0 < weight - 0.001 }) ?? (list.first ?? weight)
         }
-        let n = ((weight + Double(dir) * i.step) * 10).rounded() / 10
+        let n = ((weight + Double(dir) * i.step) * 100).rounded() / 100
         return n < 0 ? 0 : n
     }
 

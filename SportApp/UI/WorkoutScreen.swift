@@ -379,7 +379,7 @@ private struct SetRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Settype wijzigen, nu \(set.type.name)")
 
-                Text(Catalog.kind(exercise.name) == .bodyweight && set.w == 0 ? "–" : Format.weight(set.w)).sa(17, .medium, mono: true).foregroundColor(valueColor)
+                Text(Catalog.kind(exercise.name) == .bodyweight && set.w == 0 ? "–" : (Catalog.kind(exercise.name) == .cardio ? Format.km(set.w) : Format.weight(set.w))).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text(String(set.r)).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -557,7 +557,7 @@ private struct Dock: View {
                 .padding(.horizontal, 4).padding(.top, 1)
 
             HStack(spacing: 10) {
-                stepper(value: Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
+                stepper(value: kind == .cardio ? Format.km(set.w) : Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
                         onMinus: { model.stepWeight(-1) }, onPlus: { model.stepWeight(1) })
                 stepper(value: String(set.r), unit: kind == .cardio ? " min" : " reps", minus: "Minder reps", plus: "Meer reps",
                         onMinus: { model.stepReps(-1) }, onPlus: { model.stepReps(1) })
