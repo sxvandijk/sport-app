@@ -29,6 +29,11 @@ jobs:
         run: |
           brew install xcodegen
           xcodegen generate
+          # Xcode 14.2 leest alleen projectformaat t/m 56; XcodeGen schrijft standaard 77.
+          sed -i '' -e 's/objectVersion = 77;/objectVersion = 56;/' \
+                    -e 's/preferredProjectObjectVersion = 77;/preferredProjectObjectVersion = 56;/' \
+                    SportApp.xcodeproj/project.pbxproj
+          grep -n "objectVersion\|preferredProjectObjectVersion\|compatibilityVersion" SportApp.xcodeproj/project.pbxproj
 
       - name: Simulator kiezen
         id: sim
