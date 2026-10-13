@@ -1,0 +1,2120 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sport App prototype</title>
+<style>
+  :root { --page: #1A1B1E; --pageText: #A9AEB6; --seg: #26282C; --segOn: #3A3D43; --segText: #F3F4F6; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --page: #E6E6E1; --pageText: #50545B; --seg: #D6D6D0; --segOn: #FFFFFF; --segText: #121316; }
+  }
+  :root[data-theme="light"] { --page: #E6E6E1; --pageText: #50545B; --seg: #D6D6D0; --segOn: #FFFFFF; --segText: #121316; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--page); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+  .page { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; box-sizing: border-box; }
+  .bar { display: flex; align-items: center; gap: 12px; color: var(--pageText); font-size: 13px; font-weight: 500; flex-wrap: wrap; justify-content: center; }
+  .seg { display: flex; padding: 3px; border-radius: 10px; background: var(--seg); }
+  .seg button { border: 0; background: none; font: inherit; font-weight: 600; color: var(--pageText); height: 30px; padding: 0 12px; border-radius: 8px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--segOn); color: var(--segText); }
+  .stage { position: relative; }
+  .phone { position: absolute; left: 0; top: 0; width: 390px; height: 844px; transform-origin: 0 0; border-radius: 52px; overflow: hidden; box-shadow: 0 0 0 10px #050506, 0 0 0 11px #2C2E33; }
+  /* basisregels voor de app */
+  .app button, .app input { font: inherit; color: inherit; margin: 0; }
+  .app button { border: 0; padding: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .app a { color: inherit; text-decoration: none; }
+  /* op een telefoon: schermvullend, zonder rand */
+  body.bare .page { padding: 0; gap: 0; }
+  body.bare .bar { display: none; }
+  body.bare .phone { border-radius: 0; box-shadow: none; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="bar">
+    <span>Sport App · prototype</span>
+    <span>Systeemmodus</span>
+    <div class="seg" role="group" aria-label="Systeemmodus van de telefoon">
+      <button type="button" data-mode="dark">Donker</button>
+      <button type="button" data-mode="light">Licht</button>
+    </div>
+  </div>
+  <div class="stage" id="stage"><div class="phone app" id="root"></div></div>
+</div>
+
+<template id="tpl"><div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: {{t.bg}}; color: {{t.text}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<!-- ================= STARTSCHERM ================= -->
+<sc-if value="{{isTabs}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column">
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 55px 20px 24px">
+    <sc-if value="{{isHome}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; align-items: center; gap: 4px">
+      <div style="flex: 1; min-width: 0; font-size: 13px; font-weight: 500; color: {{t.text2}}">{{dateLabel}}</div>
+      <button onClick="{{openGym}}" aria-label="{{gymAria}}" style="flex: none; height: 44px; display: flex; align-items: center">
+        <span style="height: 32px; padding: 0 10px 0 8px; border-radius: 16px; background: {{t.raised}}; display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"></path><circle cx="12" cy="10" r="2.3"></circle></svg>
+          {{gymName}}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+        </span>
+      </button>
+    </div>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.6px">Training</h1>
+
+    <div style="margin-top: 14px; background: {{t.surface}}; border-radius: 20px; padding: 6px 10px 6px">
+      <button onClick="{{toggleCal}}" aria-expanded="{{calOpenStr}}" style="width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 4px 8px; text-align: left">
+        <span style="flex: 1; min-width: 0">
+          <span style="display: block; font-size: 13px; color: {{t.text2}}">Laatst getraind</span>
+          <span style="display: block; font-size: 16px; font-weight: 600; margin-top: 1px">{{lastText}}</span>
+        </span>
+        <span style="text-align: right">
+          <span style="display: block; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 24px">{{weekCount}}</span>
+          <span style="display: block; font-size: 12px; color: {{t.text2}}">deze week</span>
+        </span>
+        <span style="flex: none; color: {{t.text2}}; display: flex; transform: rotate({{calRot}}); transition: transform 0.2s">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+        </span>
+      </button>
+      <div style="display: flex">
+        <sc-for list="{{weekdays}}" as="wd" hint-placeholder-count="7">
+          <div style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: {{t.text3}}; padding-bottom: 2px">{{wd}}</div>
+        </sc-for>
+      </div>
+      <sc-for list="{{calWeeks}}" as="wk" hint-placeholder-count="5">
+        <div style="display: flex">
+          <sc-for list="{{wk.days}}" as="d" hint-placeholder-count="7">
+            <button onClick="{{d.tap}}" aria-label="{{d.aria}}" style="flex: 1; height: 42px; display: flex; align-items: center; justify-content: center">
+              <span style="width: 32px; height: 32px; box-sizing: border-box; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: {{d.bg}}; border: {{d.border}}; color: {{d.color}}; font-size: 14px; font-weight: {{d.weight}}; font-variant-numeric: tabular-nums">{{d.label}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+      <sc-if value="{{showDayInfo}}">
+        <div style="font-size: 13px; color: {{t.text2}}; padding: 4px 8px 6px">{{dayInfo}}</div>
+      </sc-if>
+    </div>
+
+    <div style="margin: 22px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Mijn schema</div>
+    <button onClick="{{openProgram}}" aria-label="{{progAria}}" style="width: 100%; min-height: 52px; display: flex; align-items: center; gap: 8px; text-align: left">
+      <span style="flex: 1; min-width: 0">
+        <span style="display: block; font-size: 22px; font-weight: 700; letter-spacing: -0.3px">{{progName}}</span>
+        <span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 1px">{{progSub}}</span>
+      </span>
+      <span style="flex: none; height: 32px; padding: 0 12px; border-radius: 16px; background: {{t.raised}}; display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600">Wissel
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </span>
+    </button>
+    <div style="height: 8px"></div>
+    <sc-for list="{{templates}}" as="tp" hint-placeholder-count="3">
+      <div style="display: flex; align-items: center; min-height: 72px; border-radius: 16px; background: {{t.surface}}; margin-bottom: 8px">
+        <button onClick="{{tp.open}}" aria-label="{{tp.openAria}}" style="flex: 1; min-width: 0; min-height: 72px; padding: 12px 4px 12px 16px; text-align: left">
+          <span style="display: flex; align-items: center; gap: 8px">
+            <span style="font-size: 17px; font-weight: 600">{{tp.name}}</span>
+            <sc-if value="{{tp.isNext}}"><span style="height: 22px; padding: 0 8px; border-radius: 11px; background: {{t.accentSoft}}; color: {{t.accentText}}; font-size: 12px; font-weight: 700; display: flex; align-items: center">Volgende</span></sc-if>
+          </span>
+          <span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 3px">{{tp.sub}}</span>
+          <span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 1px">{{tp.muscles}}</span>
+        </button>
+        <button onClick="{{tp.more}}" aria-label="{{tp.moreAria}}" style="flex: none; width: 48px; height: 48px; margin-right: 4px; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: {{t.text2}}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>
+        </button>
+      </div>
+    </sc-for>
+    <sc-if value="{{progEmpty}}">
+      <div style="padding: 16px 4px; font-size: 15px; color: {{t.text2}}">Dit schema heeft nog geen trainingen.</div>
+    </sc-if>
+    <button onClick="{{newTemplate}}" style="width: 100%; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; color: {{t.accentText}}; font-size: 15px; font-weight: 600">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Training toevoegen aan schema
+    </button>
+
+    <button onClick="{{startEmpty}}" style="margin-top: 16px; width: 100%; min-height: 64px; display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 16px; background: {{t.surface}}; text-align: left">
+      <span style="flex: none; width: 36px; height: 36px; border-radius: 18px; background: {{t.raised}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      </span>
+      <span style="flex: 1; min-width: 0">
+        <span style="display: block; font-size: 17px; font-weight: 600">Vrije training</span>
+        <span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">Kies je oefeningen tijdens het trainen</span>
+      </span>
+    </button>
+    </sc-if>
+
+    <!-- ===== PROGRESSIE ===== -->
+    <sc-if value="{{isProgress}}" hint-placeholder-val="{{ false }}">
+      <div style="height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 500; color: {{t.text2}}">Laatste 4 weken</div>
+      <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.6px">Progressie</h1>
+      <div style="display: flex; gap: 12px; margin-top: 18px">
+        <sc-for list="{{pStats}}" as="ps" hint-placeholder-count="3">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.4px; font-variant-numeric: tabular-nums">{{ps.v}}</div>
+            <div style="font-size: 13px; color: {{t.text2}}">{{ps.l}}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 20px; background: {{t.surface}}; border-radius: 20px; padding: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <div style="font-size: 17px; font-weight: 600">Volume per week</div>
+          <div style="font-size: 13px; color: {{t.text2}}">x 1.000 kg</div>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 8px; height: 120px; margin-top: 14px">
+          <sc-for list="{{pWeeks}}" as="b" hint-placeholder-count="8">
+            <div style="flex: 1; height: {{b.h}}; border-radius: 6px; background: {{b.bg}}"></div>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 6px">
+          <sc-for list="{{pWeeks}}" as="b" hint-placeholder-count="8">
+            <div style="flex: 1; text-align: center; font-size: 11px; color: {{t.text3}}; font-variant-numeric: tabular-nums">{{b.l}}</div>
+          </sc-for>
+        </div>
+        <div style="font-size: 13px; color: {{t.text2}}; margin-top: 10px">Deze week tot nu toe 6.240 kg</div>
+      </div>
+
+      <div style="margin-top: 12px; background: {{t.surface}}; border-radius: 20px; padding: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px">
+          <div style="font-size: 17px; font-weight: 600">Sets per spiergroep</div>
+          <div style="font-size: 13px; color: {{t.text2}}">deze week</div>
+        </div>
+        <sc-for list="{{pMuscles}}" as="m" hint-placeholder-count="8">
+          <div style="display: flex; align-items: center; gap: 12px; height: 30px">
+            <div style="width: 92px; font-size: 15px">{{m.name}}</div>
+            <div style="flex: 1; height: 8px; border-radius: 4px; background: {{t.track}}"><div style="height: 8px; width: {{m.w}}; border-radius: 4px; background: {{t.accentLine}}"></div></div>
+            <div style="width: 24px; text-align: right; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">{{m.v}}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin: 24px 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Persoonlijke records</div>
+      <sc-for list="{{pRecords}}" as="pr" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 16px; font-weight: 500">{{pr.name}}</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px; font-variant-numeric: tabular-nums">{{pr.sub}}</div>
+          </div>
+          <div style="font-size: 13px; color: {{t.text2}}">{{pr.date}}</div>
+        </div>
+      </sc-for>
+    </sc-if>
+
+    <!-- ===== PROFIEL ===== -->
+    <sc-if value="{{isProfile}}" hint-placeholder-val="{{ false }}">
+      <div style="height: 44px"></div>
+      <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.6px">Profiel</h1>
+      <div style="display: flex; align-items: center; gap: 14px; margin-top: 16px; padding: 14px 16px; border-radius: 16px; background: {{t.surface}}">
+        <span style="flex: none; width: 52px; height: 52px; border-radius: 26px; background: {{t.accent}}; color: {{t.onAccent}}; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700">S</span>
+        <span style="flex: 1; min-width: 0">
+          <span style="display: block; font-size: 19px; font-weight: 600">Stan</span>
+          <span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px; font-variant-numeric: tabular-nums">48 trainingen · sinds juli 2026</span>
+        </span>
+      </div>
+
+      <div style="margin: 24px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Weergave</div>
+      <div style="padding: 14px 16px 16px; border-radius: 16px; background: {{t.surface}}">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <div style="font-size: 16px; font-weight: 500">Accentkleur</div>
+          <div style="font-size: 14px; color: {{t.text2}}">{{accentName}}</div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 2px; margin: 8px -4px 0">
+          <sc-for list="{{accentOpts}}" as="ac" hint-placeholder-count="6">
+            <button onClick="{{ac.pick}}" aria-label="{{ac.name}}" aria-pressed="{{ac.onStr}}" style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; border: {{ac.ring}}; box-sizing: border-box">
+              <span style="width: 34px; height: 34px; border-radius: 17px; background: {{ac.hex}}; display: block"></span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="font-size: 16px; font-weight: 500; margin: 16px 0 8px">Modus</div>
+        <div style="display: flex; padding: 3px; border-radius: 14px; background: {{t.raised}}">
+          <sc-for list="{{modeOpts}}" as="mo" hint-placeholder-count="3">
+            <button onClick="{{mo.pick}}" aria-pressed="{{mo.onStr}}" style="flex: 1; height: 44px; border-radius: 11px; background: {{mo.bg}}; font-size: 15px; font-weight: 600; color: {{mo.fg}}">{{mo.name}}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="margin: 24px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Training</div>
+      <div style="padding: 4px 16px; border-radius: 16px; background: {{t.surface}}">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 60px">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 16px; font-weight: 500">Standaard rusttijd</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px">Na een werkset</div>
+          </div>
+          <div style="flex: none; display: flex; align-items: center; height: 44px; border-radius: 12px; background: {{t.raised}}">
+            <button onClick="{{restDefMinus}}" aria-label="Kortere rust" style="width: 40px; height: 44px; font-size: 20px">−</button>
+            <span style="min-width: 48px; text-align: center; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums">{{restDefLabel}}</span>
+            <button onClick="{{restDefPlus}}" aria-label="Langere rust" style="width: 40px; height: 44px; font-size: 20px">+</button>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 64px">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 16px; font-weight: 500">Warming-up in superset</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px; line-height: 17px">Eerst direct je eerste werkset, dan wisselen</div>
+          </div>
+          <button onClick="{{toggleWarm}}" role="switch" aria-checked="{{warmOnStr}}" aria-label="Warming-up in superset" style="flex: none; width: 51px; height: 44px; display: flex; align-items: center">
+            <span style="display: block; width: 51px; height: 31px; border-radius: 16px; background: {{toggleBg}}; position: relative">
+              <span style="position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 14px; background: #FFFFFF; transform: translateX({{knobX}}); transition: transform 0.2s"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div style="margin: 24px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Herinneringen</div>
+      <div style="padding: 4px 16px; border-radius: 16px; background: {{t.surface}}">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 64px">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 16px; font-weight: 500">Creatine</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{creaSub}}</div>
+          </div>
+          <button onClick="{{toggleCrea}}" role="switch" aria-checked="{{creaStr}}" aria-label="Creatine-herinnering" style="flex: none; width: 51px; height: 44px; display: flex; align-items: center">
+            <span style="display: block; width: 51px; height: 31px; border-radius: 16px; background: {{creaBg}}; position: relative">
+              <span style="position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 14px; background: #FFFFFF; transform: translateX({{creaX}}); transition: transform 0.2s"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+      <div style="font-size: 13px; color: {{t.text3}}; margin-top: 16px; line-height: 18px">Later hier ook: kg of lb, gegevens exporteren en een back-up.</div>
+    </sc-if>
+
+    <!-- ===== GYM ===== -->
+    <sc-if value="{{isGym}}" hint-placeholder-val="{{ false }}">
+      <div style="height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 500; color: {{t.text2}}">Apparaten en gewichtsstappen</div>
+      <h1 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.6px">Gym</h1>
+      <button onClick="{{openGym}}" style="margin-top: 16px; width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 16px; background: {{t.surface}}; text-align: left">
+        <span style="flex: none; width: 36px; height: 36px; border-radius: 18px; background: {{t.raised}}; display: flex; align-items: center; justify-content: center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"></path><circle cx="12" cy="10" r="2.3"></circle></svg>
+        </span>
+        <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 600">{{gymName}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{gymSub}}</span></span>
+        <span style="font-size: 15px; font-weight: 600; color: {{t.accentText}}">Wissel</span>
+      </button>
+      <div style="margin: 24px 0 2px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Apparaten in deze gym</div>
+      <sc-for list="{{gymEq}}" as="q" hint-placeholder-count="8">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 60px">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 16px; font-weight: 500; color: {{q.nameColor}}">{{q.name}}</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{q.steps}}</div>
+          </div>
+          <button onClick="{{q.toggle}}" role="switch" aria-checked="{{q.onStr}}" aria-label="{{q.name}}" style="flex: none; width: 51px; height: 44px; display: flex; align-items: center">
+            <span style="display: block; width: 51px; height: 31px; border-radius: 16px; background: {{q.bg}}; position: relative">
+              <span style="position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 14px; background: #FFFFFF; transform: translateX({{q.x}}); transition: transform 0.2s"></span>
+            </span>
+          </button>
+        </div>
+      </sc-for>
+      <button style="margin-top: 12px; width: 100%; height: 52px; border-radius: 16px; background: {{t.raised}}; color: {{t.accentText}}; font-size: 16px; font-weight: 600">+ Apparaat toevoegen</button>
+      <div style="font-size: 13px; color: {{t.text3}}; margin-top: 10px; line-height: 18px">Later: een apparaat scannen met je camera, zodat de gewichten vanzelf worden ingevuld.</div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{running}}" hint-placeholder-val="{{ true }}">
+    <div style="flex: none; padding: 8px 12px 4px; background: {{t.bg}}">
+      <div style="display: flex; align-items: center; gap: 8px; height: 68px; padding: 0 12px 0 4px; border-radius: 20px; background: {{t.raised}}">
+        <button onClick="{{resume}}" aria-label="Open lopende workout" style="flex: 1; min-width: 0; height: 60px; display: flex; align-items: center; gap: 12px; padding-left: 12px; text-align: left">
+          <span style="flex: none; width: 8px; height: 8px; border-radius: 4px; background: {{t.accentLine}}"></span>
+          <span style="min-width: 0">
+            <span style="display: block; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{miniName}}</span>
+            <span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums">{{miniSub}}</span>
+          </span>
+        </button>
+        <button onClick="{{resume}}" style="flex: none; height: 44px; padding: 0 20px; border-radius: 22px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 16px; font-weight: 700">Hervat</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="flex: none; display: flex; padding: 2px 8px 30px; background: {{t.bg}}">
+    <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="3">
+      <button onClick="{{tb.go}}" aria-current="{{tb.cur}}" style="flex: 1; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: {{tb.color}}; font-size: 11px; font-weight: 600">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{tb.icon}}"></path></svg>
+        <span>{{tb.name}}</span>
+      </button>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= WERKSCHERM ================= -->
+<sc-if value="{{isWorkout}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column">
+
+  <!-- Bovenbalk -->
+  <div style="flex: none; padding-top: 47px; background: {{t.bg}}">
+    <div style="display: flex; align-items: center; height: 60px; padding: 0 6px">
+      <button onClick="{{minimize}}" aria-label="Naar startscherm" style="flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <div style="flex: 1; display: flex; justify-content: space-around; text-align: center">
+        <div style="min-width: 76px">
+          <div style="font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.3px; line-height: 26px">{{elapsed}}</div>
+          <div style="font-size: 12px; font-weight: 500; color: {{t.text2}}">verstreken</div>
+        </div>
+        <div style="min-width: 76px">
+          <div style="font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.3px; line-height: 26px">{{remainNum}}</div>
+          <div style="font-size: 12px; font-weight: 500; color: {{t.text2}}">min resterend</div>
+        </div>
+        <div style="min-width: 76px">
+          <div style="font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.3px; line-height: 26px">{{setsLeft}}</div>
+          <div style="font-size: 12px; font-weight: 500; color: {{t.text2}}">sets te gaan</div>
+        </div>
+      </div>
+      <button onClick="{{openMenu}}" aria-label="Workoutmenu" style="flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>
+      </button>
+    </div>
+    <div style="height: 3px; margin: 0 20px; border-radius: 2px; overflow: hidden; background: {{t.track}}">
+      <div style="height: 3px; width: {{progress}}; background: {{t.accentLine}}; border-radius: 2px; transition: width 0.3s ease"></div>
+    </div>
+  </div>
+
+  <!-- Lijst -->
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 18px 20px 20px">
+    <div style="font-size: 28px; font-weight: 700; letter-spacing: -0.4px">{{title}}</div>
+    <div style="font-size: 13px; color: {{t.text2}}; margin: 2px 0 14px">{{subtitle}}</div>
+
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+      <div style="padding: 48px 12px; text-align: center">
+        <div style="font-size: 17px; font-weight: 600">Nog geen oefeningen</div>
+        <div style="font-size: 15px; color: {{t.text2}}; margin: 6px 0 20px">Voeg je eerste oefening toe om te beginnen.</div>
+        <button onClick="{{openAdd}}" style="height: 52px; padding: 0 24px; border-radius: 16px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 17px; font-weight: 700">Oefening toevoegen</button>
+      </div>
+    </sc-if>
+
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="5">
+      <sc-if value="{{it.header}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 6px; margin: 10px 4px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg>
+          <span>{{it.label}}</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{it.closed}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{it.tap}}" style="width: 100%; min-height: 58px; display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-radius: 14px; text-align: left; margin-bottom: 2px">
+          <span style="flex: none; width: 32px; height: 32px; box-sizing: border-box; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: {{it.iconBg}}; border: {{it.iconBorder}}; color: {{it.iconFg}}; font-size: 12px; font-weight: 700">
+            <sc-if value="{{it.isDone}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+            <sc-if value="{{it.showBadge}}"><span>{{it.badge}}</span></sc-if>
+          </span>
+          <span style="flex: 1; min-width: 0">
+            <span style="display: block; font-size: 17px; font-weight: 500; color: {{it.nameColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.name}}</span>
+            <span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.summary}}</span>
+          </span>
+        </button>
+      </sc-if>
+
+      <sc-if value="{{it.open}}" hint-placeholder-val="{{ false }}">
+        <div style="background: {{t.surface}}; border-radius: 20px; padding: 16px 0 10px; margin: 4px -8px 10px">
+          <div style="display: flex; align-items: flex-start; gap: 10px; padding: 0 16px">
+            <sc-if value="{{it.showBadge}}"><span style="flex: none; margin-top: 2px; height: 24px; padding: 0 8px; border-radius: 8px; background: {{t.raised}}; color: {{t.text2}}; font-size: 12px; font-weight: 700; display: flex; align-items: center">{{it.badge}}</span></sc-if>
+            <div style="flex: 1; min-width: 0">
+              <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.3px; line-height: 28px">{{it.name}}</div>
+              <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{it.meta}}</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; padding: 12px 16px 6px; overflow-x: auto">
+            <button onClick="{{it.explain}}" style="flex: none; height: 44px; padding: 0 14px; border-radius: 22px; background: {{t.raised}}; display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 8.8v6.4l5-3.2z"></path></svg>Uitleg
+            </button>
+            <button onClick="{{it.swap}}" style="flex: none; height: 44px; padding: 0 14px; border-radius: 22px; background: {{t.raised}}; display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"></path></svg>Bezet
+            </button>
+            <button onClick="{{it.superset}}" style="flex: none; height: 44px; padding: 0 14px; border-radius: 22px; background: {{t.raised}}; display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg>Superset
+            </button>
+          </div>
+
+          <div style="display: flex; align-items: center; height: 28px; padding: 6px 24px 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: {{t.text3}}">
+            <span style="width: 48px">Set</span><span style="flex: 1">kg</span><span style="flex: 1">Reps</span><span style="width: 40px"></span>
+          </div>
+
+          <sc-for list="{{it.sets}}" as="s" hint-placeholder-count="4">
+            <div style="position: relative; margin: 0 8px 2px; border-radius: 12px; overflow: hidden; background: {{s.delBg}}">
+              <div style="position: absolute; top: 0; bottom: 0; right: 16px; display: flex; align-items: center; gap: 6px; color: {{t.onDanger}}; font-size: 15px; font-weight: 600">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"></path></svg>Verwijder
+              </div>
+              <div onPointerDown="{{s.down}}" onPointerMove="{{s.move}}" onPointerUp="{{s.up}}" onPointerCancel="{{s.up}}" style="position: relative; display: flex; align-items: center; height: 48px; padding: 0 16px; border-radius: 12px; background: {{s.bg}}; transform: translateX({{s.dx}}px); transition: {{s.trans}}; touch-action: pan-y; user-select: none; -webkit-user-select: none">
+                <button onClick="{{s.typeTap}}" aria-label="{{s.typeAria}}" style="flex: none; width: 48px; height: 44px; margin-left: -8px; padding-left: 8px; display: flex; align-items: center">
+                  <span style="min-width: 26px; height: 26px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: {{s.chipBg}}; color: {{s.labelColor}}; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{s.label}}</span>
+                </button>
+                <span style="flex: 1; font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; color: {{s.valColor}}">{{s.w}}</span>
+                <span style="flex: 1; font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; color: {{s.valColor}}">{{s.r}}</span>
+                <span style="width: 40px; display: flex; justify-content: flex-end; color: {{t.accentText}}">
+                  <sc-if value="{{s.done}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Gedaan" role="img"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+                  <sc-if value="{{s.isCur}}"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase">Nu</span></sc-if>
+                </span>
+              </div>
+            </div>
+          </sc-for>
+
+          <div style="display: flex; gap: 8px; margin: 6px 8px 0">
+            <button onClick="{{it.addSet}}" style="flex: 1; height: 44px; border-radius: 12px; background: {{t.raised}}; display: flex; align-items: center; justify-content: center; gap: 6px; color: {{t.accentText}}; font-size: 15px; font-weight: 600">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Set
+            </button>
+            <button onClick="{{it.addWarm}}" style="flex: 1; height: 44px; border-radius: 12px; background: {{t.raised}}; display: flex; align-items: center; justify-content: center; gap: 6px; color: {{t.warm}}; font-size: 15px; font-weight: 600">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Warming-up
+            </button>
+          </div>
+          <div style="text-align: center; font-size: 12px; color: {{t.text3}}; padding: 8px 16px 2px">Tik op het setnummer voor het type · veeg naar links om te verwijderen</div>
+        </div>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <!-- Onderkant: melding, rusttimer, dock -->
+  <div style="flex: none">
+    <sc-if value="{{showToast}}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 0 12px 8px; height: 52px; padding: 0 6px 0 16px; border-radius: 16px; background: {{t.inverse}}; color: {{t.onInverse}}; display: flex; align-items: center; justify-content: space-between">
+        <span style="font-size: 15px; font-weight: 500">{{toastText}}</span>
+        <button onClick="{{undo}}" style="height: 44px; padding: 0 12px; font-size: 15px; font-weight: 700; color: {{t.onInverse}}; text-decoration: underline">Ongedaan maken</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{resting}}" hint-placeholder-val="{{ false }}">
+      <div style="position: relative; margin: 0 12px 8px; height: 56px; border-radius: 16px; overflow: hidden; background: {{t.raised}}">
+        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{restPct}}; background: {{t.accentSoft}}; transition: width 1s linear"></div>
+        <div style="position: relative; height: 56px; display: flex; align-items: center; padding: 0 6px 0 14px; gap: 4px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 2M9 2.5h6"></path></svg>
+          <span style="font-size: 15px; font-weight: 500; margin-left: 4px; color: {{t.text2}}">Rust</span>
+          <span style="flex: 1; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-left: 8px">{{restLeft}}</span>
+          <button onClick="{{restMinus}}" aria-label="15 seconden minder" style="width: 48px; height: 44px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">−15</button>
+          <button onClick="{{restPlus}}" aria-label="15 seconden meer" style="width: 48px; height: 44px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">+15</button>
+          <button onClick="{{restSkip}}" style="height: 44px; padding: 0 14px; border-radius: 22px; background: {{t.surface}}; font-size: 15px; font-weight: 600">Sla over</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showDock}}" hint-placeholder-val="{{ true }}">
+      <div style="background: {{t.surface}}; border-radius: 24px 24px 0 0; padding: 12px 16px 28px">
+        <div style="display: flex; align-items: baseline; gap: 8px; padding: 0 4px">
+          <div style="flex: 1; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{dockName}}</div>
+          <div style="flex: none; font-size: 13px; font-weight: 600; color: {{dockTagColor}}">{{dockTag}}</div>
+        </div>
+        <div style="font-size: 12px; color: {{t.text2}}; margin-top: 1px; padding: 0 4px; font-variant-numeric: tabular-nums">{{dockPrev}}</div>
+        <div style="display: flex; gap: 10px; margin-top: 10px">
+          <div style="flex: 1; min-width: 0; height: 52px; display: flex; align-items: center; border-radius: 14px; background: {{t.raised}}">
+            <button onClick="{{wMinus}}" aria-label="Minder gewicht" style="flex: none; width: 48px; height: 52px; display: flex; align-items: center; justify-content: center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+            </button>
+            <div style="flex: 1; min-width: 0; text-align: center; white-space: nowrap"><span style="font-size: 26px; font-weight: 600; letter-spacing: -0.5px; font-variant-numeric: tabular-nums">{{dockW}}</span><span style="font-size: 13px; font-weight: 500; color: {{t.text2}}"> kg</span></div>
+            <button onClick="{{wPlus}}" aria-label="Meer gewicht" style="flex: none; width: 48px; height: 52px; display: flex; align-items: center; justify-content: center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            </button>
+          </div>
+          <div style="flex: 1; min-width: 0; height: 52px; display: flex; align-items: center; border-radius: 14px; background: {{t.raised}}">
+            <button onClick="{{rMinus}}" aria-label="Minder reps" style="flex: none; width: 48px; height: 52px; display: flex; align-items: center; justify-content: center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+            </button>
+            <div style="flex: 1; min-width: 0; text-align: center; white-space: nowrap"><span style="font-size: 26px; font-weight: 600; letter-spacing: -0.5px; font-variant-numeric: tabular-nums">{{dockR}}</span><span style="font-size: 13px; font-weight: 500; color: {{t.text2}}"> reps</span></div>
+            <button onClick="{{rPlus}}" aria-label="Meer reps" style="flex: none; width: 48px; height: 52px; display: flex; align-items: center; justify-content: center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            </button>
+          </div>
+        </div>
+        <button onClick="{{complete}}" style="margin-top: 10px; width: 100%; height: 52px; border-radius: 16px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Set klaar
+        </button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showFinish}}" hint-placeholder-val="{{ false }}">
+      <div style="background: {{t.surface}}; border-radius: 24px 24px 0 0; padding: 18px 20px 30px">
+        <div style="text-align: center; font-size: 15px; color: {{t.text2}}; margin-bottom: 12px">Alle sets gedaan. Sterk werk.</div>
+        <button onClick="{{finish}}" style="width: 100%; height: 58px; border-radius: 16px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 18px; font-weight: 700">Workout afronden</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= TRAINING-OVERZICHT ================= -->
+<sc-if value="{{isOverview}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column">
+  <div style="flex: none; padding: 47px 6px 0; display: flex; align-items: center; height: 52px; background: {{t.bg}}">
+    <button onClick="{{ovBack}}" style="height: 44px; padding: 0 10px 0 4px; display: flex; align-items: center; gap: 2px; font-size: 17px; color: {{t.accentText}}">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>{{progName}}
+    </button>
+    <div style="flex: 1"></div>
+    <button onClick="{{ovMore}}" aria-label="Opties voor deze training" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>
+    </button>
+  </div>
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 8px 20px 24px">
+    <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.5px">{{ovName}}</div>
+    <div style="font-size: 15px; color: {{t.text2}}; margin-top: 4px">{{ovSub}}</div>
+    <div style="font-size: 15px; color: {{t.text2}}; margin-top: 2px">{{ovMuscles}}</div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: {{t.surface}}; font-size: 14px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="color: {{t.text2}}"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <span>{{ovLast}}</span>
+    </div>
+
+    <div style="margin: 22px 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Oefeningen</div>
+    <sc-for list="{{ovRows}}" as="or" hint-placeholder-count="5">
+      <sc-if value="{{or.header}}">
+        <div style="display: flex; align-items: center; gap: 6px; margin: 12px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg>Superset
+        </div>
+      </sc-if>
+      <sc-if value="{{or.row}}">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 60px">
+          <span style="flex: none; width: 32px; height: 32px; border-radius: 16px; background: {{t.raised}}; color: {{t.text2}}; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{or.badge}}</span>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 17px; font-weight: 500">{{or.name}}</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px; font-variant-numeric: tabular-nums">{{or.sub}}</div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-for>
+  </div>
+  <div style="flex: none; padding: 10px 20px 30px; background: {{t.bg}}">
+    <button onClick="{{ovStart}}" style="width: 100%; height: 56px; border-radius: 16px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>Start training
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= SCHEMA-EDITOR ================= -->
+<sc-if value="{{isEditor}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column">
+  <div style="flex: none; padding: 47px 8px 0; display: flex; align-items: center; height: 52px; background: {{t.bg}}">
+    <button onClick="{{edCancel}}" style="height: 44px; padding: 0 12px; font-size: 17px; color: {{t.text2}}">Annuleer</button>
+    <div style="flex: 1; text-align: center; font-size: 17px; font-weight: 600">{{edTitle}}</div>
+    <button onClick="{{edSave}}" style="height: 44px; padding: 0 12px; font-size: 17px; font-weight: 700; color: {{t.accentText}}; opacity: {{edSaveOpacity}}">Bewaar</button>
+  </div>
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 12px 20px 40px">
+    <label style="display: block">
+      <span style="display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}; margin-bottom: 8px">Naam</span>
+      <input value="{{edName}}" onChange="{{edOnName}}" placeholder="Bijv. Push B" style="width: 100%; box-sizing: border-box; height: 56px; padding: 0 16px; border: 0; outline: none; border-radius: 14px; background: {{t.surface}}; font-size: 22px; font-weight: 600; color: {{t.text}}">
+    </label>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin: 24px 0 8px">
+      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Oefeningen</div>
+      <div style="font-size: 13px; color: {{t.text2}}; font-variant-numeric: tabular-nums">{{edSummary}}</div>
+    </div>
+
+    <sc-if value="{{edEmpty}}">
+      <div style="padding: 28px 12px; text-align: center; font-size: 15px; color: {{t.text2}}">Nog geen oefeningen. Voeg je eerste oefening toe.</div>
+    </sc-if>
+
+    <sc-for list="{{edItems}}" as="ei" hint-placeholder-count="3">
+      <sc-if value="{{ei.showLink}}">
+        <div style="display: flex; justify-content: center; margin: -4px 0 4px">
+          <button onClick="{{ei.toggleLink}}" aria-pressed="{{ei.linkedStr}}" style="height: 36px; min-width: 44px; padding: 0 12px; border-radius: 18px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; background: {{ei.linkBg}}; color: {{ei.linkFg}}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg>{{ei.linkLabel}}
+          </button>
+        </div>
+      </sc-if>
+      <div style="background: {{t.surface}}; border-radius: 16px; padding: 12px 8px 12px 16px; margin-bottom: 8px">
+        <div style="display: flex; align-items: flex-start; gap: 8px">
+          <sc-if value="{{ei.showBadge}}"><span style="flex: none; margin-top: 2px; height: 22px; padding: 0 7px; border-radius: 8px; background: {{t.raised}}; color: {{t.text2}}; font-size: 12px; font-weight: 700; display: flex; align-items: center">{{ei.badge}}</span></sc-if>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 17px; font-weight: 600">{{ei.name}}</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{ei.meta}}</div>
+          </div>
+          <button onClick="{{ei.up}}" aria-label="Omhoog" style="flex: none; width: 36px; height: 44px; display: flex; align-items: center; justify-content: center; color: {{t.text2}}; opacity: {{ei.upOpacity}}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>
+          </button>
+          <button onClick="{{ei.remove}}" aria-label="Verwijder oefening" style="flex: none; width: 40px; height: 44px; display: flex; align-items: center; justify-content: center; color: {{t.danger}}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 10px; padding-right: 8px">
+          <div style="flex: 1; min-width: 0; height: 44px; display: flex; align-items: center; border-radius: 12px; background: {{t.raised}}">
+            <button onClick="{{ei.setsMinus}}" aria-label="Minder sets" style="flex: none; width: 40px; height: 44px; font-size: 20px; font-weight: 500">−</button>
+            <div style="flex: 1; text-align: center; white-space: nowrap"><span style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">{{ei.sets}}</span><span style="font-size: 13px; color: {{t.text2}}"> sets</span></div>
+            <button onClick="{{ei.setsPlus}}" aria-label="Meer sets" style="flex: none; width: 40px; height: 44px; font-size: 20px; font-weight: 500">+</button>
+          </div>
+          <div style="flex: 1; min-width: 0; height: 44px; display: flex; align-items: center; border-radius: 12px; background: {{t.raised}}">
+            <button onClick="{{ei.repsMinus}}" aria-label="Minder reps" style="flex: none; width: 40px; height: 44px; font-size: 20px; font-weight: 500">−</button>
+            <div style="flex: 1; text-align: center; white-space: nowrap"><span style="font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums">{{ei.reps}}</span><span style="font-size: 13px; color: {{t.text2}}"> reps</span></div>
+            <button onClick="{{ei.repsPlus}}" aria-label="Meer reps" style="flex: none; width: 40px; height: 44px; font-size: 20px; font-weight: 500">+</button>
+          </div>
+        </div>
+        <button onClick="{{ei.toggleWarm}}" role="switch" aria-checked="{{ei.warmStr}}" style="margin-top: 8px; height: 44px; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500">
+          <span style="display: block; width: 42px; height: 26px; border-radius: 13px; background: {{ei.warmBg}}; position: relative">
+            <span style="position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 11px; background: #FFFFFF; transform: translateX({{ei.warmX}}); transition: transform 0.2s"></span>
+          </span>
+          <span style="color: {{ei.warmFg}}">Warming-upset</span>
+        </button>
+      </div>
+    </sc-for>
+
+    <button onClick="{{edAdd}}" style="margin-top: 4px; width: 100%; height: 52px; border-radius: 16px; background: {{t.raised}}; color: {{t.accentText}}; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Oefening toevoegen
+    </button>
+    <div style="font-size: 12px; color: {{t.text3}}; text-align: center; margin-top: 10px; line-height: 17px">Koppel twee oefeningen met de knop ertussen om er een superset van te maken.</div>
+
+    <sc-if value="{{edCanDelete}}">
+      <button onClick="{{edDelete}}" style="margin-top: 24px; width: 100%; height: 52px; border-radius: 16px; color: {{t.danger}}; font-size: 16px; font-weight: 600">Training verwijderen</button>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= AFGEROND ================= -->
+<sc-if value="{{isSummary}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column">
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 96px 24px 24px">
+    <div style="width: 64px; height: 64px; border-radius: 32px; background: {{t.accent}}; color: {{t.onAccent}}; display: flex; align-items: center; justify-content: center">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+    </div>
+    <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.5px; margin-top: 20px">{{sumTitle}}</div>
+    <div style="font-size: 15px; color: {{t.text2}}; margin-top: 4px">{{sumNote}}</div>
+    <div style="display: flex; gap: 12px; margin: 28px 0 24px">
+      <div style="flex: 1"><div style="font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums">{{sumTime}}</div><div style="font-size: 13px; color: {{t.text2}}">duur</div></div>
+      <div style="flex: 1"><div style="font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums">{{sumSets}}</div><div style="font-size: 13px; color: {{t.text2}}">sets</div></div>
+      <div style="flex: 1.3"><div style="font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums">{{sumVol}}</div><div style="font-size: 13px; color: {{t.text2}}">kg volume</div></div>
+    </div>
+    <sc-for list="{{sumLines}}" as="ln" hint-placeholder-count="4">
+      <div style="padding: 9px 0">
+        <div style="font-size: 16px; font-weight: 500">{{ln.name}}</div>
+        <div style="font-size: 13px; color: {{t.text2}}; margin-top: 2px; font-variant-numeric: tabular-nums">{{ln.summary}}</div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="flex: none; padding: 8px 20px 34px">
+    <button onClick="{{goHome}}" style="width: 100%; height: 58px; border-radius: 16px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 18px; font-weight: 700">Klaar</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= SHEETS ================= -->
+<sc-if value="{{anySheet}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 20">
+  <button onClick="{{closeSheet}}" aria-label="Sluiten" style="position: absolute; inset: 0; width: 100%; height: 100%; background: {{t.scrim}}"></button>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; max-height: 740px; display: flex; flex-direction: column; background: {{t.surface}}; border-radius: 24px 24px 0 0">
+    <div style="flex: none; width: 36px; height: 5px; border-radius: 3px; background: {{t.line}}; margin: 8px auto 0"></div>
+    <div style="flex: none; display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px 4px 20px">
+      <div style="flex: 1; min-width: 0; padding-top: 8px">
+        <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.2px">{{sheetTitle}}</div>
+        <div style="font-size: 14px; color: {{t.text2}}; margin-top: 3px">{{sheetSub}}</div>
+      </div>
+      <button onClick="{{closeSheet}}" aria-label="Sluiten" style="flex: none; width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: {{t.text2}}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 8px 20px 34px">
+
+      <!-- Menu -->
+      <sc-if value="{{sheetMenu}}">
+        <button onClick="{{openAdd}}" style="width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-radius: 14px; background: {{t.raised}}; font-size: 17px; font-weight: 500; text-align: left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Oefening toevoegen
+        </button>
+        <div style="margin: 22px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Instellingen</div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; background: {{t.raised}}">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 17px; font-weight: 500">Warming-up in superset</div>
+            <div style="font-size: 13px; color: {{t.text2}}; margin-top: 3px; line-height: 18px">Na een warming-upset blijf je bij dezelfde oefening en doe je direct de eerste werkset. Daarna wissel je.</div>
+          </div>
+          <button onClick="{{toggleWarm}}" role="switch" aria-checked="{{warmOnStr}}" aria-label="Warming-up in superset" style="flex: none; width: 51px; height: 44px; display: flex; align-items: center">
+            <span style="display: block; width: 51px; height: 31px; border-radius: 16px; background: {{toggleBg}}; position: relative; transition: background 0.2s">
+              <span style="position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 14px; background: #FFFFFF; transform: translateX({{knobX}}); transition: transform 0.2s"></span>
+            </span>
+          </button>
+        </div>
+        <button onClick="{{openStop}}" style="margin-top: 22px; width: 100%; min-height: 52px; padding: 0 16px; border-radius: 14px; background: {{t.raised}}; color: {{t.danger}}; font-size: 17px; font-weight: 600; text-align: left">Workout stoppen</button>
+      </sc-if>
+
+      <!-- Instellingen -->
+      <sc-if value="{{sheetSettings}}">
+        <div style="margin: 4px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Accentkleur</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{accentOpts}}" as="ac" hint-placeholder-count="6">
+            <button onClick="{{ac.pick}}" aria-label="{{ac.name}}" aria-pressed="{{ac.onStr}}" style="width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; border: {{ac.ring}}; box-sizing: border-box">
+              <span style="width: 34px; height: 34px; border-radius: 17px; background: {{ac.hex}}; display: block"></span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="font-size: 14px; color: {{t.text2}}; margin-top: 6px">{{accentName}}</div>
+
+        <div style="margin: 24px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Weergave</div>
+        <div style="display: flex; padding: 3px; border-radius: 14px; background: {{t.raised}}">
+          <sc-for list="{{modeOpts}}" as="mo" hint-placeholder-count="3">
+            <button onClick="{{mo.pick}}" aria-pressed="{{mo.onStr}}" style="flex: 1; height: 44px; border-radius: 11px; background: {{mo.bg}}; font-size: 15px; font-weight: 600; color: {{mo.fg}}">{{mo.name}}</button>
+          </sc-for>
+        </div>
+        <div style="font-size: 13px; color: {{t.text3}}; margin-top: 16px; line-height: 18px">Later hier ook: standaard rusttijd, kg of lb, en de creatine-herinnering.</div>
+      </sc-if>
+
+      <!-- Schema kiezen -->
+      <sc-if value="{{sheetProgram}}">
+        <sc-for list="{{progList}}" as="pg" hint-placeholder-count="2">
+          <button onClick="{{pg.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; margin-bottom: 6px; border-radius: 14px; background: {{t.raised}}; text-align: left">
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 600">{{pg.name}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{pg.sub}}</span></span>
+            <sc-if value="{{pg.on}}"><span style="color: {{t.accentText}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Huidig schema" role="img"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></sc-if>
+          </button>
+        </sc-for>
+        <button onClick="{{newProgram}}" style="margin-top: 6px; width: 100%; height: 52px; border-radius: 14px; color: {{t.accentText}}; font-size: 16px; font-weight: 600">+ Nieuw schema</button>
+      </sc-if>
+
+      <!-- Opties voor een training -->
+      <sc-if value="{{sheetTplmenu}}">
+        <button onClick="{{tmEdit}}" style="width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; margin-bottom: 6px; border-radius: 14px; background: {{t.raised}}; font-size: 17px; font-weight: 500; text-align: left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"></path></svg>Training aanpassen
+        </button>
+        <button onClick="{{tmDuplicate}}" style="width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; margin-bottom: 6px; border-radius: 14px; background: {{t.raised}}; font-size: 17px; font-weight: 500; text-align: left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M8 8h11v11H8zM5 16V5h11"></path></svg>Dupliceren
+        </button>
+        <button onClick="{{tmRemove}}" style="width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-radius: 14px; background: {{t.raised}}; color: {{t.danger}}; font-size: 17px; font-weight: 600; text-align: left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"></path></svg>Verwijderen uit schema
+        </button>
+      </sc-if>
+
+      <!-- Gym kiezen -->
+      <sc-if value="{{sheetGym}}">
+        <sc-for list="{{gymList}}" as="g" hint-placeholder-count="2">
+          <button onClick="{{g.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; margin-bottom: 6px; border-radius: 14px; background: {{t.raised}}; text-align: left">
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 600">{{g.name}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{g.sub}}</span></span>
+            <sc-if value="{{g.on}}"><span style="color: {{t.accentText}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Gekozen" role="img"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></sc-if>
+          </button>
+        </sc-for>
+        <button onClick="{{closeSheet}}" style="margin-top: 6px; width: 100%; height: 52px; border-radius: 14px; color: {{t.accentText}}; font-size: 16px; font-weight: 600">+ Nieuwe gym</button>
+      </sc-if>
+
+      <!-- Settype -->
+      <sc-if value="{{sheetSettype}}">
+        <sc-for list="{{typeOpts}}" as="o" hint-placeholder-count="4">
+          <button onClick="{{o.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 14px; padding: 8px 16px; margin-bottom: 6px; border-radius: 14px; background: {{t.raised}}; text-align: left">
+            <span style="flex: none; width: 32px; height: 32px; border-radius: 10px; background: {{t.surface}}; color: {{o.color}}; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{o.letter}}</span>
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 600">{{o.name}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{o.desc}}</span></span>
+            <sc-if value="{{o.on}}"><span style="color: {{t.accentText}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Gekozen" role="img"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></sc-if>
+          </button>
+        </sc-for>
+        <button onClick="{{deleteFromSheet}}" style="margin-top: 8px; width: 100%; min-height: 52px; padding: 0 16px; border-radius: 14px; color: {{t.danger}}; font-size: 17px; font-weight: 600; text-align: left">Set verwijderen</button>
+      </sc-if>
+
+      <!-- Stoppen -->
+      <sc-if value="{{sheetStop}}">
+        <button onClick="{{stopSave}}" style="width: 100%; height: 56px; border-radius: 16px; background: {{t.danger}}; color: {{t.onDanger}}; font-size: 17px; font-weight: 700">Stoppen en opslaan</button>
+        <button onClick="{{stopDiscard}}" style="margin-top: 8px; width: 100%; height: 52px; border-radius: 16px; color: {{t.danger}}; font-size: 17px; font-weight: 600">Workout verwijderen</button>
+        <button onClick="{{closeSheet}}" style="margin-top: 8px; width: 100%; height: 56px; border-radius: 16px; background: {{t.raised}}; font-size: 17px; font-weight: 600">Verder trainen</button>
+      </sc-if>
+
+      <!-- Start terwijl er een loopt -->
+      <sc-if value="{{sheetStart}}">
+        <button onClick="{{resumeFromSheet}}" style="width: 100%; height: 56px; border-radius: 16px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 17px; font-weight: 700">{{startResumeLabel}}</button>
+        <button onClick="{{startReplace}}" style="margin-top: 8px; width: 100%; height: 56px; border-radius: 16px; background: {{t.raised}}; color: {{t.danger}}; font-size: 17px; font-weight: 600">{{startReplaceLabel}}</button>
+      </sc-if>
+
+      <!-- Uitleg -->
+      <sc-if value="{{sheetExplain}}">
+        <a href="{{ytUrl}}" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 16px; border-radius: 14px; background: {{t.raised}}; font-size: 17px; font-weight: 600">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M10 8.8v6.4l5-3.2z"></path></svg>
+          <span style="flex: 1">Zoek op YouTube</span>
+          <span style="font-size: 13px; font-weight: 500; color: {{t.text2}}">opent YouTube</span>
+        </a>
+        <sc-if value="{{hasLink}}">
+          <a href="{{savedLink}}" target="_blank" rel="noopener" style="margin-top: 8px; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 16px; border-radius: 14px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 17px; font-weight: 700">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg>
+            <span style="flex: 1">Open mijn video</span>
+          </a>
+        </sc-if>
+        <div style="margin: 22px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Eigen link</div>
+        <div style="display: flex; gap: 8px">
+          <label style="flex: 1; min-width: 0">
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Eigen link</span>
+            <input value="{{linkDraft}}" onChange="{{onLink}}" placeholder="Plak een link" inputmode="url" style="width: 100%; box-sizing: border-box; height: 48px; padding: 0 14px; border: 0; outline: none; border-radius: 12px; background: {{t.raised}}; font-size: 16px">
+          </label>
+          <button onClick="{{saveLink}}" style="flex: none; height: 48px; padding: 0 16px; border-radius: 12px; background: {{t.raised}}; color: {{t.accentText}}; font-size: 16px; font-weight: 700">Bewaar</button>
+        </div>
+        <div style="font-size: 13px; color: {{t.text2}}; margin-top: 8px; line-height: 18px">Een eigen link wordt bij deze oefening bewaard en staat daarna bovenaan.</div>
+        <sc-if value="{{hasLink}}">
+          <button onClick="{{clearLink}}" style="margin-top: 8px; height: 44px; font-size: 15px; font-weight: 600; color: {{t.danger}}">Link verwijderen</button>
+        </sc-if>
+      </sc-if>
+
+      <!-- Machine bezet -->
+      <sc-if value="{{sheetSwap}}">
+        <div style="margin: 4px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Suggestie van de app</div>
+        <button onClick="{{swapSuggest.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 14px; background: {{t.raised}}; text-align: left">
+          <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 600">{{swapSuggest.name}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{swapSuggest.meta}}</span></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"></path></svg>
+        </button>
+        <div style="margin: 20px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Mijn voorkeur</div>
+        <sc-if value="{{hasPref}}">
+          <button onClick="{{swapPref.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 14px; background: {{t.raised}}; text-align: left">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="color: {{t.accentText}}"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"></path></svg>
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 600">{{swapPref.name}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{swapPref.meta}}</span></span>
+          </button>
+        </sc-if>
+        <sc-if value="{{noPref}}">
+          <div style="font-size: 15px; color: {{t.text2}}; padding: 4px 0">Nog geen voorkeur. Kies hieronder een oefening en zet ‘Bewaar als voorkeur’ aan.</div>
+        </sc-if>
+        <div style="margin: 20px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Zelf kiezen</div>
+      </sc-if>
+
+      <!-- Superset -->
+      <sc-if value="{{sheetSuperset}}">
+        <sc-if value="{{ssInGroup}}">
+          <button onClick="{{ssUnlink}}" style="width: 100%; min-height: 52px; padding: 0 16px; margin-bottom: 4px; border-radius: 14px; background: {{t.raised}}; color: {{t.danger}}; font-size: 17px; font-weight: 600; text-align: left">Loskoppelen uit superset</button>
+        </sc-if>
+        <div style="margin: 14px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Uit dit schema</div>
+        <sc-for list="{{ssCandidates}}" as="c" hint-placeholder-count="3">
+          <button onClick="{{c.toggle}}" role="checkbox" aria-checked="{{c.onStr}}" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; margin-bottom: 6px; border-radius: 14px; background: {{t.raised}}; text-align: left">
+            <span style="flex: none; width: 26px; height: 26px; box-sizing: border-box; border-radius: 13px; border: {{c.ringBorder}}; background: {{c.ringBg}}; color: {{t.onAccent}}; display: flex; align-items: center; justify-content: center">
+              <sc-if value="{{c.on}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+            </span>
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 500">{{c.name}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{c.meta}}</span></span>
+          </button>
+        </sc-for>
+        <sc-if value="{{ssNoCandidates}}">
+          <div style="font-size: 15px; color: {{t.text2}}; padding: 4px 0">Geen andere oefeningen in dit schema.</div>
+        </sc-if>
+        <div style="margin: 20px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{t.text2}}">Nieuwe oefening zoeken</div>
+      </sc-if>
+
+      <!-- Zoeken (toevoegen, bezet, superset) -->
+      <sc-if value="{{showSearch}}">
+        <label style="display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 14px; border-radius: 12px; background: {{t.raised}}; color: {{t.text2}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Zoek oefening</span>
+          <input value="{{q}}" onChange="{{onQ}}" placeholder="Zoek oefening of spiergroep" style="flex: 1; min-width: 0; height: 44px; border: 0; outline: none; background: transparent; font-size: 16px; color: {{t.text}}">
+        </label>
+        <div style="height: 8px"></div>
+        <sc-for list="{{results}}" as="r" hint-placeholder-count="5">
+          <button onClick="{{r.pick}}" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 4px; text-align: left">
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 17px; font-weight: 500">{{r.name}}</span><span style="display: block; font-size: 13px; color: {{t.text2}}; margin-top: 2px">{{r.meta}}</span></span>
+            <span style="flex: none; width: 32px; height: 32px; border-radius: 16px; background: {{r.iconBg}}; color: {{r.iconFg}}; display: flex; align-items: center; justify-content: center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.iconPath}}"></path></svg>
+            </span>
+          </button>
+        </sc-for>
+        <sc-if value="{{noResults}}">
+          <div style="font-size: 15px; color: {{t.text2}}; padding: 12px 4px">Niets gevonden.</div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{sheetSwap}}">
+        <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 10px 16px; border-radius: 14px; background: {{t.raised}}">
+          <div style="flex: 1; font-size: 15px; font-weight: 500">Bewaar mijn keuze als voorkeur</div>
+          <button onClick="{{togglePref}}" role="switch" aria-checked="{{savePrefStr}}" aria-label="Bewaar als voorkeur" style="flex: none; width: 51px; height: 44px; display: flex; align-items: center">
+            <span style="display: block; width: 51px; height: 31px; border-radius: 16px; background: {{prefBg}}; position: relative">
+              <span style="position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 14px; background: #FFFFFF; transform: translateX({{prefKnobX}}); transition: transform 0.2s"></span>
+            </span>
+          </button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{sheetSuperset}}">
+        <button onClick="{{ssLink}}" style="margin-top: 16px; width: 100%; height: 56px; border-radius: 16px; background: {{t.accent}}; color: {{t.onAccent}}; font-size: 17px; font-weight: 700; opacity: {{ssBtnOpacity}}">{{ssBtnLabel}}</button>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div></template>
+
+<script>
+/* Kleine runtime: vult {{gaten}}, sc-if en sc-for in en werkt de pagina bij zonder alles opnieuw te tekenen. */
+(function () {
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var HOLE = /\{\{([^}]+)\}\}/g, WHOLE = /^\s*\{\{([^}]+)\}\}\s*$/;
+  function lookup(path, scopes) {
+    path = path.trim();
+    if (path === 'true') return true;
+    if (path === 'false') return false;
+    if (path === 'null') return null;
+    if (/^-?\d+(\.\d+)?$/.test(path)) return +path;
+    var parts = path.split('.');
+    for (var s = 0; s < scopes.length; s++) {
+      var sc = scopes[s];
+      if (sc && Object.prototype.hasOwnProperty.call(sc, parts[0])) {
+        var v = sc[parts[0]];
+        for (var i = 1; i < parts.length; i++) { if (v == null) return undefined; v = v[parts[i]]; }
+        return v;
+      }
+    }
+    return undefined;
+  }
+  function interp(str, scopes) { return str.replace(HOLE, function (m, p) { var v = lookup(p, scopes); return v == null ? '' : String(v); }); }
+
+  function build(nodes, scopes, out) {
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.nodeType === 3) { var tx = n.nodeValue; out.push({ t: tx.indexOf('{{') >= 0 ? interp(tx, scopes) : tx }); continue; }
+      if (n.nodeType !== 1) continue;
+      var tag = n.localName;
+      if (tag === 'sc-if') {
+        var mi = WHOLE.exec(n.getAttribute('value') || '');
+        if (mi && lookup(mi[1], scopes)) build(n.childNodes, scopes, out);
+        continue;
+      }
+      if (tag === 'sc-for') {
+        var mf = WHOLE.exec(n.getAttribute('list') || '');
+        var list = mf ? lookup(mf[1], scopes) : null, as = n.getAttribute('as') || 'item';
+        if (Array.isArray(list)) list.forEach(function (it, idx) {
+          var sc = {}; sc[as] = it; sc.$index = idx;
+          build(n.childNodes, [sc].concat(scopes), out);
+        });
+        continue;
+      }
+      var attrs = {}, ev = {};
+      for (var a = 0; a < n.attributes.length; a++) {
+        var name = n.attributes[a].name, val = n.attributes[a].value;
+        if (name.indexOf('hint-') === 0) continue;
+        if (name.indexOf('on') === 0) {
+          var me = WHOLE.exec(val), f = me ? lookup(me[1], scopes) : null;
+          if (typeof f === 'function') ev[name.slice(2)] = f;
+          continue;
+        }
+        if (val.indexOf('{{') < 0) { attrs[name] = val; continue; }
+        var mw = WHOLE.exec(val);
+        if (mw && name !== 'style') {
+          var rv = lookup(mw[1], scopes);
+          if (rv === false || rv == null) continue;
+          attrs[name] = String(rv);
+        } else attrs[name] = interp(val, scopes);
+      }
+      var ch = [];
+      build(n.childNodes, scopes, ch);
+      out.push({ tag: tag, ns: n.namespaceURI, attrs: attrs, ev: ev, ch: ch });
+    }
+    return out;
+  }
+
+  function create(v) {
+    if (v.t !== undefined) return document.createTextNode(v.t);
+    var el = v.ns === SVGNS ? document.createElementNS(SVGNS, v.tag) : document.createElement(v.tag);
+    el._v = { tag: v.tag, ns: v.ns, attrs: {}, ev: {}, ch: [] };
+    update(el, v);
+    return el;
+  }
+  function same(a, b) {
+    if (!a) return false;
+    var at = a.t !== undefined, bt = b.t !== undefined;
+    if (at !== bt) return false;
+    return bt || (a.tag === b.tag && a.ns === b.ns);
+  }
+  function update(el, v) {
+    var o = el._v, k;
+    for (k in o.attrs) if (!(k in v.attrs)) el.removeAttribute(k);
+    for (k in v.attrs) {
+      var val = v.attrs[k];
+      if (k === 'value' && (v.tag === 'input' || v.tag === 'textarea')) { if (el.value !== val) el.value = val; continue; }
+      if (o.attrs[k] !== val) el.setAttribute(k, val);
+    }
+    el._h = el._h || {};
+    var seen = {};
+    for (k in v.ev) {
+      var type = k;
+      if (type === 'change' && (v.tag === 'input' || v.tag === 'textarea')) type = 'input';
+      seen[type] = true;
+      if (!(type in el._h)) (function (t) { el.addEventListener(t, function (e) { var h = el._h[t]; if (h) h(e); }); })(type);
+      el._h[type] = v.ev[k];
+    }
+    for (k in el._h) if (!seen[k]) el._h[k] = null;
+    patch(el, o.ch, v.ch);
+    el._v = { tag: v.tag, ns: v.ns, attrs: v.attrs, ev: v.ev, ch: v.ch };
+  }
+  function patch(parent, oldCh, newCh) {
+    for (var i = 0; i < newCh.length; i++) {
+      var nv = newCh[i], ov = oldCh[i], el = parent.childNodes[i];
+      if (el && same(ov, nv)) {
+        if (nv.t !== undefined) { if (ov.t !== nv.t) el.nodeValue = nv.t; }
+        else update(el, nv);
+      } else {
+        var ne = create(nv);
+        if (el) parent.replaceChild(ne, el); else parent.appendChild(ne);
+      }
+    }
+    while (parent.childNodes.length > newCh.length) parent.removeChild(parent.lastChild);
+  }
+
+  var comp = null, root = null, tplNodes = null, prev = [], queued = false;
+  function render() {
+    queued = false;
+    var vals = comp.renderVals();
+    var next = build(tplNodes, [vals], []);
+    patch(root, prev, next);
+    prev = next;
+  }
+  function schedule() { if (!queued) { queued = true; requestAnimationFrame(render); } }
+
+  window.DCLogic = function DCLogic(props) { this.props = props || {}; this.state = {}; };
+  window.DCLogic.prototype.setState = function (p) {
+    if (typeof p === 'function') p = p(this.state, this.props);
+    this.state = Object.assign({}, this.state, p);
+    schedule();
+  };
+  window.DCLogic.prototype.forceUpdate = function () { schedule(); };
+
+  window.__mount = function (Component, props) {
+    root = document.getElementById('root');
+    tplNodes = document.getElementById('tpl').content.childNodes;
+    comp = new Component(props);
+    render();
+    if (comp.componentDidMount) comp.componentDidMount();
+    return {
+      setProps: function (p) { comp.props = Object.assign({}, comp.props, p); schedule(); }
+    };
+  };
+})();
+</script>
+
+<script>
+var LIB = {
+  'Incline dumbbell press': { m: 'Borst', e: 'Dumbbells', st: 2, d: 20 },
+  'Dumbbell bench press': { m: 'Borst', e: 'Dumbbells', st: 2, d: 24 },
+  'Barbell bench press': { m: 'Borst', e: 'Stang', st: 2.5, d: 60 },
+  'Chest press machine': { m: 'Borst', e: 'Machine', list: [25, 35, 45, 55, 65, 75, 85], d: 45 },
+  'Pec deck': { m: 'Borst', e: 'Machine', st: 5, d: 40 },
+  'Cable fly': { m: 'Borst', e: 'Kabel', st: 2.5, d: 12.5 },
+  'Dumbbell shoulder press': { m: 'Schouders', e: 'Dumbbells', st: 2, d: 16 },
+  'Shoulder press machine': { m: 'Schouders', e: 'Machine', st: 5, d: 30 },
+  'Cable lateral raise': { m: 'Schouders', e: 'Kabel', st: 2.5, d: 5 },
+  'Dumbbell lateral raise': { m: 'Schouders', e: 'Dumbbells', st: 1, d: 8 },
+  'Triceps pushdown': { m: 'Triceps', e: 'Kabel', st: 2.5, d: 20 },
+  'Overhead triceps extension': { m: 'Triceps', e: 'Kabel', st: 2.5, d: 15 },
+  'Lat pulldown': { m: 'Lats', e: 'Machine', st: 5, d: 45 },
+  'Seated cable row': { m: 'Bovenrug', e: 'Kabel', st: 5, d: 45 },
+  'Chest-supported row': { m: 'Bovenrug', e: 'Machine', st: 5, d: 40 },
+  'Face pull': { m: 'Bovenrug', e: 'Kabel', st: 2.5, d: 15 },
+  'Dumbbell curl': { m: 'Biceps', e: 'Dumbbells', st: 2, d: 10 },
+  'Cable curl': { m: 'Biceps', e: 'Kabel', st: 2.5, d: 15 },
+  'Leg press': { m: 'Quadriceps', e: 'Machine', st: 10, d: 100 },
+  'Leg extension': { m: 'Quadriceps', e: 'Machine', st: 5, d: 40 },
+  'Barbell squat': { m: 'Quadriceps', e: 'Stang', st: 2.5, d: 60 },
+  'Leg curl': { m: 'Hamstrings', e: 'Machine', st: 5, d: 35 },
+  'Romanian deadlift': { m: 'Hamstrings', e: 'Stang', st: 2.5, d: 60 },
+  'Hip thrust': { m: 'Billen', e: 'Stang', st: 5, d: 60 },
+  'Calf raise machine': { m: 'Kuiten', e: 'Machine', st: 5, d: 50 },
+  'Cable crunch': { m: 'Core', e: 'Kabel', st: 2.5, d: 30 }
+};
+
+var TPL = {
+  'Push A': [
+    { n: 'Incline dumbbell press', g: 1, warm: [12, 12], sets: [[26, 8], [26, 8], [26, 7]] },
+    { n: 'Chest press machine', g: 2, warm: [35, 12], sets: [[55, 10], [55, 9], [55, 9]] },
+    { n: 'Cable lateral raise', g: 2, sets: [[7.5, 12], [7.5, 12], [7.5, 11]] },
+    { n: 'Dumbbell shoulder press', g: 3, sets: [[20, 10], [20, 9], [18, 10]] },
+    { n: 'Triceps pushdown', g: 4, sets: [[25, 12], [25, 12], [25, 10]] }
+  ],
+  'Pull A': [
+    { n: 'Lat pulldown', g: 1, warm: [35, 12], sets: [[55, 10], [55, 10], [55, 8]] },
+    { n: 'Seated cable row', g: 2, sets: [[50, 10], [50, 10], [50, 9]] },
+    { n: 'Dumbbell curl', g: 3, sets: [[12, 10], [12, 10], [12, 9]] },
+    { n: 'Face pull', g: 3, sets: [[20, 15], [20, 15], [20, 14]] }
+  ],
+  'Full body A': [
+    { n: 'Barbell squat', g: 1, warm: [40, 10], sets: [[60, 8], [60, 8], [60, 8]] },
+    { n: 'Barbell bench press', g: 2, warm: [30, 10], sets: [[50, 8], [50, 8], [50, 7]] },
+    { n: 'Seated cable row', g: 3, sets: [[45, 10], [45, 10], [45, 10]] },
+    { n: 'Cable crunch', g: 4, sets: [[30, 12], [30, 12], [30, 12]] }
+  ],
+  'Full body B': [
+    { n: 'Romanian deadlift', g: 1, warm: [40, 10], sets: [[60, 10], [60, 10], [60, 9]] },
+    { n: 'Dumbbell shoulder press', g: 2, sets: [[18, 10], [18, 10], [18, 9]] },
+    { n: 'Lat pulldown', g: 3, sets: [[50, 10], [50, 10], [50, 9]] },
+    { n: 'Leg curl', g: 3, sets: [[35, 12], [35, 12], [35, 11]] }
+  ],
+  'Benen': [
+    { n: 'Leg press', g: 1, warm: [60, 12], sets: [[120, 10], [120, 10], [120, 9]] },
+    { n: 'Leg extension', g: 2, sets: [[45, 12], [45, 12], [45, 11]] },
+    { n: 'Leg curl', g: 2, sets: [[40, 12], [40, 12], [40, 10]] },
+    { n: 'Calf raise machine', g: 3, sets: [[60, 15], [60, 15], [60, 14]] }
+  ]
+};
+
+// Eerdere trainingen: aantal dagen geleden -> [schema, minuten]
+var HIST = {
+  4: ['Push A', 54], 6: ['Benen', 47], 8: ['Pull A', 51], 11: ['Push A', 56], 13: ['Benen', 45],
+  15: ['Pull A', 49], 18: ['Push A', 52], 20: ['Benen', 48], 22: ['Pull A', 50], 25: ['Push A', 55],
+  27: ['Benen', 44], 29: ['Pull A', 53], 32: ['Push A', 51]
+};
+
+function eqList(off) {
+  var all = [
+    ['Barbell + plates', '20 kg stang · schijven 1,25–20 kg'],
+    ['Dumbbells', '2–40 kg · stappen van 2 kg'],
+    ['Cable station', '2,5–50 kg · stappen van 2,5 kg'],
+    ['Chest press machine', '25–85 kg · stappen van 10 kg'],
+    ['Pec deck', '10–80 kg · stappen van 5 kg'],
+    ['Shoulder press machine', '10–70 kg · stappen van 5 kg'],
+    ['Lat pulldown', '10–100 kg · stappen van 5 kg'],
+    ['Seated row machine', '10–100 kg · stappen van 5 kg'],
+    ['Leg press', '40–300 kg · stappen van 10 kg'],
+    ['Leg extension', '5–100 kg · stappen van 5 kg'],
+    ['Leg curl', '5–100 kg · stappen van 5 kg'],
+    ['Calf raise machine', '10–150 kg · stappen van 5 kg']
+  ];
+  return all.map(function (a) { return { n: a[0], s: a[1], on: off.indexOf(a[0]) < 0 }; });
+}
+var GYMS = [
+  { id: 'g1', name: 'Mijn gym', eq: eqList(['Shoulder press machine']) },
+  { id: 'g2', name: 'Gym bij werk', eq: eqList(['Chest press machine', 'Pec deck', 'Leg extension', 'Calf raise machine']) }
+];
+
+var TYPES = {
+  w: { letter: 'W', name: 'Warming-up', desc: 'Telt niet mee voor je sets en volume' },
+  s: { letter: '1', name: 'Werkset', desc: 'Normale set, telt mee' },
+  d: { letter: 'D', name: 'Dropset', desc: 'Direct na de vorige set, lichter, zonder rust' },
+  f: { letter: 'F', name: 'Tot falen', desc: 'Werkset tot je geen rep meer kunt' }
+};
+
+var UID = 0;
+function uid() { UID += 1; return 'x' + UID + '_' + Math.floor(Math.random() * 1e6); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function fw(w) { return String(Math.round(w * 10) / 10).replace('.', ','); }
+function pad(n) { return n < 10 ? '0' + n : String(n); }
+function clock(ms) {
+  var s = Math.max(0, Math.floor(ms / 1000));
+  var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h > 0 ? h + ':' + pad(m) + ':' + pad(sec) : m + ':' + pad(sec);
+}
+function hhmm(ts) { var d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function thousands(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function lib(name) { return LIB[name] || { m: 'Overig', e: 'Vrij', st: 2.5, d: 20 }; }
+function meta(name) { var l = lib(name); return l.m + ' · ' + l.e; }
+
+function hexOk(h) { return typeof h === 'string' && /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(h); }
+function rgbOf(h) {
+  h = h.replace('#', '');
+  if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+  var n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mixBlack(h, f) { var c = rgbOf(h); return 'rgb(' + c.map(function (v) { return Math.round(v * (1 - f)); }).join(',') + ')'; }
+function mixWhite(h, f) { var c = rgbOf(h); return 'rgb(' + c.map(function (v) { return Math.round(v + (255 - v) * f); }).join(',') + ')'; }
+function luminance(h) {
+  var c = rgbOf(h).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function rgba(h, a) { return 'rgba(' + rgbOf(h).join(',') + ',' + a + ')'; }
+
+function stepW(name, w, dir) {
+  var l = lib(name);
+  if (l.list) {
+    var L = l.list;
+    if (dir > 0) { for (var i = 0; i < L.length; i++) if (L[i] > w + 0.001) return L[i]; return L[L.length - 1]; }
+    for (var j = L.length - 1; j >= 0; j--) if (L[j] < w - 0.001) return L[j];
+    return L[0];
+  }
+  var n = Math.round((w + dir * l.st) * 10) / 10;
+  return n < 0 ? 0 : n;
+}
+
+function makeEx(name, group, def) {
+  var sets = [];
+  if (def && def.warm) sets.push({ id: uid(), k: 'w', w: def.warm[0], r: def.warm[1], pw: def.warm[0], pr: def.warm[1], done: false });
+  if (def && def.sets) {
+    def.sets.forEach(function (p) { sets.push({ id: uid(), k: 's', w: p[0], r: p[1], pw: p[0], pr: p[1], done: false }); });
+  } else {
+    var d = lib(name).d;
+    for (var i = 0; i < 3; i++) sets.push({ id: uid(), k: 's', w: d, r: 10, pw: null, pr: null, done: false });
+  }
+  return { id: uid(), name: name, group: group, from: null, sets: sets };
+}
+
+var ACCENTS = [
+  ['Olijf', '#556B2F'], ['Viola', '#5A2D82'], ['Limoen', '#C6F25A'],
+  ['Mint', '#5EE6B0'], ['IJsblauw', '#7CC4FF'], ['Roze', '#FF9AC8']
+];
+
+// Schema -> bewerkbaar concept
+function toDraft(name, defs) {
+  return {
+    orig: name, name: name || '',
+    items: (defs || []).map(function (d, i) {
+      return {
+        id: uid(), n: d.n, warm: !!d.warm, warmW: d.warm ? d.warm[0] : null,
+        sets: d.sets.length, reps: d.sets[0][1], w: d.sets[0][0],
+        link: i > 0 && defs[i - 1].g === d.g
+      };
+    })
+  };
+}
+function fromDraft(dr) {
+  var g = 0;
+  return dr.items.map(function (it, i) {
+    if (!(i > 0 && it.link)) g++;
+    var sets = [];
+    for (var k = 0; k < it.sets; k++) sets.push([it.w, it.reps]);
+    var def = { n: it.n, g: g, sets: sets };
+    if (it.warm) def.warm = [it.warmW != null ? it.warmW : Math.round(it.w / 2), 12];
+    return def;
+  });
+}
+
+function makeSession(name, startAt, tpls) {
+  var defs = (tpls || TPL)[name] || [];
+  var exs = defs.map(function (d) { return makeEx(d.n, d.g, d); });
+  return { name: name || 'Lege training', startAt: startAt, exs: exs, nextGroup: 100 };
+}
+
+function initialSession(now) {
+  var s = makeSession('Push A', now - (23 * 60 + 14) * 1000);
+  s.exs[0].sets.forEach(function (x) { x.done = true; });
+  s.exs[0].sets[3].r = 8;
+  s.exs[1].sets[0].done = true;
+  s.exs[1].sets[1].done = true;
+  s.exs[2].sets[0].done = true;
+  return s;
+}
+
+function blocks(exs) {
+  var out = [], i = 0;
+  while (i < exs.length) {
+    var g = exs[i].group, mem = [];
+    while (i < exs.length && exs[i].group === g) { mem.push(exs[i]); i++; }
+    out.push(mem);
+  }
+  return out;
+}
+
+function buildQueue(exs, warmFirst) {
+  var q = [];
+  blocks(exs).forEach(function (mem, bi) {
+    var merge = warmFirst && mem.length > 1;
+    var slotsPer = mem.map(function (e) {
+      var warm = e.sets.filter(function (s) { return s.k === 'w'; });
+      var work = e.sets.filter(function (s) { return s.k !== 'w'; });
+      var slots = [];
+      if (merge && work.length) {
+        slots.push(warm.concat([work[0]]));
+        work.slice(1).forEach(function (s) { slots.push([s]); });
+      } else {
+        warm.concat(work).forEach(function (s) { slots.push([s]); });
+      }
+      return slots;
+    });
+    var max = 0;
+    slotsPer.forEach(function (s) { if (s.length > max) max = s.length; });
+    for (var k = 0; k < max; k++) {
+      mem.forEach(function (e, mi) {
+        (slotsPer[mi][k] || []).forEach(function (s) { q.push({ ex: e, set: s, block: bi, round: k }); });
+      });
+    }
+  });
+  return q;
+}
+
+function exSummary(e) {
+  var work = e.sets.filter(function (s) { return s.k !== 'w'; });
+  var done = work.filter(function (s) { return s.done; });
+  if (!work.length) return 'Geen sets';
+  if (done.length === work.length) {
+    var ws = done.map(function (s) { return s.w; });
+    var mn = Math.min.apply(null, ws), mx = Math.max.apply(null, ws);
+    var wt = mn === mx ? fw(mn) + ' kg' : fw(mn) + '–' + fw(mx) + ' kg';
+    return done.length + ' × ' + wt + ' · ' + done.map(function (s) { return s.r; }).join(', ') + ' reps';
+  }
+  var nx = work.filter(function (s) { return !s.done; })[0];
+  if (done.length) return done.length + ' van ' + work.length + ' gedaan · ' + fw(nx.w) + ' kg × ' + nx.r;
+  return work.length + ' sets · ' + fw(nx.w) + ' kg × ' + nx.r;
+}
+
+function suggestFor(name, exclude) {
+  var l = lib(name), names = Object.keys(LIB), best = null;
+  for (var i = 0; i < names.length; i++) {
+    var n = names[i], c = LIB[n];
+    if (n === name || exclude.indexOf(n) >= 0 || c.m !== l.m) continue;
+    if (c.e !== l.e) return n;
+    if (!best) best = n;
+  }
+  return best || names[0];
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var now = Date.now();
+    this.state = {
+      screen: 'home', session: initialSession(now), warmFirst: true, focusId: null,
+      restEnd: 0, restTotal: 90, sheet: null, sheetEx: null, pending: null,
+      q: '', sel: [], selNew: [], linkDraft: '', links: {},
+      prefs: { 'Chest press machine': 'Barbell bench press' }, savePref: false,
+      toast: null, swId: null, swDx: 0, now: now, summary: null,
+      tab: 'home', gymId: 'g1', gyms: clone(GYMS), calSel: null, doneToday: null,
+      programs: [
+        { id: 'p1', name: 'Push Pull Legs', w: ['Push A', 'Pull A', 'Benen'] },
+        { id: 'p2', name: 'Full body 2×', w: ['Full body A', 'Full body B'] }
+      ],
+      progId: 'p1', ovName: null, tmName: null, edReturn: 'home',
+      calOpen: false, restDefault: 90, crea: true, accent: null, themeMode: 'system', tpls: clone(TPL), draft: null, addTarget: 'session'
+    };
+    this.sw = null;
+  }
+
+  componentDidMount() {
+    var self = this;
+    this.timer = setInterval(function () {
+      var now = Date.now(), patch = { now: now };
+      if (self.state.restEnd && now >= self.state.restEnd) patch.restEnd = 0;
+      if (self.state.toast && now >= self.state.toast.until) patch.toast = null;
+      self.setState(patch);
+    }, 500);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  theme() {
+    var A = this.state.accent || (hexOk(this.props.accent) ? this.props.accent : '#556B2F');
+    // Donkere accenten (olijf, paars) krijgen witte tekst en een lichtere variant voor tekst/lijnen op donker.
+    var deep = luminance(A) < 0.3;
+    var mode = this.state.themeMode === 'system' ? (this.props.theme === 'light' ? 'light' : 'dark') : this.state.themeMode;
+    if (mode === 'light') {
+      return {
+        bg: '#F4F4F1', surface: '#FFFFFF', raised: '#EBEBE6', line: '#D9D9D3', track: '#E1E1DC',
+        text: '#121316', text2: '#50545B', text3: '#6A6F77',
+        accent: A, accentText: deep ? A : mixBlack(A, 0.55), accentLine: deep ? A : mixBlack(A, 0.3), accentSoft: rgba(A, deep ? 0.22 : 0.45),
+        onAccent: deep ? '#FFFFFF' : '#121316', warm: '#9A5B00', drop: '#6A4FD0', danger: '#C9362B', onDanger: '#FFFFFF',
+        inverse: '#121316', onInverse: '#F4F4F1', scrim: 'rgba(18,19,22,0.32)'
+      };
+    }
+    return {
+      bg: '#0D0E10', surface: '#17191C', raised: '#22252A', line: '#33373D', track: '#2A2E33',
+      text: '#F3F4F6', text2: '#A9AEB6', text3: '#858B94',
+      accent: A, accentText: deep ? mixWhite(A, 0.55) : A, accentLine: deep ? mixWhite(A, 0.35) : A, accentSoft: rgba(A, deep ? 0.4 : 0.18),
+      onAccent: deep ? '#FFFFFF' : '#0D0E10', warm: '#F5B54A', drop: '#B9A6FF', danger: '#FF6B5E', onDanger: '#0D0E10',
+      inverse: '#F3F4F6', onInverse: '#0D0E10', scrim: 'rgba(0,0,0,0.6)'
+    };
+  }
+
+  // ---------- helpers on state ----------
+  current(s, focusId) {
+    var q = buildQueue(s.exs, this.state.warmFirst);
+    var undone = q.filter(function (x) { return !x.set.done; });
+    var cur = null;
+    if (focusId) cur = undone.filter(function (x) { return x.ex.id === focusId; })[0] || null;
+    if (!cur) cur = undone[0] || null;
+    return { q: q, undone: undone, cur: cur };
+  }
+  findEx(s, id) { return s.exs.filter(function (e) { return e.id === id; })[0]; }
+
+  // ---------- acties ----------
+  askStart(name) {
+    if (this.state.session) this.setState({ sheet: 'start', pending: name });
+    else this.doStart(name);
+  }
+  doStart(name) {
+    this.setState({ session: makeSession(name, Date.now(), this.state.tpls), screen: 'workout', focusId: null, restEnd: 0, sheet: null, toast: null });
+  }
+  step(field, dir) {
+    var s = clone(this.state.session), c = this.current(s, this.state.focusId).cur;
+    if (!c) return;
+    var set = c.set;
+    if (field === 'w') set.w = stepW(c.ex.name, set.w, dir);
+    else set.r = Math.max(1, set.r + dir);
+    this.setState({ session: s });
+  }
+  complete() {
+    var s = clone(this.state.session), info = this.current(s, this.state.focusId), c = info.cur;
+    if (!c) return;
+    c.set.done = true;
+    var pos = info.q.indexOf(c), next = null;
+    for (var i = pos + 1; i < info.q.length; i++) if (!info.q[i].set.done) { next = info.q[i]; break; }
+    if (!next) next = info.q.filter(function (x) { return !x.set.done; })[0] || null;
+    // De volgende set in de wachtrij wordt de nieuwe "cursor": zo loopt een superset altijd door naar de volgende oefening.
+    var patch = { session: s, swId: null, swDx: 0, focusId: next ? next.ex.id : null };
+    var sameRound = next && next.block === c.block && next.round === c.round;
+    var dropNext = next && next.ex.id === c.ex.id && next.set.k === 'd';
+    if (next && !sameRound && !dropNext) {
+      var dur = c.set.k === 'w' ? 45 : this.state.restDefault;
+      patch.restEnd = Date.now() + dur * 1000; patch.restTotal = dur;
+    } else patch.restEnd = 0;
+    this.setState(patch);
+  }
+  addSet(exId) {
+    var s = clone(this.state.session), e = this.findEx(s, exId);
+    var last = e.sets[e.sets.length - 1];
+    e.sets.push({ id: uid(), k: 's', w: last ? last.w : lib(e.name).d, r: last ? last.r : 10, pw: null, pr: null, done: false });
+    this.setState({ session: s });
+  }
+  addWarm(exId) {
+    var s = clone(this.state.session), e = this.findEx(s, exId);
+    var firstWork = e.sets.filter(function (x) { return x.k !== 'w'; })[0];
+    var base = firstWork ? firstWork.w : lib(e.name).d;
+    var w = stepW(e.name, Math.max(0, Math.round(base * 0.5)) + 0.001, -1);
+    var lastWarm = -1;
+    e.sets.forEach(function (x, i) { if (x.k === 'w') lastWarm = i; });
+    e.sets.splice(lastWarm + 1, 0, { id: uid(), k: 'w', w: w, r: 12, pw: null, pr: null, done: false });
+    this.setState({ session: s });
+  }
+  setType(exId, setId, k) {
+    var s = clone(this.state.session), e = this.findEx(s, exId);
+    var x = e.sets.filter(function (y) { return y.id === setId; })[0];
+    if (!x) return;
+    x.k = k;
+    // warming-upsets staan altijd vooraan, de rest houdt zijn volgorde
+    e.sets = e.sets.filter(function (y) { return y.k === 'w'; }).concat(e.sets.filter(function (y) { return y.k !== 'w'; }));
+    this.setState({ session: s, sheet: null });
+  }
+  deleteSet(exId, setId) {
+    var s = clone(this.state.session), e = this.findEx(s, exId);
+    var idx = e.sets.findIndex(function (x) { return x.id === setId; });
+    if (idx < 0) return;
+    var removed = e.sets.splice(idx, 1)[0];
+    this.setState({ session: s, swId: null, swDx: 0, toast: { text: 'Set verwijderd', exId: exId, idx: idx, set: removed, until: Date.now() + 5000 } });
+  }
+  undo() {
+    var t = this.state.toast; if (!t) return;
+    var s = clone(this.state.session), e = this.findEx(s, t.exId);
+    if (e) e.sets.splice(t.idx, 0, t.set);
+    this.setState({ session: s, toast: null });
+  }
+  finish(note) {
+    var s = this.state.session, now = Date.now();
+    var work = [], vol = 0;
+    s.exs.forEach(function (e) { e.sets.forEach(function (x) { if (x.k !== 'w' && x.done) { work.push(x); vol += x.w * x.r; } }); });
+    this.setState({
+      screen: 'summary', session: null, sheet: null, restEnd: 0, focusId: null, toast: null,
+      doneToday: work.length ? [s.name, Math.max(1, Math.round((now - s.startAt) / 60000))] : this.state.doneToday,
+      summary: {
+        title: s.name + ' afgerond', note: note || 'Goed gedaan. Alles is opgeslagen.',
+        time: clock(now - s.startAt), sets: String(work.length), vol: thousands(vol),
+        lines: s.exs.filter(function (e) { return e.sets.some(function (x) { return x.done && x.k !== 'w'; }); })
+          .map(function (e) { return { name: e.name, summary: exSummary({ sets: e.sets.filter(function (x) { return x.done; }) }) }; })
+      }
+    });
+  }
+  openSheet(type, exId, setId) {
+    var patch = { sheet: type, sheetEx: exId || null, sheetSet: setId || null, q: '', sel: [], selNew: [], savePref: false, addTarget: 'session' };
+    if (type === 'explain') patch.linkDraft = '';
+    this.setState(patch);
+  }
+  swapTo(name, manual) {
+    var s = clone(this.state.session), e = this.findEx(s, this.state.sheetEx);
+    if (!e) return;
+    var old = e.name;
+    e.from = e.from || old;
+    e.name = name;
+    e.sets.forEach(function (x) { if (!x.done) { x.w = lib(name).d; x.pw = null; x.pr = null; } });
+    var patch = { session: s, sheet: null };
+    if (manual && this.state.savePref) { var p = Object.assign({}, this.state.prefs); p[old] = name; patch.prefs = p; }
+    this.setState(patch);
+  }
+  addExercise(name) {
+    var s = clone(this.state.session);
+    s.nextGroup += 1;
+    s.exs.push(makeEx(name, s.nextGroup, null));
+    this.setState({ session: s, sheet: null });
+  }
+  link() {
+    var st = this.state, s = clone(st.session), base = this.findEx(s, st.sheetEx);
+    if (!base || (!st.sel.length && !st.selNew.length)) return;
+    var g = base.group;
+    var moving = s.exs.filter(function (e) { return st.sel.indexOf(e.id) >= 0; });
+    s.exs = s.exs.filter(function (e) { return st.sel.indexOf(e.id) < 0; });
+    moving.forEach(function (e) { e.group = g; });
+    st.selNew.forEach(function (n) { moving.push(makeEx(n, g, null)); });
+    var lastIdx = -1;
+    s.exs.forEach(function (e, i) { if (e.group === g) lastIdx = i; });
+    Array.prototype.splice.apply(s.exs, [lastIdx + 1, 0].concat(moving));
+    this.setState({ session: s, sheet: null });
+  }
+  unlink() {
+    var s = clone(this.state.session), e = this.findEx(s, this.state.sheetEx);
+    if (!e) return;
+    var g = e.group;
+    s.exs = s.exs.filter(function (x) { return x.id !== e.id; });
+    var lastIdx = -1;
+    s.exs.forEach(function (x, i) { if (x.group === g) lastIdx = i; });
+    s.nextGroup += 1; e.group = s.nextGroup;
+    s.exs.splice(lastIdx + 1, 0, e);
+    this.setState({ session: s, sheet: null });
+  }
+
+  // ---------- swipe ----------
+  swDown(exId, setId, ev) {
+    this.sw = { exId: exId, setId: setId, x0: ev.clientX, dx: 0 };
+    try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (err) {}
+    this.setState({ swId: setId, swDx: 0 });
+  }
+  swMove(setId, ev) {
+    if (!this.sw || this.sw.setId !== setId) return;
+    var dx = Math.min(0, ev.clientX - this.sw.x0);
+    this.sw.dx = dx;
+    this.setState({ swDx: dx });
+  }
+  swUp(setId) {
+    var sw = this.sw; this.sw = null;
+    if (!sw || sw.setId !== setId) return;
+    if (sw.dx < -90) this.deleteSet(sw.exId, sw.setId);
+    else this.setState({ swId: null, swDx: 0 });
+  }
+
+  renderVals() {
+    var self = this, st = this.state, t = this.theme(), now = st.now, s = st.session;
+    var v = { t: t };
+    v.isTabs = st.screen === 'home';
+    v.isHome = v.isTabs && st.tab === 'home';
+    v.isProgress = v.isTabs && st.tab === 'progress';
+    v.isGym = v.isTabs && st.tab === 'gym';
+    v.isProfile = v.isTabs && st.tab === 'profile';
+    v.restDefLabel = Math.floor(st.restDefault / 60) + ':' + pad(st.restDefault % 60);
+    v.restDefMinus = function () { self.setState({ restDefault: Math.max(30, self.state.restDefault - 15) }); };
+    v.restDefPlus = function () { self.setState({ restDefault: Math.min(300, self.state.restDefault + 15) }); };
+    v.creaStr = st.crea ? 'true' : 'false';
+    v.creaBg = st.crea ? t.accentLine : t.line;
+    v.creaX = st.crea ? '20px' : '0px';
+    v.creaSub = st.crea ? 'Elke dag om 09:00' : 'Uit';
+    v.toggleCrea = function () { self.setState({ crea: !self.state.crea }); };
+    v.isWorkout = st.screen === 'workout' && !!s;
+    v.isSummary = st.screen === 'summary' && !!st.summary;
+
+    // ----- tabbalk -----
+    var tabDefs = [
+      ['home', 'Training', 'M6.5 6v12M17.5 6v12M3.5 9v6M20.5 9v6M6.5 12h11'],
+      ['progress', 'Progressie', 'M5 20v-8M12 20V5M19 20v-5'],
+      ['gym', 'Gym', 'M4 21V9l8-5 8 5v12M9 21v-6h6v6'],
+      ['profile', 'Profiel', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5a7.5 7.5 0 0 1 15 0']
+    ];
+    v.tabs = tabDefs.map(function (d) {
+      var on = st.tab === d[0];
+      return { name: d[1], icon: d[2], color: on ? t.accentText : t.text3, cur: on ? 'page' : 'false', go: function () { self.setState({ tab: d[0] }); } };
+    });
+
+    // ----- gym -----
+    var gym = st.gyms.filter(function (g) { return g.id === st.gymId; })[0] || st.gyms[0];
+    var gymCount = function (g) { return g.eq.filter(function (q) { return q.on; }).length + ' van ' + g.eq.length + ' apparaten'; };
+    v.gymName = gym.name;
+    v.gymAria = 'Gym: ' + gym.name + '. Tik om te wisselen';
+    v.gymSub = gymCount(gym);
+    v.openGym = function () { self.openSheet('gym'); };
+    v.gymEq = gym.eq.map(function (q, i) {
+      return {
+        name: q.n, steps: q.on ? q.s : 'Niet in deze gym', onStr: q.on ? 'true' : 'false',
+        nameColor: q.on ? t.text : t.text2, bg: q.on ? t.accentLine : t.line, x: q.on ? '20px' : '0px',
+        toggle: function () {
+          var gs = clone(self.state.gyms);
+          gs.forEach(function (g) { if (g.id === gym.id) g.eq[i].on = !g.eq[i].on; });
+          self.setState({ gyms: gs });
+        }
+      };
+    });
+    v.gymList = st.gyms.map(function (g) {
+      return { name: g.name, sub: gymCount(g), on: g.id === gym.id, pick: function () { self.setState({ gymId: g.id, sheet: null }); } };
+    });
+
+    // ----- kalender -----
+    var today = new Date(now); today.setHours(0, 0, 0, 0);
+    var dow = (today.getDay() + 6) % 7;
+    var fmtDay = function (d) { return d.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' }); };
+    var trainedAt = function (off) {
+      if (off === 0 && st.doneToday) return st.doneToday;
+      return HIST[off] || null;
+    };
+    v.weekdays = ['M', 'D', 'W', 'D', 'V', 'Z', 'Z'];
+    v.calWeeks = [];
+    for (var wr = st.calOpen ? 0 : 4; wr < 5; wr++) {
+      var days = [];
+      for (var dc = 0; dc < 7; dc++) {
+        var off = dow + 28 - (wr * 7 + dc);
+        var date = new Date(today); date.setDate(today.getDate() - off);
+        var tr = off >= 0 ? trainedAt(off) : null;
+        var isToday = off === 0, future = off < 0, live = isToday && !!s && !tr, sel = st.calSel === off;
+        days.push({
+          label: String(date.getDate()),
+          aria: fmtDay(date) + (tr ? ', ' + tr[0] : ''),
+          bg: tr ? t.accent : (live ? t.accentSoft : (sel ? t.raised : 'transparent')),
+          border: isToday && !tr ? '2px solid ' + t.accentLine : '0',
+          color: tr ? t.onAccent : (future ? t.text3 : (isToday ? t.text : t.text2)),
+          weight: tr || isToday ? '700' : '500',
+          tap: (function (o, d, trx, lv) { return function () { self.setState({ calSel: o, calInfo: trx ? fmtDay(d) + ' · ' + trx[0] + ' · ' + trx[1] + ' min' : (lv ? 'Vandaag · ' + s.name + ' loopt nog' : fmtDay(d) + ' · rustdag') }); }; })(off, date, tr, live)
+        });
+      }
+      v.calWeeks.push({ days: days });
+    }
+    var lastOff = null;
+    for (var o = 0; o < 60; o++) if (trainedAt(o)) { lastOff = o; break; }
+    if (lastOff === null) v.lastText = 'Nog niet';
+    else if (lastOff === 0) v.lastText = 'Vandaag · ' + trainedAt(0)[0];
+    else {
+      var ld = new Date(today); ld.setDate(today.getDate() - lastOff);
+      v.lastText = fmtDay(ld) + ' · ' + (lastOff === 1 ? 'gisteren' : lastOff + ' dagen geleden');
+    }
+    var wc = 0; for (var o2 = 0; o2 <= dow; o2++) if (trainedAt(o2)) wc++;
+    v.weekCount = wc + '×';
+    v.showDayInfo = st.calSel !== null && !!st.calInfo;
+    v.dayInfo = st.calInfo || '';
+    v.calOpenStr = st.calOpen ? 'true' : 'false';
+    v.calRot = st.calOpen ? '180deg' : '0deg';
+    v.toggleCal = function () { self.setState({ calOpen: !self.state.calOpen, calSel: null }); };
+
+    // ----- progressie (voorbeelddata) -----
+    v.pStats = [{ v: '11', l: 'trainingen' }, { v: '48.230', l: 'kg volume' }, { v: '3', l: 'nieuwe PR’s' }];
+    var vols = [9.8, 11.2, 10.4, 12.1, 11.6, 12.8, 13.4, 6.2];
+    v.pWeeks = vols.map(function (x, i) {
+      return { h: Math.round(x / 14 * 120) + 'px', bg: i === vols.length - 1 ? t.accentLine : t.accentSoft, l: 'W' + (35 + i) };
+    });
+    var mus = [['Borst', 12], ['Schouders', 9], ['Quadriceps', 8], ['Lats', 6], ['Bovenrug', 6], ['Triceps', 6], ['Hamstrings', 4], ['Biceps', 3]];
+    v.pMuscles = mus.map(function (m) { return { name: m[0], v: String(m[1]), w: Math.round(m[1] / 12 * 100) + '%' }; });
+    v.pRecords = [
+      { name: 'Incline dumbbell press', sub: '26 kg × 8 · geschat 1RM 33 kg', date: '9 okt' },
+      { name: 'Leg press', sub: '120 kg × 10 · geschat 1RM 160 kg', date: '7 okt' },
+      { name: 'Chest press machine', sub: '55 kg × 10 · geschat 1RM 73 kg', date: '2 okt' }
+    ];
+
+    // ----- start -----
+    v.dateLabel = new Date(now).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+    var prog = st.programs.filter(function (p) { return p.id === st.progId; })[0] || st.programs[0];
+    var tplInfo = function (n) {
+      var d = st.tpls[n] || [], work = 0, warm = 0, ms = [];
+      d.forEach(function (x) { work += x.sets.length; if (x.warm) warm += 1; var m = lib(x.n).m; if (ms.indexOf(m) < 0) ms.push(m); });
+      return { d: d, sub: d.length + (d.length === 1 ? ' oefening · ' : ' oefeningen · ') + work + ' sets · ~' + Math.round(work * 2.25 + warm) + ' min', muscles: ms.join(' · ') || 'Nog leeg' };
+    };
+    // Laatst gedaan + volgende in de rotatie
+    var lastDone = null, lastOffDone = null;
+    if (st.doneToday && prog.w.indexOf(st.doneToday[0]) >= 0) { lastDone = st.doneToday[0]; lastOffDone = 0; }
+    else for (var hOff = 1; hOff < 60; hOff++) if (HIST[hOff] && prog.w.indexOf(HIST[hOff][0]) >= 0) { lastDone = HIST[hOff][0]; lastOffDone = hOff; break; }
+    var nextName = prog.w.length ? (lastDone ? prog.w[(prog.w.indexOf(lastDone) + 1) % prog.w.length] : prog.w[0]) : null;
+    v.progName = prog.name;
+    v.progSub = prog.w.length + (prog.w.length === 1 ? ' training' : ' trainingen') + (nextName ? ' · volgende: ' + nextName : '');
+    v.progAria = 'Huidig schema ' + prog.name + '. Tik om te wisselen';
+    v.progEmpty = prog.w.length === 0;
+    v.openProgram = function () { self.openSheet('program'); };
+    v.templates = prog.w.map(function (n) {
+      var inf = tplInfo(n);
+      return {
+        name: n, sub: inf.sub, muscles: inf.muscles, isNext: n === nextName,
+        openAria: n + ' bekijken', moreAria: 'Opties voor ' + n,
+        open: function () { self.setState({ screen: 'overview', ovName: n }); },
+        more: function () { self.setState({ sheet: 'tplmenu', tmName: n }); }
+      };
+    });
+    v.newTemplate = function () { self.setState({ screen: 'editor', draft: toDraft(null, []), edReturn: 'home' }); };
+    v.progList = st.programs.map(function (p) {
+      return { name: p.name, sub: p.w.join(' · ') || 'Nog geen trainingen', on: p.id === prog.id, pick: function () { self.setState({ progId: p.id, sheet: null }); } };
+    });
+    v.newProgram = function () {
+      var ps = clone(self.state.programs), id = 'p' + Date.now();
+      ps.push({ id: id, name: 'Nieuw schema ' + ps.length, w: [] });
+      self.setState({ programs: ps, progId: id, sheet: null });
+    };
+
+    // ----- training-overzicht -----
+    v.isOverview = st.screen === 'overview' && !!st.ovName && !!st.tpls[st.ovName];
+    v.ovRows = [];
+    if (v.isOverview) {
+      var oinf = tplInfo(st.ovName);
+      v.ovName = st.ovName; v.ovSub = oinf.sub; v.ovMuscles = oinf.muscles;
+      var lastOv = null;
+      for (var lo = 0; lo < 60; lo++) { var hh = lo === 0 ? st.doneToday : HIST[lo]; if (hh && hh[0] === st.ovName) { lastOv = [lo, hh[1]]; break; } }
+      if (lastOv) {
+        var lod = new Date(now); lod.setDate(lod.getDate() - lastOv[0]);
+        v.ovLast = 'Vorige keer ' + (lastOv[0] === 0 ? 'vandaag' : lod.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })) + ' · ' + lastOv[1] + ' min';
+      } else v.ovLast = 'Nog niet eerder gedaan';
+      var ssL = 0, od = oinf.d, blockNo = 0;
+      od.forEach(function (x, i) {
+        var prevSame = i > 0 && od[i - 1].g === x.g, nextSame = i < od.length - 1 && od[i + 1].g === x.g;
+        if (!prevSame) blockNo++;
+        var inSS = prevSame || nextSame;
+        if (inSS && !prevSame) { ssL++; v.ovRows.push({ header: true, row: false }); }
+        var pos = 1; for (var j = i - 1; j >= 0 && od[j].g === x.g; j--) pos++;
+        var ws = x.sets.map(function (p) { return p[0]; }), rs = x.sets.map(function (p) { return p[1]; });
+        var sub = (x.warm ? 'W + ' : '') + x.sets.length + ' × ' + Math.max.apply(null, rs) + ' · ' + fw(Math.max.apply(null, ws)) + ' kg · ' + lib(x.n).m;
+        v.ovRows.push({ header: false, row: true, name: x.n, sub: sub, badge: inSS ? 'ABCDEFGH'[ssL - 1] + pos : String(blockNo) });
+      });
+    }
+    v.ovBack = function () { self.setState({ screen: 'home', ovName: null }); };
+    v.ovMore = function () { self.setState({ sheet: 'tplmenu', tmName: self.state.ovName }); };
+    v.ovStart = function () { self.askStart(self.state.ovName); };
+
+    // ----- opties voor een training -----
+    v.tmEdit = function () {
+      var n = self.state.tmName;
+      self.setState({ sheet: null, screen: 'editor', draft: toDraft(n, self.state.tpls[n]), edReturn: self.state.screen === 'overview' ? 'overview' : 'home' });
+    };
+    v.tmDuplicate = function () {
+      var n = self.state.tmName, T = clone(self.state.tpls), k = 2;
+      while (T[n + ' (' + k + ')']) k++;
+      var nn = n + ' (' + k + ')';
+      T[nn] = clone(T[n]);
+      var ps = clone(self.state.programs);
+      ps.forEach(function (p) { if (p.id === prog.id) p.w.splice(p.w.indexOf(n) + 1, 0, nn); });
+      self.setState({ tpls: T, programs: ps, sheet: null });
+    };
+    v.tmRemove = function () {
+      var n = self.state.tmName, ps = clone(self.state.programs);
+      ps.forEach(function (p) { if (p.id === prog.id) p.w = p.w.filter(function (x) { return x !== n; }); });
+      self.setState({ programs: ps, sheet: null, screen: 'home', ovName: null });
+    };
+
+    // ----- schema-editor -----
+    v.isEditor = st.screen === 'editor' && !!st.draft;
+    v.edItems = [];
+    if (v.isEditor) {
+      var dr = st.draft;
+      var upd = function (fn) { var d2 = clone(self.state.draft); fn(d2); self.setState({ draft: d2 }); };
+      v.edTitle = dr.orig ? 'Training aanpassen' : 'Nieuwe training';
+      v.edName = dr.name;
+      v.edOnName = function (ev) { var val = ev.target.value; upd(function (d2) { d2.name = val; }); };
+      v.edEmpty = dr.items.length === 0;
+      var edSets = 0, edWarm = 0;
+      dr.items.forEach(function (it) { edSets += it.sets; if (it.warm) edWarm++; });
+      v.edSummary = dr.items.length ? dr.items.length + ' · ' + edSets + ' sets · ~' + Math.round(edSets * 2.25 + edWarm) + ' min' : '';
+      // supersetletters voor groepen van 2+
+      var grp = [], gi = -1;
+      dr.items.forEach(function (it, i) { if (!(i > 0 && it.link)) gi++; grp.push(gi); });
+      var sizes = {}; grp.forEach(function (g) { sizes[g] = (sizes[g] || 0) + 1; });
+      var letterOf = {}, li = 0, posIn = {};
+      v.edItems = dr.items.map(function (it, i) {
+        var g = grp[i], badge = '';
+        if (sizes[g] > 1) {
+          if (letterOf[g] === undefined) letterOf[g] = 'ABCDEFGH'[li++];
+          posIn[g] = (posIn[g] || 0) + 1;
+          badge = letterOf[g] + posIn[g];
+        }
+        var edit = function (fn) { upd(function (d2) { fn(d2.items[i], d2); }); };
+        return {
+          name: it.n, meta: lib(it.n).m + ' · ' + fw(it.w) + ' kg', badge: badge, showBadge: !!badge,
+          sets: String(it.sets), reps: String(it.reps),
+          showLink: i > 0, linkedStr: it.link ? 'true' : 'false',
+          linkLabel: it.link ? 'Superset' : 'Koppel als superset',
+          linkBg: it.link ? t.accentSoft : 'transparent', linkFg: it.link ? t.accentText : t.text3,
+          toggleLink: function () { edit(function (x) { x.link = !x.link; }); },
+          setsMinus: function () { edit(function (x) { x.sets = Math.max(1, x.sets - 1); }); },
+          setsPlus: function () { edit(function (x) { x.sets = Math.min(10, x.sets + 1); }); },
+          repsMinus: function () { edit(function (x) { x.reps = Math.max(1, x.reps - 1); }); },
+          repsPlus: function () { edit(function (x) { x.reps = x.reps + 1; }); },
+          warmStr: it.warm ? 'true' : 'false', warmBg: it.warm ? t.warm : t.line, warmX: it.warm ? '16px' : '0px', warmFg: it.warm ? t.text : t.text2,
+          toggleWarm: function () { edit(function (x) { x.warm = !x.warm; }); },
+          upOpacity: i === 0 ? '0.3' : '1',
+          up: function () {
+            if (i === 0) return;
+            upd(function (d2) { var a = d2.items[i]; d2.items[i] = d2.items[i - 1]; d2.items[i - 1] = a; d2.items[0].link = false; });
+          },
+          remove: function () { upd(function (d2) { d2.items.splice(i, 1); if (d2.items[0]) d2.items[0].link = false; }); }
+        };
+      });
+      var nameOk = (dr.name || '').trim().length > 0;
+      v.edSaveOpacity = nameOk ? '1' : '0.4';
+      v.edSave = function () {
+        var d2 = self.state.draft, nm = (d2.name || '').trim();
+        if (!nm) return;
+        var T = clone(self.state.tpls), ps = clone(self.state.programs);
+        if (d2.orig && d2.orig !== nm) {
+          delete T[d2.orig];
+          ps.forEach(function (p) { p.w = p.w.map(function (x) { return x === d2.orig ? nm : x; }); });
+        }
+        T[nm] = fromDraft(d2);
+        if (!d2.orig) ps.forEach(function (p) { if (p.id === self.state.progId && p.w.indexOf(nm) < 0) p.w.push(nm); });
+        var back = self.state.edReturn === 'overview' ? 'overview' : 'home';
+        self.setState({ tpls: T, programs: ps, screen: back, ovName: back === 'overview' ? nm : null, draft: null });
+      };
+      v.edCancel = function () { self.setState({ screen: self.state.edReturn === 'overview' ? 'overview' : 'home', draft: null }); };
+      v.edCanDelete = !!dr.orig;
+      v.edDelete = function () {
+        var o = self.state.draft.orig, T = clone(self.state.tpls), ps = clone(self.state.programs);
+        delete T[o];
+        ps.forEach(function (p) { p.w = p.w.filter(function (x) { return x !== o; }); });
+        self.setState({ tpls: T, programs: ps, screen: 'home', ovName: null, draft: null });
+      };
+      v.edAdd = function () { self.setState({ sheet: 'add', q: '', addTarget: 'draft' }); };
+    }
+
+    // ----- instellingen -----
+    var curA = st.accent || (hexOk(this.props.accent) ? this.props.accent : '#556B2F');
+    v.openSettings = function () { self.openSheet('settings'); };
+    v.accentOpts = ACCENTS.map(function (a) {
+      var on = a[1].toLowerCase() === curA.toLowerCase();
+      return { name: a[0], hex: a[1], onStr: on ? 'true' : 'false', ring: on ? '2px solid ' + t.text : '2px solid transparent', pick: function () { self.setState({ accent: a[1] }); } };
+    });
+    var an = ACCENTS.filter(function (a) { return a[1].toLowerCase() === curA.toLowerCase(); })[0];
+    v.accentName = an ? an[0] : curA;
+    v.modeOpts = [['system', 'Systeem'], ['dark', 'Donker'], ['light', 'Licht']].map(function (m) {
+      var on = st.themeMode === m[0];
+      return { name: m[1], onStr: on ? 'true' : 'false', bg: on ? t.surface : 'transparent', fg: on ? t.text : t.text2, pick: function () { self.setState({ themeMode: m[0] }); } };
+    });
+    v.startEmpty = function () { self.askStart(''); };
+    v.running = !!s;
+    v.resume = function () { self.setState({ screen: 'workout', sheet: null }); };
+
+    // ----- werkscherm -----
+    v.items = []; v.isEmpty = false; v.showDock = false; v.showFinish = false; v.resting = false;
+    v.miniName = ''; v.miniSub = '';
+    if (s) {
+      var info = this.current(s, st.focusId), cur = info.cur;
+      var focusEx = st.focusId ? this.findEx(s, st.focusId) : null;
+      var openId = focusEx ? focusEx.id : (cur ? cur.ex.id : null);
+      var workAll = 0, workDone = 0, warmLeft = 0;
+      s.exs.forEach(function (e) { e.sets.forEach(function (x) { if (x.k === 'w') { if (!x.done) warmLeft++; } else { workAll++; if (x.done) workDone++; } }); });
+      var workLeft = workAll - workDone;
+      v.elapsed = clock(now - s.startAt);
+      v.remainNum = (workLeft || warmLeft) ? '~' + Math.max(1, Math.round(workLeft * 2.25 + warmLeft)) : '0';
+      v.setsLeft = String(workLeft);
+      v.progress = (workAll ? Math.round(workDone / workAll * 100) : 0) + '%';
+      v.title = s.name;
+      v.subtitle = 'Gestart om ' + hhmm(s.startAt) + ' · ' + gym.name + ' · ' + s.exs.length + (s.exs.length === 1 ? ' oefening' : ' oefeningen');
+      v.isEmpty = s.exs.length === 0;
+      v.miniName = s.name;
+      v.miniSub = clock(now - s.startAt) + (cur ? ' · ' + cur.ex.name : '');
+
+      var letters = 'ABCDEFGH', ssi = 0;
+      blocks(s.exs).forEach(function (mem) {
+        var isSS = mem.length > 1, letter = isSS ? letters[ssi++] : '';
+        if (isSS) v.items.push({ header: true, closed: false, open: false, label: 'Superset · ' + mem.length + ' oefeningen' });
+        mem.forEach(function (e, mi) {
+          var badge = isSS ? letter + (mi + 1) : '';
+          var work = e.sets.filter(function (x) { return x.k !== 'w'; });
+          var allDone = e.sets.length > 0 && e.sets.every(function (x) { return x.done; });
+          if (e.id === openId) {
+            var wi = 0;
+            var rows = e.sets.map(function (x) {
+              var isCur = !!(cur && cur.set.id === x.id);
+              var label = x.k === 'w' ? 'W' : x.k === 'd' ? 'D' : x.k === 'f' ? 'F' : String(++wi);
+              if (x.k === 'f') wi++;
+              var dx = st.swId === x.id ? st.swDx : 0;
+              var typeColor = x.k === 'w' ? t.warm : x.k === 'd' ? t.drop : x.k === 'f' ? t.danger : null;
+              return {
+                label: label, w: fw(x.w), r: String(x.r), done: x.done, isCur: isCur,
+                bg: isCur ? t.raised : t.surface,
+                chipBg: isCur ? t.surface : t.raised,
+                typeTap: function () { self.openSheet('settype', e.id, x.id); },
+                typeAria: 'Settype wijzigen, nu ' + (TYPES[x.k] || TYPES.s).name,
+                labelColor: typeColor || (isCur ? t.accentText : t.text2),
+                valColor: x.done || isCur ? t.text : t.text3,
+                dx: dx, trans: st.swId === x.id ? 'none' : 'transform 0.2s ease',
+                delBg: dx < 0 ? t.danger : 'transparent',
+                down: function (ev) { self.swDown(e.id, x.id, ev); },
+                move: function (ev) { self.swMove(x.id, ev); },
+                up: function () { self.swUp(x.id); }
+              };
+            });
+            v.items.push({
+              header: false, closed: false, open: true, name: e.name, badge: badge, showBadge: !!badge,
+              meta: meta(e.name) + (e.from ? ' · vervangt ' + e.from : ''),
+              sets: rows,
+              explain: function () { self.openSheet('explain', e.id); },
+              swap: function () { self.openSheet('swap', e.id); },
+              superset: function () { self.openSheet('superset', e.id); },
+              addSet: function () { self.addSet(e.id); },
+              addWarm: function () { self.addWarm(e.id); }
+            });
+          } else {
+            v.items.push({
+              header: false, open: false, closed: true, name: e.name, summary: exSummary(e) + (e.from ? ' · vervangt ' + e.from : ''),
+              isDone: allDone, showBadge: !allDone && !!badge, badge: badge,
+              iconBg: allDone ? t.accentSoft : (badge ? t.raised : 'transparent'),
+              iconBorder: allDone || badge ? '0' : '2px solid ' + t.line,
+              iconFg: allDone ? t.accentText : t.text2,
+              nameColor: allDone ? t.text2 : t.text,
+              tap: function () { self.setState({ focusId: e.id }); }
+            });
+          }
+        });
+      });
+
+      v.showDock = !!cur;
+      v.showFinish = !cur && info.q.length > 0;
+      if (cur) {
+        var wk = cur.ex.sets.filter(function (x) { return x.k !== 'w'; });
+        var n = wk.indexOf(cur.set) + 1;
+        v.dockName = cur.ex.name;
+        var nums = wk.filter(function (x) { return x.k !== 'd'; });
+        var ni = nums.indexOf(cur.set) + 1;
+        var k = cur.set.k;
+        v.dockTag = k === 'w' ? 'Warming-up' : k === 'd' ? 'Dropset' : k === 'f' ? 'Tot falen · ' + ni + ' van ' + nums.length : 'Set ' + ni + ' van ' + nums.length;
+        v.dockTagColor = k === 'w' ? t.warm : k === 'd' ? t.drop : k === 'f' ? t.danger : t.text2;
+        v.dockPrev = cur.set.pw != null ? 'Vorige keer ' + fw(cur.set.pw) + ' kg × ' + cur.set.pr : 'Nog geen vorige keer';
+        v.dockW = fw(cur.set.w);
+        v.dockR = String(cur.set.r);
+      }
+      v.resting = !!(st.restEnd && st.restEnd > now && cur);
+      if (v.resting) {
+        var left = st.restEnd - now;
+        v.restLeft = clock(left + 999);
+        v.restPct = Math.max(0, Math.min(100, left / (st.restTotal * 1000) * 100)) + '%';
+      }
+    }
+    v.minimize = function () { self.setState({ screen: 'home', focusId: null }); };
+    v.openMenu = function () { self.openSheet('menu'); };
+    v.openAdd = function () { self.openSheet('add'); };
+    v.openStop = function () { self.openSheet('stop'); };
+    v.wMinus = function () { self.step('w', -1); };
+    v.wPlus = function () { self.step('w', 1); };
+    v.rMinus = function () { self.step('r', -1); };
+    v.rPlus = function () { self.step('r', 1); };
+    v.complete = function () { self.complete(); };
+    v.finish = function () { self.finish(); };
+    v.restMinus = function () { self.setState({ restEnd: Math.max(Date.now() + 1000, self.state.restEnd - 15000) }); };
+    v.restPlus = function () { self.setState({ restEnd: self.state.restEnd + 15000, restTotal: self.state.restTotal + 15 }); };
+    v.restSkip = function () { self.setState({ restEnd: 0 }); };
+    v.showToast = !!(st.toast && st.toast.until > now && s);
+    v.toastText = st.toast ? st.toast.text : '';
+    v.undo = function () { self.undo(); };
+
+    // ----- afgerond -----
+    var sm = st.summary || { title: '', note: '', time: '', sets: '', vol: '', lines: [] };
+    v.sumTitle = sm.title; v.sumNote = sm.note; v.sumTime = sm.time; v.sumSets = sm.sets; v.sumVol = sm.vol; v.sumLines = sm.lines;
+    v.goHome = function () { self.setState({ screen: 'home', summary: null }); };
+
+    // ----- sheets -----
+    var sh = st.sheet;
+    v.anySheet = !!sh;
+    v.closeSheet = function () { self.setState({ sheet: null }); };
+    ['menu', 'stop', 'start', 'explain', 'swap', 'superset', 'add', 'settype', 'gym', 'settings', 'program', 'tplmenu'].forEach(function (k) {
+      v['sheet' + k.charAt(0).toUpperCase() + k.slice(1)] = sh === k;
+    });
+    var sx = s && st.sheetEx ? this.findEx(s, st.sheetEx) : null;
+    var titles = {
+      menu: ['Workout', s ? s.name + ' · ' + clock(now - s.startAt) : ''],
+      stop: ['Workout stoppen?', ''],
+      start: ['Er loopt al een workout', ''],
+      explain: ['Uitleg', sx ? sx.name : ''],
+      swap: ['Machine bezet', sx ? 'Vervang ' + sx.name + ' voor de sets die nog open staan. Gedane sets blijven staan.' : ''],
+      superset: ['Superset', sx ? 'Koppel oefeningen aan ' + sx.name + '. Je wisselt na elke set.' : ''],
+      add: ['Oefening toevoegen', st.addTarget === 'draft' ? 'Wordt onderaan je schema gezet' : 'Wordt onderaan je workout gezet'],
+      settings: ['Instellingen', 'Kleur en weergave van de app'],
+      program: ['Kies je schema', 'Je schema bepaalt welke trainingen je op het startscherm ziet.'],
+      tplmenu: [st.tmName || '', 'Opties voor deze training'],
+      settype: ['Soort set', sx ? sx.name : ''],
+      gym: ['Kies je gym', 'Machine bezet en de plus/min-stappen volgen de apparaten van deze gym.']
+    };
+    var tt = titles[sh] || ['', ''];
+    v.sheetTitle = tt[0]; v.sheetSub = tt[1];
+    v.typeOpts = [];
+    if (sh === 'settype' && sx) {
+      var tset = sx.sets.filter(function (y) { return y.id === st.sheetSet; })[0];
+      if (tset) {
+        v.typeOpts = ['w', 's', 'd', 'f'].map(function (k) {
+          var T = TYPES[k];
+          return {
+            letter: T.letter, name: T.name, desc: T.desc, on: tset.k === k,
+            color: k === 'w' ? t.warm : k === 'd' ? t.drop : k === 'f' ? t.danger : t.text,
+            pick: function () { self.setType(sx.id, tset.id, k); }
+          };
+        });
+      }
+    }
+    v.deleteFromSheet = function () { var ex = self.state.sheetEx, id = self.state.sheetSet; self.setState({ sheet: null }); self.deleteSet(ex, id); };
+    if (sh === 'stop' && s) {
+      var open = 0; s.exs.forEach(function (e) { e.sets.forEach(function (x) { if (x.k !== 'w' && !x.done) open++; }); });
+      v.sheetSub = (open === 1 ? 'Er staat nog 1 set open.' : 'Er staan nog ' + open + ' sets open.') + ' Je gedane sets worden bewaard.';
+    }
+    if (sh === 'start' && s) {
+      v.sheetSub = s.name + ' loopt al ' + Math.max(1, Math.round((now - s.startAt) / 60000)) + ' min.';
+      v.startResumeLabel = 'Hervat ' + s.name;
+      v.startReplaceLabel = 'Stop ' + s.name + ' en start ' + (st.pending || 'lege training');
+    }
+    v.resumeFromSheet = function () { self.setState({ sheet: null, screen: 'workout' }); };
+    v.startReplace = function () { self.doStart(self.state.pending); };
+    v.stopSave = function () { self.finish('Eerder gestopt. Je gedane sets zijn opgeslagen.'); };
+    v.stopDiscard = function () { self.setState({ session: null, sheet: null, screen: 'home', restEnd: 0 }); };
+    v.warmOnStr = st.warmFirst ? 'true' : 'false';
+    v.toggleBg = st.warmFirst ? t.accentLine : t.line;
+    v.knobX = st.warmFirst ? '20px' : '0px';
+    v.toggleWarm = function () { self.setState({ warmFirst: !self.state.warmFirst }); };
+
+    // uitleg
+    var exName = sx ? sx.name : '';
+    v.ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(exName + ' form');
+    v.hasLink = !!st.links[exName];
+    v.savedLink = st.links[exName] || '';
+    v.linkDraft = st.linkDraft;
+    v.onLink = function (ev) { self.setState({ linkDraft: ev.target.value }); };
+    v.saveLink = function () {
+      var u = (self.state.linkDraft || '').trim(); if (!u) return;
+      if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      var L = Object.assign({}, self.state.links); L[exName] = u;
+      self.setState({ links: L, linkDraft: '' });
+    };
+    v.clearLink = function () { var L = Object.assign({}, self.state.links); delete L[exName]; self.setState({ links: L }); };
+
+    // bezet
+    var inWorkout = s ? s.exs.map(function (e) { return e.name; }) : [];
+    var sug = suggestFor(exName, inWorkout);
+    v.swapSuggest = { name: sug, meta: meta(sug), pick: function () { self.swapTo(sug, false); } };
+    var pref = st.prefs[(sx && sx.from) || exName] || st.prefs[exName];
+    v.hasPref = !!pref; v.noPref = !pref;
+    v.swapPref = pref ? { name: pref, meta: meta(pref), pick: function () { self.swapTo(pref, false); } } : { name: '', meta: '', pick: null };
+    v.savePrefStr = st.savePref ? 'true' : 'false';
+    v.prefBg = st.savePref ? t.accentLine : t.line;
+    v.prefKnobX = st.savePref ? '20px' : '0px';
+    v.togglePref = function () { self.setState({ savePref: !self.state.savePref }); };
+
+    // superset
+    v.ssInGroup = false; v.ssCandidates = [];
+    if (sh === 'superset' && s && sx) {
+      v.ssInGroup = s.exs.filter(function (e) { return e.group === sx.group; }).length > 1;
+      v.ssCandidates = s.exs.filter(function (e) {
+        return e.group !== sx.group && e.sets.some(function (x) { return !x.done; });
+      }).map(function (e) {
+        var on = st.sel.indexOf(e.id) >= 0;
+        return {
+          name: e.name, meta: exSummary(e), on: on, onStr: on ? 'true' : 'false',
+          ringBg: on ? t.accentLine : 'transparent', ringBorder: on ? '0' : '2px solid ' + t.line,
+          toggle: function () {
+            var sel = self.state.sel.slice(), i = sel.indexOf(e.id);
+            if (i >= 0) sel.splice(i, 1); else sel.push(e.id);
+            self.setState({ sel: sel });
+          }
+        };
+      });
+    }
+    v.ssNoCandidates = v.ssCandidates.length === 0;
+    var nSel = st.sel.length + st.selNew.length;
+    v.ssBtnLabel = nSel ? 'Koppelen (' + nSel + ')' : 'Kies minstens één oefening';
+    v.ssBtnOpacity = nSel ? '1' : '0.45';
+    v.ssLink = function () { self.link(); };
+    v.ssUnlink = function () { self.unlink(); };
+
+    // zoeken
+    v.showSearch = sh === 'add' || sh === 'swap' || sh === 'superset';
+    v.q = st.q;
+    v.onQ = function (ev) { self.setState({ q: ev.target.value }); };
+    var q = (st.q || '').toLowerCase().trim();
+    var baseMuscle = sx ? lib(sx.name).m : '';
+    var names = Object.keys(LIB).filter(function (n) {
+      if (sh === 'swap' && sx && n === sx.name) return false;
+      return !q || n.toLowerCase().indexOf(q) >= 0 || LIB[n].m.toLowerCase().indexOf(q) >= 0;
+    });
+    if (sh === 'swap' && !q) names.sort(function (a, b) { return (LIB[a].m === baseMuscle ? 0 : 1) - (LIB[b].m === baseMuscle ? 0 : 1); });
+    var plus = 'M12 5v14M5 12h14', swapI = 'M4 8h14l-3.5-3.5M20 16H6l3.5 3.5', check = 'M5 12.5l4.5 4.5L19 7.5';
+    v.results = names.slice(0, 8).map(function (n) {
+      var chosen = sh === 'superset' && st.selNew.indexOf(n) >= 0;
+      return {
+        name: n, meta: meta(n),
+        iconBg: chosen ? t.accentLine : t.raised, iconFg: chosen ? t.onAccent : t.text,
+        iconPath: sh === 'swap' ? swapI : (chosen ? check : plus),
+        pick: function () {
+          if (sh === 'add' && self.state.addTarget === 'draft') {
+            var d2 = clone(self.state.draft), l = lib(n);
+            d2.items.push({ id: uid(), n: n, warm: false, warmW: null, sets: 3, reps: 10, w: l.d, link: false });
+            self.setState({ draft: d2, sheet: null });
+          } else if (sh === 'add') self.addExercise(n);
+          else if (sh === 'swap') self.swapTo(n, true);
+          else {
+            var sn = self.state.selNew.slice(), i = sn.indexOf(n);
+            if (i >= 0) sn.splice(i, 1); else sn.push(n);
+            self.setState({ selNew: sn });
+          }
+        }
+      };
+    });
+    v.noResults = v.results.length === 0;
+    return v;
+  }
+}
+</script>
+
+<script>
+(function () {
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  var mode = mq && mq.matches ? 'light' : 'dark';
+  var app = window.__mount(Component, { theme: mode, accent: '#556B2F' });
+
+  var buttons = document.querySelectorAll('.seg button');
+  function setMode(m) {
+    mode = m;
+    app.setProps({ theme: m });
+    document.documentElement.setAttribute('data-theme', m);
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); }); });
+  if (mq && mq.addEventListener) mq.addEventListener('change', function (e) { setMode(e.matches ? 'light' : 'dark'); });
+  setMode(mode);
+
+  // Telefoon passend maken in het venster
+  var stage = document.getElementById('stage'), phone = document.getElementById('root');
+  function fit() {
+    var w = window.innerWidth, h = window.innerHeight;
+    var bare = w < 500;
+    document.body.classList.toggle('bare', bare);
+    var s = bare ? Math.min(w / 390, h / 844) : Math.min(1, (w - 60) / 390, (h - 90) / 844);
+    if (bare && h / w > 844 / 390) {
+      // langer scherm dan 390x844: breedte vullen
+      s = w / 390;
+    }
+    phone.style.transform = 'scale(' + s + ')';
+    stage.style.width = Math.round(390 * s) + 'px';
+    stage.style.height = Math.round(Math.min(844 * s, bare ? h : 844 * s)) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+})();
+</script>
+</body>
+</html>
