@@ -161,6 +161,9 @@ enum DateText {
     /// "dinsdag 13 oktober"
     static func long(_ date: Date) -> String { formatter("EEEE d MMMM").string(from: date) }
 
+    /// "oktober 2026"
+    static func month(_ date: Date) -> String { formatter("LLLL yyyy").string(from: date) }
+
     /// "di 13 okt"
     static func short(_ date: Date) -> String {
         formatter("EEE d MMM").string(from: date).replacingOccurrences(of: ".", with: "")

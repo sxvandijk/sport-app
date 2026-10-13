@@ -21,10 +21,13 @@ struct LaunchConfig {
         if let appearance = appearance { model.themeMode = appearance }
         if let accent = accent { model.accent = accent }
         guard let screen = screen else { return }
+        if !screen.hasSuffix("-empty") {
+            model.history = ScreenshotScenario.history(templates: model.templates, now: now)
+        }
 
         let needsSession = screen.hasPrefix("workout") || screen.hasPrefix("sheet-") || screen == "training-running"
         if needsSession {
-            model.session = ScreenshotScenario.session(now: now, templates: model.templates)
+            model.session = ScreenshotScenario.session(now: now, templates: model.templates, history: model.history)
         }
 
         switch screen {
@@ -34,6 +37,8 @@ struct LaunchConfig {
             model.tab = .training
             model.calOpen = true
         case "progress": model.tab = .progress
+        case "progress-empty": model.tab = .progress
+        case "training-empty": model.tab = .training
         case "gym": model.tab = .gym
         case "profile": model.tab = .profile
         case "workout": model.screen = .workout
@@ -43,7 +48,7 @@ struct LaunchConfig {
             model.restEnd = now.addingTimeInterval(64)
         case "workout-superset":
             model.screen = .workout
-            if let s = model.session, let target = s.exercises.first(where: { $0.name == "Chest press machine" }) {
+            if let s = model.session, let target = s.exercises.first(where: { $0.name == "Butterfly" }) {
                 model.focusID = target.id
             }
         case "workout-toast":
@@ -61,9 +66,9 @@ struct LaunchConfig {
             }
         case "overview":
             model.screen = .overview
-            model.ovName = "Push A"
+            model.ovName = "Push"
         case "editor":
-            model.draft = Draft(name: "Push A", plans: model.templates["Push A"] ?? [])
+            model.draft = Draft(name: "Push", plans: model.templates["Push"] ?? [])
             model.edReturn = .overview
             model.screen = .editor
         case "summary":
@@ -85,7 +90,7 @@ struct LaunchConfig {
             model.screen = .workout
             model.openSheet(.stop)
         case "start":
-            model.askStart("Pull A")
+            model.askStart("Pull")
         case "explain":
             model.screen = .workout
             model.openSheet(.explain, exID: exID)
@@ -106,7 +111,7 @@ struct LaunchConfig {
         case "program":
             model.openSheet(.program)
         case "tplmenu":
-            model.tmName = "Push A"
+            model.tmName = "Push"
             model.openSheet(.tplmenu)
         default:
             break
@@ -116,8 +121,31 @@ struct LaunchConfig {
 
 /// De beginstand van het prototype, zodat screenshots met het prototype te vergelijken zijn.
 enum ScreenshotScenario {
-    static func session(now: Date, templates: [String: [PlanItem]]) -> LiveSession {
-        var s = LiveSession.make(name: "Push A", startAt: now.addingTimeInterval(-(23 * 60 + 14)), templates: templates)
+    /// Zes weken voorbeeldtrainingen (alleen voor screenshots): om de dag Push, Pull, Legs, Upper met een beetje progressie.
+    static func history(templates: [String: [PlanItem]], now: Date) -> [HistoryEntry] {
+        let cal = Calendar.current
+        let order = ["Push", "Pull", "Legs", "Upper"]
+        var out: [HistoryEntry] = []
+        var day = 2
+        var n = 0
+        while day <= 42 {
+            let name = order[n % 4]
+            let date = cal.date(byAdding: .hour, value: 18, to: cal.date(byAdding: .day, value: -day, to: cal.startOfDay(for: now)) ?? now) ?? now
+            var logged: [LoggedExercise] = []
+            let bump = Double(max(0, 12 - n)) * 0.25
+            for item in templates[name] ?? [] {
+                let sets = item.sets.map { LoggedSet(w: max(0, $0.w - bump), r: $0.r, type: .work) }
+                logged.append(LoggedExercise(name: item.name, sets: sets))
+            }
+            out.append(HistoryEntry(date: date, name: name, minutes: 45 + (n * 7) % 20, exercises: logged))
+            day += (n % 3 == 2) ? 3 : 2
+            n += 1
+        }
+        return out
+    }
+
+    static func session(now: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = []) -> LiveSession {
+        var s = LiveSession.make(name: "Push", startAt: now.addingTimeInterval(-(23 * 60 + 14)), templates: templates, history: history)
         if s.exercises.count >= 3 {
             for i in s.exercises[0].sets.indices { s.exercises[0].sets[i].done = true }
             if s.exercises[0].sets.count > 3 { s.exercises[0].sets[3].r = 8 }

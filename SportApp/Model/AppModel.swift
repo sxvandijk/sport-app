@@ -27,6 +27,7 @@ struct DraftItem: Identifiable, Hashable {
     var warmW: Double?
     var sets: Int
     var reps: Int
+    var repsMax: Int? = nil
     var w: Double
     var link: Bool
 }
@@ -43,7 +44,8 @@ struct Draft: Hashable {
         for (i, p) in plans.enumerated() {
             let linked = i > 0 && plans[i - 1].group == p.group
             list.append(DraftItem(name: p.name, warm: p.warm != nil, warmW: p.warm?.w,
-                                  sets: p.sets.count, reps: p.sets.first?.r ?? 10, w: p.sets.first?.w ?? 20, link: linked))
+                                  sets: p.sets.count, reps: p.sets.first?.r ?? 10, repsMax: p.sets.first?.rmax,
+                                  w: p.sets.first?.w ?? 20, link: linked))
         }
         items = list
     }
@@ -54,7 +56,7 @@ struct Draft: Hashable {
         for (i, it) in items.enumerated() {
             if !(i > 0 && it.link) { g += 1 }
             var sets: [PlanSet] = []
-            for _ in 0..<it.sets { sets.append(PlanSet(w: it.w, r: it.reps)) }
+            for _ in 0..<it.sets { sets.append(PlanSet(w: it.w, r: it.reps, rmax: it.repsMax)) }
             var plan = PlanItem(name: it.name, group: g, sets: sets)
             if it.warm {
                 plan.warm = PlanSet(w: it.warmW ?? (it.w / 2).rounded(), r: 12)
@@ -93,6 +95,9 @@ struct PersistedState: Codable {
     var crea: Bool
     var links: [String: String]
     var prefs: [String: String]
+    /// Nieuwere velden zijn optioneel, zodat een oud opslagbestand nog te lezen is.
+    var customExercises: [CustomExercise]? = nil
+    var dataVersion: Int? = nil
 }
 
 /// De toestand van de hele app. De regels staan in `LiveSession`; dit is de laag die schermen en opslag verbindt.
@@ -121,6 +126,7 @@ final class AppModel: ObservableObject {
     @Published var crea: Bool
     @Published var links: [String: String]
     @Published var prefs: [String: String]
+    @Published var customExercises: [CustomExercise]
 
     // Werkscherm
     @Published var focusID: UUID?
@@ -167,13 +173,17 @@ final class AppModel: ObservableObject {
         crea = state.crea
         links = state.links
         prefs = state.prefs
+        customExercises = state.customExercises ?? []
+        Catalog.setCustom(customExercises)
     }
+
+    static let dataVersion = 2
 
     static func defaultState(now: Date) -> PersistedState {
         PersistedState(templates: SeedData.templates, programs: SeedData.programs, progID: "p1",
-                       gyms: SeedData.gyms, gymID: "g1", history: SeedData.history(now: now), session: nil,
+                       gyms: SeedData.gyms, gymID: "g1", history: [], session: nil,
                        accent: .olive, themeMode: .system, restDefault: 90, warmFirst: true, crea: true,
-                       links: [:], prefs: ["Chest press machine": "Barbell bench press"])
+                       links: [:], prefs: [:], customExercises: [], dataVersion: AppModel.dataVersion)
     }
 
     // MARK: Opslag
@@ -187,7 +197,13 @@ final class AppModel: ObservableObject {
     private static func load(_ url: URL?) -> PersistedState? {
         guard let url = url, FileManager.default.fileExists(atPath: url.path) else { return nil }
         guard let data = try? Data(contentsOf: url) else { return nil }
-        if let state = try? JSONDecoder().decode(PersistedState.self, from: data) { return state }
+        if let state = try? JSONDecoder().decode(PersistedState.self, from: data) {
+            if (state.dataVersion ?? 1) >= AppModel.dataVersion { return state }
+            // Opslag uit de testversie met voorbeeldgegevens: bewaren onder andere naam en schoon beginnen.
+            let old = url.deletingLastPathComponent().appendingPathComponent("sport-app.voorbeeld-\(Int(Date().timeIntervalSince1970)).json")
+            try? FileManager.default.moveItem(at: url, to: old)
+            return nil
+        }
         // Onleesbaar bestand: bewaar het onder een andere naam in plaats van het te overschrijven.
         let stamp = Int(Date().timeIntervalSince1970)
         let broken = url.deletingLastPathComponent().appendingPathComponent("sport-app.broken-\(stamp).json")
@@ -198,7 +214,8 @@ final class AppModel: ObservableObject {
     var state: PersistedState {
         PersistedState(templates: templates, programs: programs, progID: progID, gyms: gyms, gymID: gymID,
                        history: history, session: session, accent: accent, themeMode: themeMode,
-                       restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs)
+                       restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
+                       customExercises: customExercises, dataVersion: AppModel.dataVersion)
     }
 
     func save() {
@@ -269,7 +286,7 @@ final class AppModel: ObservableObject {
     }
 
     func doStart(_ name: String) {
-        session = LiveSession.make(name: name, startAt: Date(), templates: templates)
+        session = LiveSession.make(name: name, startAt: Date(), templates: templates, history: history)
         screen = .workout
         focusID = nil
         restEnd = nil
@@ -285,7 +302,12 @@ final class AppModel: ObservableObject {
         let result = s.finishSummary(now: now, note: note)
         if result.workSets > 0 {
             let minutes = max(1, Int((now.timeIntervalSince(s.startAt) / 60).rounded()))
-            history.insert(HistoryEntry(date: now, name: s.name, minutes: minutes), at: 0)
+            var logged: [LoggedExercise] = []
+            for e in s.exercises {
+                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type) }
+                if done.contains(where: { $0.type != .warmup }) { logged.append(LoggedExercise(name: e.name, sets: done)) }
+            }
+            history.insert(HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged), at: 0)
         }
         summary = result.summary
         session = nil
@@ -402,7 +424,7 @@ final class AppModel: ObservableObject {
     func swapExercise(to name: String, manual: Bool) {
         guard var s = session, let ex = sheetEx, let current = s.exercise(ex) else { return }
         let old = current.name
-        s.swap(exID: ex, to: name)
+        s.swap(exID: ex, to: name, history: history)
         session = s
         if manual && savePref { prefs[old] = name }
         sheet = nil
@@ -411,7 +433,7 @@ final class AppModel: ObservableObject {
 
     func addExercise(_ name: String) {
         guard var s = session else { return }
-        s.addExercise(name)
+        s.addExercise(name, history: history)
         session = s
         sheet = nil
         save()
@@ -419,7 +441,7 @@ final class AppModel: ObservableObject {
 
     func linkSelected() {
         guard var s = session, let ex = sheetEx else { return }
-        s.link(base: ex, existing: selected, newNames: selectedNew)
+        s.link(base: ex, existing: selected, newNames: selectedNew, history: history)
         session = s
         sheet = nil
         save()
@@ -566,6 +588,20 @@ final class AppModel: ObservableObject {
         guard let gi = gyms.firstIndex(where: { $0.id == gym.id }), gyms[gi].equipment.indices.contains(index) else { return }
         gyms[gi].equipment[index].on.toggle()
         save()
+    }
+
+    // MARK: Eigen oefeningen
+
+    func addCustomExercise(name: String, muscle: String, equipment: String, kind: ExerciseKind) -> String? {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        if n.isEmpty { return nil }
+        if Catalog.allNames.contains(where: { $0.lowercased() == n.lowercased() }) {
+            return Catalog.allNames.first(where: { $0.lowercased() == n.lowercased() })
+        }
+        customExercises.append(CustomExercise(name: n, muscle: muscle, equipment: equipment, kind: kind))
+        Catalog.setCustom(customExercises)
+        save()
+        return n
     }
 
     // MARK: Uitleg-links

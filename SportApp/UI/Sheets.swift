@@ -411,7 +411,7 @@ private struct SupersetSheet: View {
                         if on { Icon.check(14, 3).foregroundColor(ac.onAccent) }
                     }
                     .frame(width: 26, height: 26)
-                    TitleSub(title: e.name, sub: LiveSession.summary(of: e.sets), titleSize: 17, titleWeight: .medium)
+                    TitleSub(title: e.name, sub: LiveSession.summary(of: e.sets, kind: Catalog.kind(e.name)), titleSize: 17, titleWeight: .medium)
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 56)
@@ -446,11 +446,18 @@ private struct SearchList: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     let mode: Mode
+    @State private var creating = false
+    @State private var newKind: ExerciseKind = .weights
+    @State private var newMuscle = "Overig"
+
+    private static let muscles = ["Borst", "Schouders", "Triceps", "Biceps", "Onderarmen", "Lats", "Bovenrug", "Traps",
+                                  "Quadriceps", "Hamstrings", "Billen", "Kuiten", "Core", "Cardio", "Overig"]
 
     private func results() -> [(name: String, info: ExerciseInfo)] {
         let q = model.query.lowercased().trimmingCharacters(in: .whitespaces)
         let current = model.session?.exercise(model.sheetEx)
-        var names = Catalog.all.filter { item in
+        let pool: [(name: String, info: ExerciseInfo)] = Catalog.all + Catalog.custom.keys.sorted().map { (name: $0, info: Catalog.info($0)) }
+        var names = pool.filter { item in
             if mode == .swap, let c = current, item.name == c.name { return false }
             return q.isEmpty || item.name.lowercased().contains(q) || item.info.muscle.lowercased().contains(q)
         }
@@ -460,7 +467,7 @@ private struct SearchList: View {
             let other = names.filter { $0.info.muscle != muscle }
             names = same + other
         }
-        return Array(names.prefix(8))
+        return Array(names.prefix(10))
     }
 
     var body: some View {
@@ -499,6 +506,58 @@ private struct SearchList: View {
             if shown.isEmpty {
                 Text("Niets gevonden.").sa(15).foregroundColor(Tokens.text2).padding(.horizontal, 4).padding(.vertical, 12)
             }
+            createSection
+        }
+    }
+
+    private var queryName: String { model.query.trimmingCharacters(in: .whitespaces) }
+
+    @ViewBuilder
+    private var createSection: some View {
+        let exact = Catalog.allNames.contains(where: { $0.lowercased() == queryName.lowercased() })
+        if !queryName.isEmpty && !exact {
+            Button { creating.toggle() } label: {
+                HStack(spacing: 12) {
+                    Icon.plus(16, 2.6).foregroundColor(ac.accentText).frame(width: 32, height: 32)
+                        .background(Circle().fill(ac.accentSoft))
+                    Text("Eigen oefening: " + queryName).sa(17, .medium).foregroundColor(ac.accentText).lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 4).padding(.vertical, 8)
+                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if creating {
+                VStack(alignment: .leading, spacing: 10) {
+                    Picker("Soort", selection: $newKind) {
+                        ForEach(ExerciseKind.allCases, id: \.self) { k in Text(k.title).tag(k) }
+                    }
+                    .pickerStyle(.segmented)
+                    if newKind != .cardio {
+                        HStack {
+                            Text("Spiergroep").sa(15).foregroundColor(Tokens.text2)
+                            Spacer()
+                            Picker("Spiergroep", selection: $newMuscle) {
+                                ForEach(SearchList.muscles, id: \.self) { m in Text(m).tag(m) }
+                            }
+                            .pickerStyle(.menu)
+                            .accentColor(ac.accentText)
+                        }
+                    }
+                    PrimaryButton(title: "Toevoegen", height: 52, icon: Icon.plus(20, 2.6)) { createAndPick() }
+                }
+                .padding(12)
+                .card(Tokens.raised, radius: Radius.field)
+            }
+        }
+    }
+
+    private func createAndPick() {
+        let muscle = newKind == .cardio ? "Cardio" : newMuscle
+        let equipment = newKind == .bodyweight ? "Lichaamsgewicht" : (newKind == .cardio ? "Cardio" : "Eigen")
+        if let name = model.addCustomExercise(name: queryName, muscle: muscle, equipment: equipment, kind: newKind) {
+            pick(name)
         }
     }
 
@@ -516,7 +575,8 @@ private struct SearchList: View {
             if model.addToDraft {
                 guard var d = model.draft else { return }
                 let w = Catalog.info(name).defaultWeight
-                d.items.append(DraftItem(name: name, warm: false, warmW: nil, sets: 3, reps: 10, w: w, link: false))
+                d.items.append(DraftItem(name: name, warm: false, warmW: nil, sets: Catalog.kind(name) == .cardio ? 1 : 3,
+                                         reps: 10, w: w, link: false))
                 model.draft = d
                 model.sheet = nil
             } else {

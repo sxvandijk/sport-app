@@ -255,6 +255,9 @@ struct Icon: View {
 /// Alle pictogrammen die het prototype gebruikt.
 extension Icon {
     static func chevronDown(_ size: CGFloat = 18, _ w: CGFloat = 2.4) -> Icon { Icon(paths: ["M6 9l6 6 6-6"], lineWidth: w, size: size) }
+    static func chevronRight(_ size: CGFloat = 22) -> Icon { Icon(paths: ["M9 6l6 6-6 6"], lineWidth: 2.4, size: size) }
+    /// Twee pijltjes (omhoog/omlaag): "kies een andere".
+    static func updown(_ size: CGFloat = 22) -> Icon { Icon(paths: ["M8 9l4-4 4 4", "M8 15l4 4 4-4"], lineWidth: 2.2, size: size) }
     static func chevronLeft(_ size: CGFloat = 22) -> Icon { Icon(paths: ["M15 6l-6 6 6 6"], lineWidth: 2.4, size: size) }
     static func chevronUp(_ size: CGFloat = 18) -> Icon { Icon(paths: ["M6 15l6-6 6 6"], lineWidth: 2.4, size: size) }
     static func check(_ size: CGFloat = 16, _ w: CGFloat = 2.8) -> Icon { Icon(paths: ["M5 12.5l4.5 4.5L19 7.5"], lineWidth: w, size: size) }

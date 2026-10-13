@@ -25,7 +25,7 @@ targets:
     info:
       path: SportApp/Info.plist
       properties:
-        CFBundleDisplayName: Sport App
+        CFBundleDisplayName: Set
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
