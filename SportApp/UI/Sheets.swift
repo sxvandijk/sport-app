@@ -86,7 +86,7 @@ private struct SheetBody: View {
                     .padding(.top, 10).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
 
                     ViewThatFits(in: .vertical) {
-                        padded
+                        padded.fixedSize(horizontal: false, vertical: true)
                         ScrollView { padded }
                     }
                 }
