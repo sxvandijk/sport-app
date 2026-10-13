@@ -85,7 +85,7 @@ jobs:
             xcrun simctl io "$UDID" screenshot "ci-results/screenshots/$1.png"
           }
           for mode in dark light; do
-            for screen in training training-running calendar-open progress gym profile \
+            for screen in training training-empty progress-empty training-running calendar-open progress gym profile \
                           workout workout-rest workout-superset workout-toast workout-done \
                           overview editor summary \
                           sheet-menu sheet-stop sheet-start sheet-explain sheet-swap sheet-superset \
