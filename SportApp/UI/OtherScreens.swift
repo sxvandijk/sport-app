@@ -430,10 +430,9 @@ struct SummaryScreen: View {
 
     private func stat(_ value: String, _ label: String, flex: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(value).sa(28, .semibold, mono: true).foregroundColor(Tokens.text).lineLimit(1).minimumScaleFactor(0.7)
+            Text(value).sa(28, .semibold, mono: true).foregroundColor(Tokens.text).lineLimit(1)
             Text(label).sa(13).foregroundColor(Tokens.text2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .layoutPriority(Double(flex))
     }
 }
