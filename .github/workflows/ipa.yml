@@ -1,0 +1,49 @@
+name: IPA
+
+# Maakt een installatiebestand (.ipa) zonder handtekening, om met Sideloadly op een telefoon te zetten.
+# Handmatig starten via Actions -> IPA -> Run workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: XcodeGen installeren en project maken
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Bouwen voor een echte telefoon (zonder handtekening)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project SportApp.xcodeproj \
+            -scheme SportApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tail -40
+
+      - name: IPA maken
+        run: |
+          APP=$(find build/Build/Products -name "SportApp.app" -path "*Release-iphoneos*" | head -1)
+          echo "App: $APP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry Set.ipa Payload
+          ls -la Set.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Set-ipa
+          path: Set.ipa
+          retention-days: 14
