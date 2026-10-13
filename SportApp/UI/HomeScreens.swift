@@ -170,8 +170,8 @@ struct TrainingTab: View {
                 Spacer(minLength: 0)
                 Button { model.openSheet(.program) } label: {
                     HStack(spacing: 6) {
-                        Icon.updown(16)
                         Text("Wissel schema").sa(14, .semibold)
+                        Icon.updown(16)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.horizontal, 12).frame(height: 34)
@@ -222,6 +222,8 @@ struct TrainingTab: View {
             }
             .buttonStyle(.plain)
             .padding(.top, 16)
+
+            CreatineCheckRow().padding(.top, 10)
         }
     }
 
@@ -295,6 +297,7 @@ struct TrainingTab: View {
 struct ProgressTab: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @State private var volumeInfo = false
 
     var body: some View {
         let stats = ProgressStats.make(history: model.history, now: Date())
@@ -331,9 +334,23 @@ struct ProgressTab: View {
         let top = max(volumes.max() ?? 0, 0.001)
         let thisWeek = volumes.last ?? 0
         return VStack(alignment: .leading, spacing: 0) {
-            Text("Volume per week").sa(17, .semibold).foregroundColor(Tokens.text)
-            Text("Totaal getild gewicht: kg \u{00D7} herhalingen, opgeteld. 9,8k = 9.800 kg.")
-                .sa(13).foregroundColor(Tokens.text2).padding(.top, 2)
+            HStack(spacing: 4) {
+                Text("Volume per week").sa(17, .semibold).foregroundColor(Tokens.text)
+                Button { volumeInfo.toggle() } label: {
+                    Text("i").sa(12, .bold, mono: true).foregroundColor(Tokens.text3)
+                        .frame(width: 20, height: 20)
+                        .overlay(Circle().stroke(Tokens.line, lineWidth: 1.5))
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Uitleg over volume")
+                Spacer(minLength: 0)
+            }
+            .frame(height: 28)
+            if volumeInfo {
+                Text("Totaal getild gewicht: kg \u{00D7} herhalingen, opgeteld. 9,8k = 9.800 kg.")
+                    .sa(13).foregroundColor(Tokens.text2).padding(.top, 4)
+            }
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(0..<volumes.count, id: \.self) { i in
                     VStack(spacing: 4) {
@@ -452,8 +469,8 @@ struct GymTab: View {
                     }
                     Spacer(minLength: 0)
                     HStack(spacing: 6) {
-                        Icon.updown(16)
                         Text("Wissel gym").sa(14, .semibold)
+                        Icon.updown(16)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.horizontal, 12).frame(height: 34)
@@ -580,54 +597,12 @@ struct ProfileTab: View {
                     }
                 }
                 .frame(minHeight: 64)
-
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Algemene warming-up").sa(16, .medium).foregroundColor(Tokens.text)
-                        Text(model.warmupOn ? "\(model.warmupMinutes) min aan het begin van elke training" : "Uit")
-                            .sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    if model.warmupOn {
-                        HStack(spacing: 0) {
-                            Button { model.setWarmupMinutes(model.warmupMinutes - 1) } label: {
-                                Text("\u{2212}").sa(20).foregroundColor(Tokens.text).frame(width: 40, height: 44)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Kortere warming-up")
-                            Text("\(model.warmupMinutes)").sa(16, .semibold, mono: true)
-                                .foregroundColor(Tokens.text).frame(minWidth: 28)
-                            Button { model.setWarmupMinutes(model.warmupMinutes + 1) } label: {
-                                Text("+").sa(20).foregroundColor(Tokens.text).frame(width: 40, height: 44)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Langere warming-up")
-                        }
-                        .card(Tokens.raised, radius: Radius.field)
-                    }
-                    SAToggle(isOn: model.warmupOn, onColor: ac.accentLine, label: "Algemene warming-up") {
-                        model.setWarmup(on: !model.warmupOn)
-                    }
-                }
-                .frame(minHeight: 64)
             }
             .padding(.horizontal, 16).padding(.vertical, 4)
             .card(Tokens.surface, radius: Radius.button)
 
             SectionLabel(text: "Herinneringen").padding(.top, 24).padding(.bottom, 10)
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Creatine").sa(16, .medium).foregroundColor(Tokens.text)
-                    Text(model.crea ? "Elke dag om 09:00" : "Uit").sa(13).foregroundColor(Tokens.text2)
-                }
-                Spacer(minLength: 0)
-                SAToggle(isOn: model.crea, onColor: ac.accentLine, label: "Creatine-herinnering") {
-                    model.setCreatine(!model.crea)
-                }
-            }
-            .frame(minHeight: 64)
-            .padding(.horizontal, 16).padding(.vertical, 4)
-            .card(Tokens.surface, radius: Radius.button)
+            CreatineSettings()
 
             Text("Later hier ook: kg of lb, gegevens exporteren en een back-up.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 16)
@@ -719,5 +694,135 @@ struct ModePicker: View {
         }
         .padding(3)
         .card(Tokens.raised, radius: Radius.row)
+    }
+}
+
+
+// MARK: - Creatine
+
+private func clockText(_ minutes: Int) -> String {
+    String(format: "%02d:%02d", minutes / 60, minutes % 60)
+}
+
+private func timeBinding(_ value: Int, _ set: @escaping (Int) -> Void) -> Binding<Date> {
+    Binding<Date>(
+        get: { Calendar.current.date(bySettingHour: value / 60, minute: value % 60, second: 0, of: Date()) ?? Date() },
+        set: { d in
+            let c = Calendar.current.dateComponents([.hour, .minute], from: d)
+            set((c.hour ?? 0) * 60 + (c.minute ?? 0))
+        }
+    )
+}
+
+/// Afvinkrij voor vandaag (op het Training-tabblad).
+struct CreatineCheckRow: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+
+    var body: some View {
+        if model.crea {
+            let done = model.creaDoneToday
+            Button { model.toggleCreaDone() } label: {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle().fill(done ? ac.accentLine : Color.clear)
+                        Circle().stroke(done ? ac.accentLine : Tokens.line, lineWidth: 2)
+                        if done { Icon.check(16).foregroundColor(ac.onAccent) }
+                    }
+                    .frame(width: 28, height: 28)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Creatine").sa(16, .medium).foregroundColor(Tokens.text)
+                        Text(done ? "Vandaag gehad" : "Vandaag nog niet gehad").sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                .card(Tokens.surface, radius: Radius.button)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(done ? "Creatine vandaag gehad, tik om ongedaan te maken" : "Creatine vandaag afvinken")
+        }
+    }
+}
+
+private struct CreatineSettings: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+
+    private var subtitle: String {
+        if !model.crea { return "Uit" }
+        var t = "Elke dag om " + clockText(model.creaTime)
+        if model.creaLateOn && model.creaLateTime > model.creaTime { t += ", anders om " + clockText(model.creaLateTime) }
+        return t
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Creatine").sa(16, .medium).foregroundColor(Tokens.text)
+                    Text(subtitle).sa(13).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+                SAToggle(isOn: model.crea, onColor: ac.accentLine, label: "Creatine-herinnering") {
+                    model.setCreatine(!model.crea)
+                }
+            }
+            .frame(minHeight: 64)
+
+            if model.crea {
+                Divider().background(Tokens.line)
+                HStack {
+                    Text("Eerste herinnering").sa(15).foregroundColor(Tokens.text)
+                    Spacer(minLength: 0)
+                    DatePicker("", selection: timeBinding(model.creaTime) { model.setCreaTime($0) }, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                }
+                .frame(minHeight: 52)
+                Divider().background(Tokens.line)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Nog niet gehad? Herinner me later").sa(15).foregroundColor(Tokens.text)
+                        Text("Bijvoorbeeld bij het avondeten. Als je hem afvinkt, komt er geen tweede melding.")
+                            .sa(12).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    SAToggle(isOn: model.creaLateOn, onColor: ac.accentLine, label: "Latere herinnering") {
+                        model.setCreaLate(on: !model.creaLateOn)
+                    }
+                }
+                .frame(minHeight: 60)
+                if model.creaLateOn {
+                    Divider().background(Tokens.line)
+                    HStack {
+                        Text("Tweede herinnering").sa(15).foregroundColor(Tokens.text)
+                        Spacer(minLength: 0)
+                        DatePicker("", selection: timeBinding(model.creaLateTime) { model.setCreaLateTime($0) }, displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                    }
+                    .frame(minHeight: 52)
+                }
+                Divider().background(Tokens.line)
+                Button { model.toggleCreaDone() } label: {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle().fill(model.creaDoneToday ? ac.accentLine : Color.clear)
+                            Circle().stroke(model.creaDoneToday ? ac.accentLine : Tokens.line, lineWidth: 2)
+                            if model.creaDoneToday { Icon.check(14).foregroundColor(ac.onAccent) }
+                        }
+                        .frame(width: 24, height: 24)
+                        Text(model.creaDoneToday ? "Vandaag gehad" : "Vandaag afvinken").sa(15).foregroundColor(Tokens.text)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minHeight: 52)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 4)
+        .card(Tokens.surface, radius: Radius.button)
     }
 }

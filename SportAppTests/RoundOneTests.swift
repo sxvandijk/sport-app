@@ -68,14 +68,13 @@ final class RoundOneTests: XCTestCase {
         Catalog.setCustom([])
     }
 
-    func testGeneralWarmupIsFirstExerciseAndNotAWorkSet() {
-        let s = LiveSession.make(name: "Push", startAt: Date(), templates: SeedData.templates, startWarmupMinutes: 5)
-        XCTAssertEqual(s.exercises.first?.name, Catalog.generalWarmupName)
-        XCTAssertEqual(s.exercises.first?.sets.first?.type, .warmup)
-        XCTAssertEqual(s.exercises.first?.sets.first?.r, 5)
+    func testWarmupBlockIsNotAWorkSet() {
+        var t = SeedData.templates
+        t["Push"]?.insert(PlanItem(name: "Rotator cuff external rotation", group: 99,
+                                   sets: [PlanSet(w: 0, r: 15, rmax: nil)], isWarmup: true), at: 0)
+        let s = LiveSession.make(name: "Push", startAt: Date(), templates: t)
+        XCTAssertEqual(s.exercises.first?.name, "Rotator cuff external rotation")
         XCTAssertEqual(s.workSetCounts.total, 27)
-        let none = LiveSession.make(name: "Push", startAt: Date(), templates: SeedData.templates)
-        XCTAssertNotEqual(none.exercises.first?.name, Catalog.generalWarmupName)
     }
 
     func testDeleteProgramRemovesItsTrainings() {
@@ -85,5 +84,40 @@ final class RoundOneTests: XCTestCase {
         XCTAssertEqual(model.programs.count, 1)
         XCTAssertTrue(model.program.workouts.isEmpty)
         XCTAssertTrue(model.templates.isEmpty)
+    }
+
+    func testChosenSetIsCompletedAndFlowReturnsToTheFirstOpenSet() {
+        var s = LiveSession.make(name: "Push", startAt: Date(), templates: SeedData.templates)
+        let q = s.queue(warmFirst: true)
+        XCTAssertGreaterThan(q.count, 4)
+        let chosen = q[4]
+        let r = s.complete(focus: nil, focusSet: chosen.setID, warmFirst: true, restDefault: 180)
+        XCTAssertEqual(s.findSet(chosen.setID)?.done, true)
+        XCTAssertEqual(r?.nextFocus, q[0].exID)
+        // Een gedane set nog eens afronden doet niets.
+        XCTAssertNil(s.complete(focus: nil, focusSet: chosen.setID, warmFirst: true, restDefault: 180))
+    }
+
+    func testSwapInScheduleChangesTheTemplate() {
+        let model = AppModel(fileURL: nil)
+        model.doStart("Push")
+        guard let ex = model.session?.exercises.first else { return XCTFail("geen oefening") }
+        let old = ex.name
+        model.sheetEx = ex.id
+        model.swapScope = .schema
+        model.swapExercise(to: "Dumbbell Shrug", manual: false)
+        XCTAssertEqual(model.templates["Push"]?.first?.name, "Dumbbell Shrug")
+        XCTAssertNotEqual(old, "Dumbbell Shrug")
+    }
+
+    func testPreferenceOnlyDoesNotSwap() {
+        let model = AppModel(fileURL: nil)
+        model.doStart("Push")
+        guard let ex = model.session?.exercises.first else { return XCTFail("geen oefening") }
+        model.sheetEx = ex.id
+        model.swapScope = .prefOnly
+        model.swapExercise(to: "Dumbbell Shrug", manual: true)
+        XCTAssertEqual(model.session?.exercises.first?.name, ex.name)
+        XCTAssertEqual(model.prefs[ex.name], "Dumbbell Shrug")
     }
 }

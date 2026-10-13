@@ -27,8 +27,7 @@ struct LaunchConfig {
 
         let needsSession = screen.hasPrefix("workout") || screen.hasPrefix("sheet-") || screen == "training-running"
         if needsSession {
-            model.session = ScreenshotScenario.session(now: now, templates: model.templates, history: model.history,
-                                                       warmupMinutes: model.warmupOn ? model.warmupMinutes : nil)
+            model.session = ScreenshotScenario.session(now: now, templates: model.templates, history: model.history)
         }
 
         switch screen {
@@ -55,7 +54,7 @@ struct LaunchConfig {
             }
         case "workout-toast":
             model.screen = .workout
-            if let s = model.session, let ex = s.exercises.first(where: { $0.name != Catalog.generalWarmupName }), let set = ex.sets.last {
+            if let s = model.session, let ex = s.exercises.first(where: { !$0.name.isEmpty }), let set = ex.sets.last {
                 model.deleteSet(exID: ex.id, setID: set.id)
             }
         case "workout-done":
@@ -66,10 +65,17 @@ struct LaunchConfig {
                 }
                 model.session = s
             }
+        case "workout-select":
+            model.screen = .workout
+            if let s = model.session, let ex = s.exercises.first, let set = ex.sets.first {
+                model.selectSet(exID: ex.id, setID: set.id)
+            }
         case "overview":
+            ScreenshotScenario.addWarmup(to: model)
             model.screen = .overview
             model.ovName = "Push"
         case "editor":
+            ScreenshotScenario.addWarmup(to: model)
             model.draft = Draft(name: "Push", plans: model.templates["Push"] ?? [])
             model.edReturn = .overview
             model.screen = .editor
@@ -149,12 +155,9 @@ enum ScreenshotScenario {
         return out
     }
 
-    static func session(now: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = [],
-                        warmupMinutes: Int? = nil) -> LiveSession {
-        var s = LiveSession.make(name: "Push", startAt: now.addingTimeInterval(-(23 * 60 + 14)), templates: templates, history: history,
-                                 startWarmupMinutes: warmupMinutes)
-        let off = s.exercises.first?.name == Catalog.generalWarmupName ? 1 : 0
-        if off == 1 { s.exercises[0].sets[0].done = true }
+    static func session(now: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = []) -> LiveSession {
+        var s = LiveSession.make(name: "Push", startAt: now.addingTimeInterval(-(23 * 60 + 14)), templates: templates, history: history)
+        let off = 0
         if s.exercises.count >= 3 + off {
             for i in s.exercises[off].sets.indices { s.exercises[off].sets[i].done = true }
             if s.exercises[off].sets.count > 3 { s.exercises[off].sets[3].r = 8 }
@@ -163,6 +166,17 @@ enum ScreenshotScenario {
             s.exercises[off + 2].sets[0].done = true
         }
         return s
+    }
+
+    /// Voorbeeld-warming-up (rotator cuff) vooraan in Push, voor de schermen die het blok tonen.
+    static func addWarmup(to model: AppModel) {
+        var plans = model.templates["Push"] ?? []
+        if plans.contains(where: { $0.isWarmup == true }) { return }
+        var item = PlanItem(name: "Rotator cuff external rotation", group: 0,
+                            sets: [PlanSet(w: 2.5, r: 15, rmax: nil), PlanSet(w: 2.5, r: 15, rmax: nil)])
+        item.isWarmup = true
+        plans.insert(item, at: 0)
+        model.templates["Push"] = plans
     }
 
     static func summary(templates: [String: [PlanItem]], now: Date) -> SessionSummary {

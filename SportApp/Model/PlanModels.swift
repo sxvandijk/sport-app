@@ -14,12 +14,15 @@ struct PlanItem: Codable, Hashable, Identifiable {
     var group: Int
     var warm: PlanSet?
     var sets: [PlanSet]
+    /// Hoort bij het warming-upblok vooraan in de training (bijv. rotator cuff of fietsen).
+    var isWarmup: Bool?
 
-    init(name: String, group: Int, warm: PlanSet? = nil, sets: [PlanSet]) {
+    init(name: String, group: Int, warm: PlanSet? = nil, sets: [PlanSet], isWarmup: Bool? = nil) {
         self.name = name
         self.group = group
         self.warm = warm
         self.sets = sets
+        self.isWarmup = isWarmup
     }
 }
 

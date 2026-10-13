@@ -20,6 +20,8 @@ enum SheetKind: String {
     case menu, stop, start, explain, swap, superset, add, settype, gym, program, tplmenu, exmenu
 }
 
+enum SwapScope { case now, schema, prefOnly }
+
 struct DraftItem: Identifiable, Hashable {
     var id = UUID()
     var name: String
@@ -30,6 +32,7 @@ struct DraftItem: Identifiable, Hashable {
     var repsMax: Int? = nil
     var w: Double
     var link: Bool
+    var isWarmup = false
 }
 
 extension DraftItem {
@@ -57,10 +60,13 @@ struct Draft: Hashable {
         self.name = name ?? ""
         var list: [DraftItem] = []
         for (i, p) in plans.enumerated() {
-            let linked = i > 0 && plans[i - 1].group == p.group
-            list.append(DraftItem(name: p.name, warm: p.warm != nil, warmW: p.warm?.w,
-                                  sets: p.sets.count, reps: p.sets.first?.r ?? 10, repsMax: p.sets.first?.rmax,
-                                  w: p.sets.first?.w ?? 20, link: linked))
+            let isWarm = p.isWarmup == true
+            let linked = !isWarm && i > 0 && plans[i - 1].group == p.group && plans[i - 1].isWarmup != true
+            var item = DraftItem(name: p.name, warm: p.warm != nil, warmW: p.warm?.w,
+                                 sets: p.sets.count, reps: p.sets.first?.r ?? 10, repsMax: p.sets.first?.rmax,
+                                 w: p.sets.first?.w ?? 20, link: linked)
+            item.isWarmup = isWarm
+            list.append(item)
         }
         items = list
     }
@@ -68,12 +74,14 @@ struct Draft: Hashable {
     func toPlans() -> [PlanItem] {
         var g = 0
         var out: [PlanItem] = []
-        for (i, it) in items.enumerated() {
-            if !(i > 0 && it.link) { g += 1 }
+        let ordered = items.filter { $0.isWarmup } + items.filter { !$0.isWarmup }
+        for (i, it) in ordered.enumerated() {
+            if !(i > 0 && it.link && !it.isWarmup && !ordered[i - 1].isWarmup) { g += 1 }
             var sets: [PlanSet] = []
             for _ in 0..<it.sets { sets.append(PlanSet(w: it.w, r: it.reps, rmax: it.repsMax)) }
             var plan = PlanItem(name: it.name, group: g, sets: sets)
-            if it.warm {
+            if it.isWarmup { plan.isWarmup = true }
+            if it.warm && !it.isWarmup {
                 plan.warm = PlanSet(w: it.warmW ?? (it.w / 2).rounded(), r: 12)
             }
             out.append(plan)
@@ -112,8 +120,11 @@ struct PersistedState: Codable {
     var prefs: [String: String]
     /// Nieuwere velden zijn optioneel, zodat een oud opslagbestand nog te lezen is.
     var customExercises: [CustomExercise]? = nil
-    var warmupOn: Bool? = nil
-    var warmupMinutes: Int? = nil
+    var restMigrated: Bool? = nil
+    var creaTime: Int? = nil          // minuten sinds middernacht
+    var creaLateOn: Bool? = nil
+    var creaLateTime: Int? = nil
+    var creaDone: [String]? = nil     // dagen (yyyy-MM-dd) waarop je hem hebt afgevinkt
     var dataVersion: Int? = nil
 }
 
@@ -144,11 +155,14 @@ final class AppModel: ObservableObject {
     @Published var links: [String: String]
     @Published var prefs: [String: String]
     @Published var customExercises: [CustomExercise]
-    @Published var warmupOn: Bool
-    @Published var warmupMinutes: Int
+    @Published var creaTime: Int
+    @Published var creaLateOn: Bool
+    @Published var creaLateTime: Int
+    @Published var creaDone: [String]
 
     // Werkscherm
     @Published var focusID: UUID?
+    @Published var focusSetID: UUID?
     @Published var restEnd: Date?
     @Published var restTotal: Int = 90
     @Published var toast: Toast?
@@ -166,6 +180,8 @@ final class AppModel: ObservableObject {
     @Published var edReturn: Screen = .home
     @Published var draft: Draft?
     @Published var addToDraft = false
+    @Published var addToDraftWarmup = false
+    @Published var swapScope = SwapScope.now
 
     // Kalender
     @Published var calOpen = false
@@ -194,8 +210,12 @@ final class AppModel: ObservableObject {
         links = state.links
         prefs = state.prefs
         customExercises = state.customExercises ?? []
-        warmupOn = state.warmupOn ?? true
-        warmupMinutes = state.warmupMinutes ?? 5
+        creaTime = state.creaTime ?? 9 * 60
+        creaLateOn = state.creaLateOn ?? true
+        creaLateTime = state.creaLateTime ?? 18 * 60
+        creaDone = state.creaDone ?? []
+        // Eerdere versies hadden 1:30 als standaard rusttijd; de nieuwe standaard is 3:00.
+        if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
     }
 
@@ -205,7 +225,7 @@ final class AppModel: ObservableObject {
         PersistedState(templates: SeedData.templates, programs: SeedData.programs, progID: "p1",
                        gyms: SeedData.gyms, gymID: "g1", history: [], session: nil,
                        accent: .olive, themeMode: .system, restDefault: 180, warmFirst: true, crea: true,
-                       links: [:], prefs: [:], customExercises: [], warmupOn: true, warmupMinutes: 5, dataVersion: AppModel.dataVersion)
+                       links: [:], prefs: [:], customExercises: [], restMigrated: true, dataVersion: AppModel.dataVersion)
     }
 
     // MARK: Opslag
@@ -237,8 +257,8 @@ final class AppModel: ObservableObject {
         PersistedState(templates: templates, programs: programs, progID: progID, gyms: gyms, gymID: gymID,
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
-                       customExercises: customExercises, warmupOn: warmupOn, warmupMinutes: warmupMinutes,
-                       dataVersion: AppModel.dataVersion)
+                       customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
+                       creaDone: creaDone, dataVersion: AppModel.dataVersion)
     }
 
     func save() {
@@ -262,14 +282,14 @@ final class AppModel: ObservableObject {
         var work = 0
         var warm = 0
         var muscles: [String] = []
-        for x in items {
+        for x in items where x.isWarmup != true {
             work += x.sets.count
             if x.warm != nil { warm += 1 }
             let m = Catalog.info(x.name).muscle
             if !muscles.contains(m) { muscles.append(m) }
         }
         let minutes = Int((Double(work) * 2.25 + Double(warm)).rounded())
-        let count = items.count
+        let count = items.filter { $0.isWarmup != true }.count
         let sub = "\(count) \(count == 1 ? "oefening" : "oefeningen") · \(work) sets · ~\(minutes) min"
         return (sub, muscles.isEmpty ? "Nog leeg" : muscles.joined(separator: " · "), items)
     }
@@ -309,8 +329,7 @@ final class AppModel: ObservableObject {
     }
 
     func doStart(_ name: String) {
-        session = LiveSession.make(name: name, startAt: Date(), templates: templates, history: history,
-                                  startWarmupMinutes: warmupOn ? warmupMinutes : nil)
+        session = LiveSession.make(name: name, startAt: Date(), templates: templates, history: history)
         screen = .workout
         focusID = nil
         restEnd = nil
@@ -329,7 +348,7 @@ final class AppModel: ObservableObject {
             var logged: [LoggedExercise] = []
             for e in s.exercises {
                 let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type) }
-                if done.contains(where: { $0.type != .warmup }) { logged.append(LoggedExercise(name: e.name, sets: done)) }
+                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done)) }
             }
             history.insert(HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged), at: 0)
         }
@@ -362,7 +381,7 @@ final class AppModel: ObservableObject {
 
     func current() -> (queue: [QueueItem], cur: QueueItem?) {
         guard let s = session else { return ([], nil) }
-        return s.current(focus: focusID, warmFirst: warmFirst)
+        return s.current(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst)
     }
 
     func stepWeight(_ dir: Int) {
@@ -379,10 +398,29 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    func focus(_ exID: UUID) {
+        focusID = exID
+        focusSetID = nil
+    }
+
+    /// Kies zelf een set (ook een al gedane, om aan te passen). Daarna ga je weer verder waar je was.
+    func selectSet(exID: UUID, setID: UUID) {
+        focusID = exID
+        focusSetID = setID
+        Haptics.light()
+    }
+
     func complete() {
         guard var s = session else { return }
-        guard let result = s.complete(focus: focusID, warmFirst: warmFirst, restDefault: restDefault) else { return }
+        if let c = current().cur, let set = s.findSet(c.setID), set.done {
+            focusSetID = nil
+            focusID = nil
+            save()
+            return
+        }
+        guard let result = s.complete(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst, restDefault: restDefault) else { return }
         session = s
+        focusSetID = nil
         focusID = result.nextFocus
         toast = nil
         Haptics.success()
@@ -448,10 +486,47 @@ final class AppModel: ObservableObject {
     func swapExercise(to name: String, manual: Bool) {
         guard var s = session, let ex = sheetEx, let current = s.exercise(ex) else { return }
         let old = current.name
+        let original = current.from ?? old
+        if swapScope == .prefOnly {
+            prefs[original] = name
+            sheet = nil
+            save()
+            return
+        }
         s.swap(exID: ex, to: name, history: history)
         session = s
-        if manual && savePref { prefs[old] = name }
+        if (manual && savePref) { prefs[original] = name }
+        if swapScope == .schema, var plans = templates[s.name], let i = plans.firstIndex(where: { $0.name == original }) {
+            plans[i].name = name
+            templates[s.name] = plans
+        }
         sheet = nil
+        save()
+    }
+
+    func clearPreference(for name: String) {
+        prefs[name] = nil
+        save()
+    }
+
+    /// Zet een oefening in het warming-upblok van het schema dat je aan het bewerken bent.
+    func addDraftWarmup(_ name: String) {
+        guard var d = draft else { return }
+        let kind = Catalog.kind(name)
+        var item = DraftItem(name: name, warm: false, warmW: nil, sets: kind == .weights || kind == .bodyweight ? 2 : 1,
+                             reps: kind == .weights || kind == .bodyweight ? 15 : 5, w: Catalog.info(name).defaultWeight, link: false)
+        item.isWarmup = true
+        let at = d.items.filter { $0.isWarmup }.count
+        d.items.insert(item, at: at)
+        EditorScreen.normalize(&d)
+        draft = d
+        sheet = nil
+    }
+
+    func renameProgram(_ id: String, to name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty, let i = programs.firstIndex(where: { $0.id == id }) else { return }
+        programs[i].name = n
         save()
     }
 
@@ -508,6 +583,8 @@ final class AppModel: ObservableObject {
         selectedNew = []
         savePref = false
         addToDraft = false
+        addToDraftWarmup = false
+        swapScope = .now
         if kind == .explain { linkDraft = "" }
     }
 
@@ -665,21 +742,52 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    func setWarmup(on: Bool) {
-        warmupOn = on
-        save()
+    // MARK: Creatine
+
+    static func dayKey(_ date: Date) -> String {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
-    func setWarmupMinutes(_ value: Int) {
-        warmupMinutes = min(30, max(1, value))
-        save()
-    }
+    var creaDoneToday: Bool { creaDone.contains(AppModel.dayKey(Date())) }
 
     func setCreatine(_ on: Bool) {
         crea = on
         if on { Notifier.requestAuthorizationIfNeeded() }
-        Notifier.updateCreatine(on: on)
+        rescheduleCreatine()
         save()
+    }
+
+    func toggleCreaDone() {
+        let key = AppModel.dayKey(Date())
+        if let i = creaDone.firstIndex(of: key) { creaDone.remove(at: i) } else { creaDone.append(key) }
+        if creaDone.count > 60 { creaDone.removeFirst(creaDone.count - 60) }
+        Haptics.light()
+        rescheduleCreatine()
+        save()
+    }
+
+    func setCreaTime(_ minutes: Int) {
+        creaTime = min(1439, max(0, minutes))
+        rescheduleCreatine()
+        save()
+    }
+
+    func setCreaLate(on: Bool) {
+        creaLateOn = on
+        rescheduleCreatine()
+        save()
+    }
+
+    func setCreaLateTime(_ minutes: Int) {
+        creaLateTime = min(1439, max(0, minutes))
+        rescheduleCreatine()
+        save()
+    }
+
+    /// Plant de komende 14 dagen. Een dag die je hebt afgevinkt krijgt geen herinnering meer.
+    func rescheduleCreatine() {
+        Notifier.scheduleCreatine(on: crea, time: creaTime, lateOn: creaLateOn, lateTime: creaLateTime, doneDays: creaDone)
     }
 }
 
@@ -713,18 +821,35 @@ enum Notifier {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["rest"])
     }
 
-    static func updateCreatine(on: Bool) {
+    static func scheduleCreatine(on: Bool, time: Int, lateOn: Bool, lateTime: Int, doneDays: [String]) {
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return }
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ["creatine"])
+        var ids = ["creatine"]
+        for i in 0..<14 { ids.append("creatine-a-\(i)"); ids.append("creatine-b-\(i)") }
+        center.removePendingNotificationRequests(withIdentifiers: ids)
         guard on else { return }
+        let cal = Calendar.current
+        let now = Date()
+        let start = cal.startOfDay(for: now)
+        for i in 0..<14 {
+            guard let day = cal.date(byAdding: .day, value: i, to: start) else { continue }
+            if doneDays.contains(AppModel.dayKey(day)) { continue }
+            add(center, id: "creatine-a-\(i)", day: day, minutes: time, body: "Tijd voor je creatine.", now: now)
+            if lateOn && lateTime > time {
+                add(center, id: "creatine-b-\(i)", day: day, minutes: lateTime, body: "Creatine nog niet gehad? Pak hem bij het avondeten.", now: now)
+            }
+        }
+    }
+
+    private static func add(_ center: UNUserNotificationCenter, id: String, day: Date, minutes: Int, body: String, now: Date) {
+        let cal = Calendar.current
+        guard let fire = cal.date(byAdding: .minute, value: minutes, to: day), fire > now else { return }
         let content = UNMutableNotificationContent()
         content.title = "Creatine"
-        content.body = "Tijd voor je creatine."
+        content.body = body
         content.sound = .default
-        var parts = DateComponents()
-        parts.hour = 9
-        parts.minute = 0
-        let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: true)
-        center.add(UNNotificationRequest(identifier: "creatine", content: content, trigger: trigger))
+        let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
+        center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
     }
 }

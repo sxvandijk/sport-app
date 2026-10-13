@@ -18,10 +18,8 @@ struct WorkoutScreen: View {
                             .padding(.bottom, 20)
                     }
                     // De huidige oefening staat altijd bovenaan, ook na het wegscrollen en weer aantikken.
-                    .onChange(of: openID) { id in
-                        guard let id = id else { return }
-                        withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(id, anchor: .top) }
-                    }
+                    .onChange(of: openID) { id in scrollTop(proxy, id) }
+                    .onChange(of: info.cur?.setID) { _ in scrollTop(proxy, openID) }
                     .onAppear {
                         guard let id = openID else { return }
                         DispatchQueue.main.async { proxy.scrollTo(id, anchor: .top) }
@@ -30,6 +28,14 @@ struct WorkoutScreen: View {
                 WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
             }
             .background(Tokens.bg.ignoresSafeArea())
+        }
+    }
+
+    /// Zet de open oefening bovenaan; met een korte vertraging, zodat de lijst eerst opnieuw is opgebouwd.
+    private func scrollTop(_ proxy: ScrollViewProxy, _ id: UUID?) {
+        guard let id = id else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(id, anchor: .top) }
         }
     }
 }
@@ -191,7 +197,7 @@ private struct ClosedExerciseRow: View {
         let allDone = !exercise.sets.isEmpty && exercise.sets.allSatisfy { $0.done }
         let summary = LiveSession.summary(of: exercise.sets, kind: Catalog.kind(exercise.name)) + (exercise.from.map { " · vervangt " + $0 } ?? "")
         Button {
-            model.focusID = exercise.id
+            model.focus(exercise.id)
         } label: {
             HStack(spacing: 12) {
                 ZStack {
@@ -343,7 +349,7 @@ private struct OpenExerciseCard: View {
             }
             .padding(.horizontal, 8).padding(.top, 6)
 
-            Text("Tik op het setnummer voor het type · veeg naar links om te verwijderen")
+            Text("Tik op een set om hem te kiezen of aan te passen · tik op het nummer voor het type · veeg naar links om te verwijderen")
                 .sa(12).foregroundColor(Tokens.text3)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
@@ -427,6 +433,8 @@ private struct SetRow: View {
             .frame(height: Size.setRow)
             .card(isCur ? Tokens.raised : Tokens.surface, radius: Radius.field)
             .offset(x: dx)
+            .contentShape(Rectangle())
+            .onTapGesture { model.selectSet(exID: exercise.id, setID: set.id) }
             .simultaneousGesture(
                 DragGesture(minimumDistance: 14)
                     .onChanged { value in
@@ -574,7 +582,8 @@ private struct Dock: View {
         } else {
             prev = "Nog geen vorige keer"
         }
-        if kind == .timed { prev = "Algemene warming-up" }
+        if kind == .timed { prev = set.type == .warmup ? "Warming-up" : "Op tijd" }
+        if set.done { prev = "Gedaan · pas aan en tik op Klaar" }
         if let m = set.rmax, let lo = set.rmin, m > lo, kind != .cardio && kind != .timed { prev += " · doel \(lo)–\(m) reps" }
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -588,7 +597,7 @@ private struct Dock: View {
 
             HStack(spacing: 10) {
 if kind != .timed {
-                                    stepper(value: kind == .cardio ? Format.km(set.w) : Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
+                    stepper(value: kind == .cardio ? Format.km(set.w) : Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
                         onMinus: { model.stepWeight(-1) }, onPlus: { model.stepWeight(1) })
                 }
                 stepper(value: String(set.r), unit: (kind == .cardio || kind == .timed) ? " min" : " reps", minus: "Minder reps", plus: "Meer reps",
@@ -596,7 +605,7 @@ if kind != .timed {
             }
             .padding(.top, 10)
 
-            PrimaryButton(title: "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
+            PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
                 .padding(.top, 10)
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)

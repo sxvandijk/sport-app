@@ -65,7 +65,16 @@ enum Catalog {
         ("Calf raise machine", ExerciseInfo("Kuiten", "Machine", step: 5, d: 50)),
         ("Cable crunch", ExerciseInfo("Core", "Kabel", step: 2.5, d: 30)),
         // Jouw schema's
-        (Catalog.generalWarmupName, ExerciseInfo("Warming-up", "Vrij", step: 1, d: 0, kind: .timed)),
+        // Warming-up
+        ("Rotator cuff external rotation", ExerciseInfo("Schouders", "Kabel", step: 0.5, d: 2.5)),
+        ("Rotator cuff internal rotation", ExerciseInfo("Schouders", "Kabel", step: 0.5, d: 2.5)),
+        ("Band pull-apart", ExerciseInfo("Schouders", "Band", step: 2.5, d: 0, kind: .bodyweight)),
+        ("Shoulder dislocates (band)", ExerciseInfo("Schouders", "Band", step: 2.5, d: 0, kind: .bodyweight)),
+        ("Arm circles", ExerciseInfo("Schouders", "Vrij", step: 1, d: 0, kind: .timed)),
+        ("Fietsen", ExerciseInfo("Cardio", "Hometrainer", step: 1, d: 0, kind: .timed)),
+        ("Roeimachine", ExerciseInfo("Cardio", "Roeier", step: 1, d: 0, kind: .timed)),
+        ("Crosstrainer", ExerciseInfo("Cardio", "Crosstrainer", step: 1, d: 0, kind: .timed)),
+        ("Touwtje springen", ExerciseInfo("Cardio", "Touw", step: 1, d: 0, kind: .timed)),
         ("Pullups", ExerciseInfo("Lats", "Rekstok", step: 2.5, d: 0, kind: .bodyweight)),
         ("Muscle Up", ExerciseInfo("Lats", "Rekstok", step: 2.5, d: 0, kind: .bodyweight)),
         ("Hanging Leg Raise", ExerciseInfo("Core", "Rekstok", step: 2.5, d: 0, kind: .bodyweight)),
@@ -94,8 +103,17 @@ enum Catalog {
         ("Bayesian Bicep Cable Curl", ExerciseInfo("Biceps", "Kabel", step: 0.5, d: 10))
     ]
 
-    /// De algemene warming-up aan het begin van een training.
-    static let generalWarmupName = "Warming-up"
+    /// Voorstellen voor het warming-upblok.
+    static let warmupNames: [String] = ["Rotator cuff external rotation", "Rotator cuff internal rotation", "Band pull-apart",
+                                        "Shoulder dislocates (band)", "Arm circles", "Fietsen", "Roeimachine", "Crosstrainer", "Touwtje springen"]
+
+    /// Spiergroepen zoals ze in de catalogus voorkomen (voor het filter).
+    static var muscleGroups: [String] {
+        var out: [String] = []
+        for item in all where !out.contains(item.info.muscle) { out.append(item.info.muscle) }
+        for (_, info) in custom.sorted(by: { $0.key < $1.key }) where !out.contains(info.muscle) { out.append(info.muscle) }
+        return out
+    }
 
     /// Zelf toegevoegde oefeningen (door `AppModel` gevuld).
     static var custom: [String: ExerciseInfo] = [:]
