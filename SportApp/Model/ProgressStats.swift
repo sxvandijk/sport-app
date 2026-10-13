@@ -42,7 +42,7 @@ struct ProgressStats {
             for e in h.exercises ?? [] {
                 let kind = Catalog.kind(e.name)
                 for s in e.sets where s.type != .warmup {
-                    if kind == .cardio { continue }
+                    if kind == .cardio || kind == .timed { continue }
                     let vol = s.w * Double(s.r)
                     if inMonth { out.volume += vol }
                     if weeksAgo >= 0 && weeksAgo < 8 { weekVol[7 - weeksAgo] += vol }

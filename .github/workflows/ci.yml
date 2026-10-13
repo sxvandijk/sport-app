@@ -89,7 +89,7 @@ jobs:
                           workout workout-rest workout-superset workout-toast workout-done \
                           overview editor summary \
                           sheet-menu sheet-stop sheet-start sheet-explain sheet-swap sheet-superset \
-                          sheet-add sheet-settype sheet-gym sheet-program sheet-tplmenu; do
+                          sheet-add sheet-exmenu records sheet-settype sheet-gym sheet-program sheet-tplmenu; do
               shoot "$screen-$mode" "$screen" "$mode" olive
             done
           done

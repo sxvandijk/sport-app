@@ -6,57 +6,46 @@ struct OverviewScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
-    private struct Row: Identifiable {
-        let id = UUID()
-        let header: Bool
-        let name: String
-        let sub: String
-        let badge: String
-    }
-
     /// "3 × 8–12 · 22,5 kg · Borst", "3 × 15 · Core" of "2,37 km · 3 min · Cardio".
     static func planLine(_ x: PlanItem) -> String {
         let kind = Catalog.kind(x.name)
         let muscle = Catalog.info(x.name).muscle
         guard let f = x.sets.first else { return "Geen sets · " + muscle }
         if kind == .cardio { return Format.setText(.cardio, f.w, f.r) + " · " + muscle }
-        let maxW = x.sets.map { $0.w }.max() ?? 0
-        var line = "\(x.sets.count) × " + Format.reps(f.r, f.rmax)
-        if kind == .weights || maxW > 0 { line += " · " + (kind == .bodyweight ? "+" : "") + Format.weight(maxW) + " kg" }
-        return line + " · " + muscle
+        return "\(x.sets.count) × " + Format.reps(f.r, f.rmax) + " \u{00B7} " + muscle
     }
 
-    private func rows(for items: [PlanItem]) -> [Row] {
-        var out: [Row] = []
-        var superLetterIndex = 0
-        var blockNo = 0
-        let letters = Array("ABCDEFGH")
-        for (i, x) in items.enumerated() {
-            let prevSame = i > 0 && items[i - 1].group == x.group
-            let nextSame = i < items.count - 1 && items[i + 1].group == x.group
-            if !prevSame { blockNo += 1 }
-            let inSS = prevSame || nextSame
-            if inSS && !prevSame {
-                superLetterIndex += 1
-                out.append(Row(header: true, name: "", sub: "", badge: ""))
+    /// Opeenvolgende oefeningen met hetzelfde groepsnummer vormen een superset.
+    private func blocks(of items: [PlanItem]) -> [[PlanItem]] {
+        var out: [[PlanItem]] = []
+        for x in items {
+            if let last = out.last?.last, last.group == x.group {
+                out[out.count - 1].append(x)
+            } else {
+                out.append([x])
             }
-            var pos = 1
-            var j = i - 1
-            while j >= 0 && items[j].group == x.group {
-                pos += 1
-                j -= 1
-            }
-            let sub = (x.warm != nil ? "W + " : "") + OverviewScreen.planLine(x)
-            let letter = String(letters[min(max(superLetterIndex - 1, 0), letters.count - 1)])
-            out.append(Row(header: false, name: x.name, sub: sub, badge: inSS ? letter + String(pos) : String(blockNo)))
         }
         return out
+    }
+
+    private func exerciseRow(_ x: PlanItem, number: Int, hue: Color?) -> some View {
+        HStack(spacing: 12) {
+            NumberBadge(text: String(number), hue: hue)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(x.name).sa(17, .medium).foregroundColor(Tokens.text)
+                Text((x.warm != nil ? "W + " : "") + OverviewScreen.planLine(x)).sa(13, .regular, mono: true)
+                    .foregroundColor(Tokens.text2)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 8)
+        .frame(minHeight: 60)
     }
 
     var body: some View {
         if let name = model.ovName, model.templates[name] != nil {
             let info = model.planSummary(name)
-            let list = rows(for: info.items)
+            let blockList = blocks(of: info.items)
             VStack(spacing: 0) {
                 HStack {
                     Button {
@@ -100,26 +89,7 @@ struct OverviewScreen: View {
                         .padding(.top, 14)
 
                         SectionLabel(text: "Oefeningen").padding(.top, 22).padding(.bottom, 4)
-                        ForEach(list) { row in
-                            if row.header {
-                                HStack(spacing: 6) {
-                                    Icon.link(14)
-                                    Text("SUPERSET").sa(12, .semibold, tracking: 0.72)
-                                }
-                                .foregroundColor(Tokens.text2).padding(.top, 12)
-                            } else {
-                                HStack(spacing: 12) {
-                                    Text(row.badge).sa(12, .bold).foregroundColor(Tokens.text2)
-                                        .frame(width: 32, height: 32).background(Circle().fill(Tokens.raised))
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(row.name).sa(17, .medium).foregroundColor(Tokens.text)
-                                        Text(row.sub).sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
-                                    }
-                                    Spacer(minLength: 0)
-                                }
-                                .frame(minHeight: 60)
-                            }
-                        }
+                        overviewBlocks(blockList)
                     }
                     .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 24)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -132,6 +102,27 @@ struct OverviewScreen: View {
                 .background(Tokens.bg.ignoresSafeArea(edges: .bottom))
             }
             .background(Tokens.bg.ignoresSafeArea())
+        }
+    }
+
+    @ViewBuilder
+    private func overviewBlocks(_ blockList: [[PlanItem]]) -> some View {
+        ForEach(0..<blockList.count, id: \.self) { bi in
+            let members = blockList[bi]
+            let before = blockList[0..<bi].reduce(0) { $0 + $1.count }
+            if members.count > 1 {
+                let idx = blockList[0..<bi].filter { $0.count > 1 }.count
+                SupersetFrame(index: idx, count: members.count) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(0..<members.count, id: \.self) { mi in
+                            exerciseRow(members[mi], number: before + mi + 1, hue: SupersetStyle.color(idx))
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                }
+            } else {
+                exerciseRow(members[0], number: before + 1, hue: nil)
+            }
         }
     }
 
@@ -206,9 +197,9 @@ struct EditorScreen: View {
                                 .padding(.vertical, 28).padding(.horizontal, 12)
                         }
 
-                        let badges = badgeList(draft)
+                        let ssList = supersetIndices(draft)
                         ForEach(0..<draft.items.count, id: \.self) { i in
-                            itemView(i, draft.items[i], badge: badges[i])
+                            itemView(i, draft.items[i], ss: ssList[i])
                         }
 
                         Button {
@@ -255,8 +246,8 @@ struct EditorScreen: View {
                 })
     }
 
-    /// Superset-badges (A1, A2, B1 ...) voor gekoppelde oefeningen.
-    private func badgeList(_ draft: Draft) -> [String] {
+    /// Per oefening: hoeveelste superset (voor de kleur), of nil als de oefening alleen staat.
+    private func supersetIndices(_ draft: Draft) -> [Int?] {
         var groups: [Int] = []
         var gi = -1
         for (i, it) in draft.items.enumerated() {
@@ -265,39 +256,35 @@ struct EditorScreen: View {
         }
         var sizes: [Int: Int] = [:]
         for g in groups { sizes[g, default: 0] += 1 }
-        var letterOf: [Int: String] = [:]
-        var li = 0
-        var posIn: [Int: Int] = [:]
-        let letters = Array("ABCDEFGH")
-        var out: [String] = []
+        var order: [Int: Int] = [:]
+        var out: [Int?] = []
         for g in groups {
             if (sizes[g] ?? 0) > 1 {
-                if letterOf[g] == nil {
-                    letterOf[g] = String(letters[min(li, letters.count - 1)])
-                    li += 1
-                }
-                posIn[g, default: 0] += 1
-                out.append((letterOf[g] ?? "") + String(posIn[g] ?? 1))
+                if order[g] == nil { order[g] = order.count }
+                out.append(order[g])
             } else {
-                out.append("")
+                out.append(nil)
             }
         }
         return out
     }
 
+    private static let presets: [(title: String, lo: Int, hi: Int)] = [("5\u{2013}8", 5, 8), ("8\u{2013}12", 8, 12), ("12\u{2013}15", 12, 15)]
+
     @ViewBuilder
-    private func itemView(_ i: Int, _ it: DraftItem, badge: String) -> some View {
+    private func itemView(_ i: Int, _ it: DraftItem, ss: Int?) -> some View {
+        let hue: Color? = ss.map { SupersetStyle.color($0) }
         if i > 0 {
             HStack {
                 Spacer()
                 Button { edit(i) { $0.link.toggle() } } label: {
                     HStack(spacing: 6) {
                         Icon.link(14, 2.4)
-                        Text(it.link ? "Superset" : "Koppel als superset").sa(13, .semibold)
+                        Text(it.link ? "Superset met vorige" : "Koppel als superset").sa(13, .semibold)
                     }
-                    .foregroundColor(it.link ? ac.accentText : Tokens.text3)
+                    .foregroundColor(it.link ? (hue ?? ac.accentText) : Tokens.text3)
                     .padding(.horizontal, 12).frame(minWidth: 44).frame(height: 36)
-                    .background(Capsule().fill(it.link ? ac.accentSoft : Color.clear))
+                    .background(Capsule().fill(it.link ? (hue ?? ac.accent).opacity(0.18) : Color.clear))
                 }
                 .buttonStyle(.plain)
                 .accessibilityValue(it.link ? "aan" : "uit")
@@ -306,15 +293,11 @@ struct EditorScreen: View {
             .padding(.top, -4).padding(.bottom, 4)
         }
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 8) {
-                if !badge.isEmpty {
-                    Text(badge).sa(12, .bold).foregroundColor(Tokens.text2)
-                        .padding(.horizontal, 7).frame(height: 22)
-                        .card(Tokens.raised, radius: Radius.badge).padding(.top, 2)
-                }
+            HStack(alignment: .top, spacing: 10) {
+                NumberBadge(text: String(i + 1), hue: hue, size: 28).padding(.top, 2)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
-                    Text(Catalog.info(it.name).muscle + " · " + Catalog.kind(it.name).title).sa(13).foregroundColor(Tokens.text2)
+                    Text(Catalog.info(it.name).muscle + " \u{00B7} " + Catalog.kind(it.name).title).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
                 Button { moveUp(i) } label: {
@@ -344,46 +327,56 @@ struct EditorScreen: View {
                     counter(value: String(it.sets), unit: " sets", minus: "Minder sets", plus: "Meer sets",
                             onMinus: { edit(i) { $0.sets = max(1, $0.sets - 1) } },
                             onPlus: { edit(i) { $0.sets = min(10, $0.sets + 1) } })
-                    counter(value: Format.weight(it.w), unit: Catalog.kind(it.name) == .bodyweight ? " + kg" : " kg",
-                            minus: "Minder gewicht", plus: "Meer gewicht",
-                            onMinus: { edit(i) { $0.w = Catalog.step($0.name, weight: $0.w, dir: -1) } },
-                            onPlus: { edit(i) { $0.w = Catalog.step($0.name, weight: $0.w, dir: 1) } })
-                }
-                .padding(.top, 10).padding(.trailing, 8)
-                HStack(spacing: 8) {
                     counter(value: String(it.reps), unit: " reps", minus: "Minder reps", plus: "Meer reps",
                             onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
                             onPlus: { edit(i) {
                                 $0.reps += 1
                                 if let m = $0.repsMax, m <= $0.reps { $0.repsMax = nil }
                             } })
-                    counter(value: it.repsMax.map { String($0) } ?? "–", unit: " tot", minus: "Minder maximum reps", plus: "Meer maximum reps",
+                }
+                .padding(.top, 10).padding(.trailing, 8)
+                HStack(spacing: 8) {
+                    counter(value: it.repsMax.map { String($0) } ?? "\u{2013}", unit: " tot", minus: "Minder maximum reps", plus: "Meer maximum reps",
                             onMinus: { edit(i) {
                                 if let m = $0.repsMax { $0.repsMax = m - 1 <= $0.reps ? nil : m - 1 }
                             } },
                             onPlus: { edit(i) { $0.repsMax = ($0.repsMax ?? $0.reps) + 1 } })
+                    Button { edit(i) { $0.warm.toggle() } } label: {
+                        HStack(spacing: 6) {
+                            Icon.plus(16, 2.4)
+                            Text("Warming-up").sa(14, .semibold)
+                        }
+                        .foregroundColor(it.warm ? Color.black.opacity(0.85) : Tokens.warm)
+                        .frame(maxWidth: .infinity).frame(height: 44)
+                        .card(it.warm ? Tokens.warm : Tokens.raised, radius: Radius.field)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityValue(it.warm ? "aan" : "uit")
                 }
                 .padding(.top, 8).padding(.trailing, 8)
-            }
-
-            Button { edit(i) { $0.warm.toggle() } } label: {
-                HStack(spacing: 10) {
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(it.warm ? Tokens.warm : Tokens.line).frame(width: 42, height: 26)
-                        Circle().fill(Color.white).frame(width: 22, height: 22).padding(.leading, 2)
-                            .offset(x: it.warm ? 16 : 0)
+                HStack(spacing: 6) {
+                    Text("Advies").sa(12, .medium).foregroundColor(Tokens.text3)
+                    ForEach(0..<EditorScreen.presets.count, id: \.self) { k in
+                        let p = EditorScreen.presets[k]
+                        let on = it.reps == p.lo && it.repsMax == p.hi
+                        Button { edit(i) { $0.reps = p.lo; $0.repsMax = p.hi } } label: {
+                            Text(p.title).sa(13, .semibold, mono: true)
+                                .foregroundColor(on ? Tokens.text : Tokens.text2)
+                                .padding(.horizontal, 12).frame(height: 32)
+                                .background(Capsule().fill(on ? ac.accentSoft : Tokens.raised))
+                        }
+                        .buttonStyle(.plain)
                     }
-                    Text("Warming-upset").sa(15, .medium).foregroundColor(it.warm ? Tokens.text : Tokens.text2)
+                    Spacer(minLength: 0)
                 }
-                .frame(height: 44)
+                .padding(.top, 8)
             }
-            .buttonStyle(.plain)
-            .padding(.top, 8)
-            .accessibilityValue(it.warm ? "aan" : "uit")
         }
         .padding(.leading, 16).padding(.trailing, 8).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.button)
+        .overlay(RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
+                    .stroke(hue?.opacity(0.7) ?? Color.clear, lineWidth: 1.5))
         .padding(.bottom, 8)
     }
 

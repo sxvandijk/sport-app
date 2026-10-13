@@ -169,3 +169,61 @@ enum DateText {
         formatter("EEE d MMM").string(from: date).replacingOccurrences(of: ".", with: "")
     }
 }
+
+// MARK: - Supersets
+
+/// Elke superset krijgt zijn eigen kleur, zodat je ze uit elkaar houdt.
+enum SupersetStyle {
+    static let hues: [Color] = [
+        Color(.sRGB, red: 0.30, green: 0.55, blue: 1.00, opacity: 1),
+        Color(.sRGB, red: 1.00, green: 0.62, blue: 0.26, opacity: 1),
+        Color(.sRGB, red: 1.00, green: 0.45, blue: 0.66, opacity: 1),
+        Color(.sRGB, red: 0.22, green: 0.78, blue: 0.68, opacity: 1),
+        Color(.sRGB, red: 0.70, green: 0.55, blue: 1.00, opacity: 1)
+    ]
+
+    static func color(_ index: Int) -> Color { hues[((index % hues.count) + hues.count) % hues.count] }
+}
+
+/// Een blok om oefeningen die samen een superset zijn.
+struct SupersetFrame<Content: View>: View {
+    let index: Int
+    let count: Int
+    let content: Content
+
+    init(index: Int, count: Int, @ViewBuilder content: () -> Content) {
+        self.index = index
+        self.count = count
+        self.content = content()
+    }
+
+    var body: some View {
+        let hue = SupersetStyle.color(index)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 6) {
+                Icon.link(14, 2.4)
+                Text("SUPERSET \(index + 1) \u{00B7} \(count) OEFENINGEN").sa(11, .bold, tracking: 0.66)
+            }
+            .foregroundColor(hue)
+            .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+            content
+        }
+        .padding(.bottom, 6)
+        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(hue.opacity(0.10)))
+        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).stroke(hue.opacity(0.55), lineWidth: 1.5))
+        .padding(.vertical, 6)
+    }
+}
+
+/// Rond nummer voor een oefening; in een superset in de kleur van die superset.
+struct NumberBadge: View {
+    let text: String
+    var hue: Color?
+    var size: CGFloat = 32
+
+    var body: some View {
+        Text(text).sa(12, .bold).foregroundColor(hue == nil ? Tokens.text2 : Color.black.opacity(0.85))
+            .frame(width: size, height: size)
+            .background(Circle().fill(hue ?? Tokens.raised))
+    }
+}

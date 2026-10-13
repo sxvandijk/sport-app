@@ -9,11 +9,23 @@ struct WorkoutScreen: View {
             let info = model.current()
             VStack(spacing: 0) {
                 WorkoutTopBar(session: s)
-                ScrollView {
-                    WorkoutList(session: s, cur: info.cur)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 18)
-                        .padding(.bottom, 20)
+                let openID = model.focusID.flatMap { s.exercise($0)?.id } ?? info.cur?.exID
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        WorkoutList(session: s, cur: info.cur)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 18)
+                            .padding(.bottom, 20)
+                    }
+                    // De huidige oefening staat altijd bovenaan, ook na het wegscrollen en weer aantikken.
+                    .onChange(of: openID) { id in
+                        guard let id = id else { return }
+                        withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(id, anchor: .top) }
+                    }
+                    .onAppear {
+                        guard let id = openID else { return }
+                        DispatchQueue.main.async { proxy.scrollTo(id, anchor: .top) }
+                    }
                 }
                 WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
             }
@@ -126,34 +138,43 @@ private struct WorkoutList: View {
             ForEach(0..<blocks.count, id: \.self) { bi in
                 blockView(blocks[bi], blockIndex: bi, blocks: blocks, openID: openID)
             }
+            // Ruimte onderaan, zodat ook de laatste oefening bovenaan het scherm kan staan.
+            Color.clear.frame(height: 360)
         }
     }
 
-    private func supersetLetter(blockIndex: Int, blocks: [[LiveExercise]]) -> String {
+    /// Hoeveelste superset dit blok is (0 = eerste), voor de kleur.
+    private func supersetIndex(blockIndex: Int, blocks: [[LiveExercise]]) -> Int {
         var n = 0
         for i in 0..<blockIndex where blocks[i].count > 1 { n += 1 }
-        let letters = Array("ABCDEFGH")
-        return String(letters[min(n, letters.count - 1)])
+        return n
     }
 
     @ViewBuilder
     private func blockView(_ members: [LiveExercise], blockIndex: Int, blocks: [[LiveExercise]], openID: UUID?) -> some View {
         let isSS = members.count > 1
         if isSS {
-            HStack(spacing: 6) {
-                Icon.link(14)
-                Text("Superset · \(members.count) oefeningen".uppercased()).sa(12, .semibold, tracking: 0.72)
+            let idx = supersetIndex(blockIndex: blockIndex, blocks: blocks)
+            SupersetFrame(index: idx, count: members.count) {
+                VStack(alignment: .leading, spacing: 0) {
+                    memberViews(members, hue: SupersetStyle.color(idx), openID: openID)
+                }
+                .padding(.horizontal, 10)
             }
-            .foregroundColor(Tokens.text2)
-            .padding(.top, 10).padding(.horizontal, 4).padding(.bottom, 4)
+        } else {
+            memberViews(members, hue: nil, openID: openID)
         }
+    }
+
+    @ViewBuilder
+    private func memberViews(_ members: [LiveExercise], hue: Color?, openID: UUID?) -> some View {
         ForEach(0..<members.count, id: \.self) { mi in
             let e = members[mi]
-            let badge = isSS ? supersetLetter(blockIndex: blockIndex, blocks: blocks) + String(mi + 1) : ""
+            let badge = hue != nil ? String(mi + 1) : ""
             if e.id == openID {
-                OpenExerciseCard(exercise: e, badge: badge, cur: cur)
+                OpenExerciseCard(exercise: e, badge: badge, hue: hue, cur: cur).id(e.id)
             } else {
-                ClosedExerciseRow(exercise: e, badge: badge)
+                ClosedExerciseRow(exercise: e, badge: badge, hue: hue).id(e.id)
             }
         }
     }
@@ -164,6 +185,7 @@ private struct ClosedExerciseRow: View {
     @Environment(\.accentColors) private var ac
     let exercise: LiveExercise
     let badge: String
+    var hue: Color?
 
     var body: some View {
         let allDone = !exercise.sets.isEmpty && exercise.sets.allSatisfy { $0.done }
@@ -177,8 +199,8 @@ private struct ClosedExerciseRow: View {
                         Circle().fill(ac.accentSoft)
                         Icon.check(16).foregroundColor(ac.accentText)
                     } else if !badge.isEmpty {
-                        Circle().fill(Tokens.raised)
-                        Text(badge).sa(12, .bold).foregroundColor(Tokens.text2)
+                        Circle().fill(hue ?? Tokens.raised)
+                        Text(badge).sa(12, .bold).foregroundColor(hue == nil ? Tokens.text2 : Color.black.opacity(0.85))
                     } else {
                         Circle().stroke(Tokens.line, lineWidth: 2)
                     }
@@ -223,6 +245,7 @@ private struct OpenExerciseCard: View {
     @Environment(\.accentColors) private var ac
     let exercise: LiveExercise
     let badge: String
+    var hue: Color?
     let cur: QueueItem?
 
     /// "W", "1", "2", "D", "F", ... Een "Tot falen"-set telt als een genummerde set, een dropset niet.
@@ -251,6 +274,7 @@ private struct OpenExerciseCard: View {
         case .weights: return ("KG", "REPS")
         case .bodyweight: return ("+ KG", "REPS")
         case .cardio: return ("KM", "MIN")
+        case .timed: return ("", "MIN")
         }
     }
 
@@ -261,9 +285,9 @@ private struct OpenExerciseCard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 10) {
                 if !badge.isEmpty {
-                    Text(badge).sa(12, .bold).foregroundColor(Tokens.text2)
+                    Text(badge).sa(12, .bold).foregroundColor(hue == nil ? Tokens.text2 : Color.black.opacity(0.85))
                         .padding(.horizontal, 8).frame(height: 24)
-                        .card(Tokens.raised, radius: Radius.badge)
+                        .card(hue ?? Tokens.raised, radius: Radius.badge)
                         .padding(.top, 2)
                 }
                 VStack(alignment: .leading, spacing: 2) {
@@ -272,6 +296,12 @@ private struct OpenExerciseCard: View {
                         .sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
+                Button { model.openSheet(.exmenu, exID: exercise.id) } label: {
+                    Icon.more(22).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, -8).padding(.trailing, -10)
+                .accessibilityLabel("Opties voor \(exercise.name)")
             }
             .padding(.horizontal, 16)
 
@@ -310,16 +340,6 @@ private struct OpenExerciseCard: View {
                     .card(Tokens.raised, radius: Radius.field)
                 }
                 .buttonStyle(.plain)
-                Button { model.addWarmup(exercise.id) } label: {
-                    HStack(spacing: 6) {
-                        Icon.plus(18)
-                        Text("Warming-up").sa(15, .semibold)
-                    }
-                    .foregroundColor(Tokens.warm)
-                    .frame(maxWidth: .infinity).frame(height: 44)
-                    .card(Tokens.raised, radius: Radius.field)
-                }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 8).padding(.top, 6)
 
@@ -344,6 +364,15 @@ private struct SetRow: View {
     let label: String
     let isCur: Bool
     @State private var dx: CGFloat = 0
+
+    private var firstColumn: String {
+        switch Catalog.kind(exercise.name) {
+        case .timed: return ""
+        case .bodyweight: return set.w == 0 ? "\u{2013}" : Format.weight(set.w)
+        case .cardio: return Format.km(set.w)
+        case .weights: return Format.weight(set.w)
+        }
+    }
 
     var body: some View {
         var typeColor: Color?
@@ -379,7 +408,7 @@ private struct SetRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Settype wijzigen, nu \(set.type.name)")
 
-                Text(Catalog.kind(exercise.name) == .bodyweight && set.w == 0 ? "–" : (Catalog.kind(exercise.name) == .cardio ? Format.km(set.w) : Format.weight(set.w))).sa(17, .medium, mono: true).foregroundColor(valueColor)
+                Text(firstColumn).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text(String(set.r)).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -545,7 +574,8 @@ private struct Dock: View {
         } else {
             prev = "Nog geen vorige keer"
         }
-        if let m = set.rmax, let lo = set.rmin, m > lo, kind != .cardio { prev += " · doel \(lo)–\(m) reps" }
+        if kind == .timed { prev = "Algemene warming-up" }
+        if let m = set.rmax, let lo = set.rmin, m > lo, kind != .cardio && kind != .timed { prev += " · doel \(lo)–\(m) reps" }
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
@@ -557,9 +587,11 @@ private struct Dock: View {
                 .padding(.horizontal, 4).padding(.top, 1)
 
             HStack(spacing: 10) {
-                stepper(value: kind == .cardio ? Format.km(set.w) : Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
+if kind != .timed {
+                                    stepper(value: kind == .cardio ? Format.km(set.w) : Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
                         onMinus: { model.stepWeight(-1) }, onPlus: { model.stepWeight(1) })
-                stepper(value: String(set.r), unit: kind == .cardio ? " min" : " reps", minus: "Minder reps", plus: "Meer reps",
+                }
+                stepper(value: String(set.r), unit: (kind == .cardio || kind == .timed) ? " min" : " reps", minus: "Minder reps", plus: "Meer reps",
                         onMinus: { model.stepReps(-1) }, onPlus: { model.stepReps(1) })
             }
             .padding(.top, 10)
