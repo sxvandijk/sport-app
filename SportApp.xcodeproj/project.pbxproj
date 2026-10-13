@@ -12,6 +12,7 @@
 		17CFE4F79E6729C58D5E5563 /* WeightScale.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082ECF064246E5EDBB526B47 /* WeightScale.swift */; };
 		1CEE362E8B65DB787C242767 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50AE1FAC9177983ABFA1F522 /* RootView.swift */; };
 		1F7CCAC090633386718BD7A9 /* StoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904C969D974EED4BDAFD24AE /* StoreTests.swift */; };
+		224E9FB15BE95AF39FF4C3C6 /* RecordsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF10B0A5955D7380CAB57CB /* RecordsScreen.swift */; };
 		26730E265956F0378B5860B9 /* WorkoutTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8618AD660ED167CD840CDDCA /* WorkoutTemplate.swift */; };
 		2918E912CB4DBA621AA64DBC /* Tokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F6B51DFA1BA2096FC34340D /* Tokens.swift */; };
 		2D9E605573EF2D878877F5EF /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C49433089E38293B56BB4AF /* ProgressStats.swift */; };
@@ -79,6 +80,7 @@
 		732408D890E012F2C3658430 /* Program.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Program.swift; sourceTree = "<group>"; };
 		748423CE4CEB4451880D9F22 /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
 		7B8E9BA237D2E66C7EE664E1 /* RoundOneTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundOneTests.swift; sourceTree = "<group>"; };
+		7FF10B0A5955D7380CAB57CB /* RecordsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsScreen.swift; sourceTree = "<group>"; };
 		8618AD660ED167CD840CDDCA /* WorkoutTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutTemplate.swift; sourceTree = "<group>"; };
 		87A6C6FBD9988FE4300BFDA8 /* OtherScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherScreens.swift; sourceTree = "<group>"; };
 		904C969D974EED4BDAFD24AE /* StoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreTests.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				049E495496112395984D36A2 /* Components.swift */,
 				126581F677789CD791AC5137 /* HomeScreens.swift */,
 				87A6C6FBD9988FE4300BFDA8 /* OtherScreens.swift */,
+				7FF10B0A5955D7380CAB57CB /* RecordsScreen.swift */,
 				EE5A68D9636C3C4FDB011318 /* Sheets.swift */,
 				1E3FA897A80262B5FD9BADA2 /* SVGPath.swift */,
 				F4AE0A1508E934E487C0EA64 /* WorkoutScreen.swift */,
@@ -334,6 +337,7 @@
 				449C218FC67AD79F89739279 /* PlanModels.swift in Sources */,
 				BC20F35776246727ACEC69E5 /* Program.swift in Sources */,
 				2D9E605573EF2D878877F5EF /* ProgressStats.swift in Sources */,
+				224E9FB15BE95AF39FF4C3C6 /* RecordsScreen.swift in Sources */,
 				1CEE362E8B65DB787C242767 /* RootView.swift in Sources */,
 				5AFAC9BB1BFC69EAB7E3082D /* SVGPath.swift in Sources */,
 				3D9D878A700537D75780C23A /* Sheets.swift in Sources */,
