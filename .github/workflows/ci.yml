@@ -144,18 +144,19 @@ jobs:
             grep -E "error:|warning:|Test Case .* (passed|failed)|Executed [0-9]+ tests|\*\* (BUILD|TEST) " ci-results/xcodebuild.log > out/summary.log
           fi
           [ -d ci-results/screenshots ] && cp -R ci-results/screenshots out/screenshots
+          rm -rf "$RUNNER_TEMP/out" && cp -R out "$RUNNER_TEMP/out"
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
           git fetch origin ci-results 2>/dev/null
           if git rev-parse --verify origin/ci-results >/dev/null 2>&1; then
-            git checkout -B ci-results origin/ci-results
+            git checkout -f -B ci-results origin/ci-results
           else
-            git checkout --orphan ci-results
+            git checkout -f --orphan ci-results
             git rm -rf . >/dev/null 2>&1
           fi
           rm -rf "results/$SAFE"
           mkdir -p "results/$SAFE"
-          cp -R out/. "results/$SAFE/"
+          cp -R "$RUNNER_TEMP/out/." "results/$SAFE/"
           git add -f results
           git commit -m "CI-uitkomst voor $BRANCH_NAME ($JOB_STATUS)" >/dev/null 2>&1
-          git push origin ci-results
+          git push origin ci-results || { git pull --rebase origin ci-results && git push origin ci-results; }
