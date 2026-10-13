@@ -129,7 +129,12 @@ struct LiveSession: Codable, Hashable {
         let kind = Catalog.kind(name)
         let workType: SetType = isWarmupBlock ? .warmup : .work
         if !isWarmupBlock, let warm = plan?.warm {
-            sets.append(LiveSet(type: .warmup, w: warm.w, r: warm.r, pw: nil, pr: nil))
+            let n = max(1, plan?.warmCount ?? 1)
+            for k in 0..<n {
+                // Bij meerdere warming-upsets loopt het gewicht op naar je werkgewicht.
+                let w = n == 1 ? warm.w : ((warm.w * 2 * Double(k + 1) / Double(n + 1)) * 2).rounded() / 2
+                sets.append(LiveSet(type: .warmup, w: w, r: warm.r, pw: nil, pr: nil))
+            }
         }
         let planned = plan?.sets ?? []
         let count: Int

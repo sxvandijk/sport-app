@@ -25,7 +25,7 @@ enum SwapScope { case now, schema, prefOnly }
 struct DraftItem: Identifiable, Hashable {
     var id = UUID()
     var name: String
-    var warm: Bool
+    var warmSets: Int
     var warmW: Double?
     var sets: Int
     var reps: Int
@@ -62,7 +62,7 @@ struct Draft: Hashable {
         for (i, p) in plans.enumerated() {
             let isWarm = p.isWarmup == true
             let linked = !isWarm && i > 0 && plans[i - 1].group == p.group && plans[i - 1].isWarmup != true
-            var item = DraftItem(name: p.name, warm: p.warm != nil, warmW: p.warm?.w,
+            var item = DraftItem(name: p.name, warmSets: p.warm == nil ? 0 : (p.warmCount ?? 1), warmW: p.warm?.w,
                                  sets: p.sets.count, reps: p.sets.first?.r ?? 10, repsMax: p.sets.first?.rmax,
                                  w: p.sets.first?.w ?? 20, link: linked)
             item.isWarmup = isWarm
@@ -81,8 +81,9 @@ struct Draft: Hashable {
             for _ in 0..<it.sets { sets.append(PlanSet(w: it.w, r: it.reps, rmax: it.repsMax)) }
             var plan = PlanItem(name: it.name, group: g, sets: sets)
             if it.isWarmup { plan.isWarmup = true }
-            if it.warm && !it.isWarmup {
+            if it.warmSets > 0 && !it.isWarmup {
                 plan.warm = PlanSet(w: it.warmW ?? (it.w / 2).rounded(), r: 12)
+                plan.warmCount = it.warmSets
             }
             out.append(plan)
         }
@@ -284,7 +285,7 @@ final class AppModel: ObservableObject {
         var muscles: [String] = []
         for x in items where x.isWarmup != true {
             work += x.sets.count
-            if x.warm != nil { warm += 1 }
+            if x.warm != nil { warm += x.warmCount ?? 1 }
             let m = Catalog.info(x.name).muscle
             if !muscles.contains(m) { muscles.append(m) }
         }
@@ -513,7 +514,7 @@ final class AppModel: ObservableObject {
     func addDraftWarmup(_ name: String) {
         guard var d = draft else { return }
         let kind = Catalog.kind(name)
-        var item = DraftItem(name: name, warm: false, warmW: nil, sets: kind == .weights || kind == .bodyweight ? 2 : 1,
+        var item = DraftItem(name: name, warmSets: 0, warmW: nil, sets: kind == .weights || kind == .bodyweight ? 2 : 1,
                              reps: kind == .weights || kind == .bodyweight ? 15 : 5, w: Catalog.info(name).defaultWeight, link: false)
         item.isWarmup = true
         let at = d.items.filter { $0.isWarmup }.count
@@ -758,6 +759,14 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    /// Vanuit de melding ("Gehad"): vink vandaag af zonder de app te openen.
+    func markCreaDoneFromNotification() {
+        let key = AppModel.dayKey(Date())
+        if !creaDone.contains(key) { creaDone.append(key) }
+        rescheduleCreatine()
+        save()
+    }
+
     func toggleCreaDone() {
         let key = AppModel.dayKey(Date())
         if let i = creaDone.firstIndex(of: key) { creaDone.remove(at: i) } else { creaDone.append(key) }
@@ -803,6 +812,20 @@ enum Haptics {
 
 /// Lokale meldingen: einde van de rusttijd en de dagelijkse creatine-herinnering.
 enum Notifier {
+    static let creatineCategory = "CREATINE"
+    static let takenAction = "CREATINE_TAKEN"
+    static let laterAction = "CREATINE_LATER"
+    /// Wordt door de app gezet; draait wanneer je in de melding op "Gehad" tikt.
+    static var onCreatineTaken: (() -> Void)?
+
+    /// Knoppen onder de creatine-melding: "Gehad" haalt de tweede herinnering weg, "Later" laat hem staan.
+    static func registerCategories() {
+        let taken = UNNotificationAction(identifier: takenAction, title: "Gehad", options: [])
+        let later = UNNotificationAction(identifier: laterAction, title: "Later", options: [])
+        let category = UNNotificationCategory(identifier: creatineCategory, actions: [taken, later], intentIdentifiers: [], options: [])
+        UNUserNotificationCenter.current().setNotificationCategories([category])
+    }
+
     static func requestAuthorizationIfNeeded() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
@@ -848,6 +871,7 @@ enum Notifier {
         content.title = "Creatine"
         content.body = body
         content.sound = .default
+        content.categoryIdentifier = creatineCategory
         let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
         let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
         center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
