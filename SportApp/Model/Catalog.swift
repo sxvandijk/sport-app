@@ -81,6 +81,7 @@ enum Catalog {
         ("Ab Crunch Machine", ExerciseInfo("Core", "Machine", step: 5, d: 40)),
         ("Abductor", ExerciseInfo("Billen", "Machine", step: 5, d: 40)),
         ("Adductor", ExerciseInfo("Billen", "Machine", step: 5, d: 40)),
+        ("Dumbbell Shoulder Press", ExerciseInfo("Schouders", "Dumbbells", step: 2.5, d: 17.5)),
         ("Dumbbell Bench Press", ExerciseInfo("Borst", "Dumbbells", step: 2.5, d: 22.5)),
         ("Butterfly", ExerciseInfo("Borst", "Machine", step: 5, d: 50)),
         ("Cable Deltoid Side Raise", ExerciseInfo("Schouders", "Kabel", step: 0.5, d: 5)),

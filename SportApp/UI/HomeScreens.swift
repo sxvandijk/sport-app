@@ -512,6 +512,12 @@ struct GymTab: View {
 // MARK: - Profiel
 
 struct ProfileTab: View {
+    private var profileLine: String {
+        let n = model.history.count
+        guard let first = model.history.map({ $0.date }).min() else { return "Nog geen trainingen" }
+        return "\(n) \(n == 1 ? "training" : "trainingen") \u{00B7} sinds " + DateText.month(first)
+    }
+
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
@@ -526,7 +532,7 @@ struct ProfileTab: View {
                     .frame(width: 52, height: 52).background(Circle().fill(ac.accent))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Stan").sa(19, .semibold).foregroundColor(Tokens.text)
-                    Text("\(model.history.count) trainingen · sinds juli 2026").sa(13, .regular, mono: true)
+                    Text(profileLine).sa(13, .regular, mono: true)
                         .foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
