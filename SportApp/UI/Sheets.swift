@@ -60,8 +60,6 @@ private struct SheetBody: View {
         }
     }
 
-    @State private var contentHeight: CGFloat = 320
-
     var body: some View {
         let h = heading
         GeometryReader { geo in
@@ -87,25 +85,23 @@ private struct SheetBody: View {
                     }
                     .padding(.top, 10).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
 
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 0) {
-                            content
-                        }
-                        .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            GeometryReader { inner in
-                                Color.clear.preference(key: SheetHeightKey.self, value: inner.size.height)
-                            }
-                        )
+                    ViewThatFits(in: .vertical) {
+                        padded
+                        ScrollView { padded }
                     }
-                    .frame(maxHeight: contentHeight)
-                    .onPreferenceChange(SheetHeightKey.self) { contentHeight = $0 }
                 }
                 .frame(maxHeight: min(740, geo.size.height - 40))
                 .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
             }
         }
+    }
+
+    private var padded: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            content
+        }
+        .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder

@@ -9,6 +9,7 @@ enum SVGPath {
         var current = CGPoint.zero
         var start = CGPoint.zero
         var command: Character = "M"
+        var lastControl: CGPoint?
 
         while let next = scanner.nextCommandOrNumber() {
             if case .command(let c) = next {
@@ -22,6 +23,8 @@ enum SVGPath {
                 scanner.pushBack(next)
             }
             let relative = command.isLowercase
+            let previousControl = lastControl
+            lastControl = nil
             switch command {
             case "M", "m":
                 guard let x = scanner.number(), let y = scanner.number() else { return path }
@@ -54,6 +57,20 @@ enum SVGPath {
                 path.addCurve(to: end,
                               control1: CGPoint(x: o.x + x1, y: o.y + y1),
                               control2: CGPoint(x: o.x + x2, y: o.y + y2))
+                lastControl = CGPoint(x: o.x + x2, y: o.y + y2)
+                current = end
+            case "S", "s":
+                guard let x2 = scanner.number(), let y2 = scanner.number(),
+                      let x = scanner.number(), let y = scanner.number() else { return path }
+                let o = relative ? current : .zero
+                let end = CGPoint(x: o.x + x, y: o.y + y)
+                let c2 = CGPoint(x: o.x + x2, y: o.y + y2)
+                var c1 = current
+                if let prev = previousControl {
+                    c1 = CGPoint(x: 2 * current.x - prev.x, y: 2 * current.y - prev.y)
+                }
+                path.addCurve(to: end, control1: c1, control2: c2)
+                lastControl = c2
                 current = end
             case "A", "a":
                 guard let rx = scanner.number(), let ry = scanner.number(), let rot = scanner.number(),
