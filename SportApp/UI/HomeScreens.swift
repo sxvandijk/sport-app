@@ -203,27 +203,29 @@ struct TrainingTab: View {
             }
             .buttonStyle(.plain)
 
-            Button {
-                model.askStart("")
-            } label: {
-                HStack(spacing: 14) {
-                    Icon.plus(20).foregroundColor(Tokens.text)
-                        .frame(width: 36, height: 36)
-                        .background(Circle().fill(Tokens.raised))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Vrije training").sa(17, .semibold).foregroundColor(Tokens.text)
-                        Text("Kies je oefeningen tijdens het trainen").sa(13).foregroundColor(Tokens.text2)
+            VStack(alignment: .leading, spacing: 0) {
+                Button {
+                    model.askStart("")
+                } label: {
+                    HStack(spacing: 14) {
+                        Icon.plus(20).foregroundColor(Tokens.text)
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(Tokens.raised))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Vrije training").sa(17, .semibold).foregroundColor(Tokens.text)
+                            Text("Kies je oefeningen tijdens het trainen").sa(13).foregroundColor(Tokens.text2)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    Spacer(minLength: 0)
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+                    .card(Tokens.surface, radius: Radius.button)
                 }
-                .padding(.horizontal, 16).padding(.vertical, 10)
-                .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-                .card(Tokens.surface, radius: Radius.button)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 16)
+                .buttonStyle(.plain)
+                .padding(.top, 16)
 
-            CreatineCheckRow().padding(.top, 10)
+                CreatineCheckRow().padding(.top, 10)
+            }
         }
     }
 
