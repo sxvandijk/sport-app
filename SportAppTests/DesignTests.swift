@@ -4,8 +4,8 @@ import XCTest
 final class AccentPaletteTests: XCTestCase {
 
     func testWhichAccentsCountAsDark() {
-        let dark: [AccentID] = [.olive, .viola]
-        let light: [AccentID] = [.lime, .mint, .ice, .pink]
+        let dark: [AccentID] = [.olive, .viola, .blue, .red, .petrol, .forest, .graphite, .raspberry]
+        let light: [AccentID] = [.lime, .mint, .ice, .pink, .orange, .yellow, .aqua, .lilac, .coral]
         for id in dark {
             XCTAssertLessThan(RGB(hex: id.hex).luminance, AccentPalette.darkThreshold, id.displayName)
         }

@@ -14,6 +14,18 @@ struct OverviewScreen: View {
         let badge: String
     }
 
+    /// "3 × 8–12 · 22,5 kg · Borst", "3 × 15 · Core" of "2,37 km · 3 min · Cardio".
+    static func planLine(_ x: PlanItem) -> String {
+        let kind = Catalog.kind(x.name)
+        let muscle = Catalog.info(x.name).muscle
+        guard let f = x.sets.first else { return "Geen sets · " + muscle }
+        if kind == .cardio { return Format.setText(.cardio, f.w, f.r) + " · " + muscle }
+        let maxW = x.sets.map { $0.w }.max() ?? 0
+        var line = "\(x.sets.count) × " + Format.reps(f.r, f.rmax)
+        if kind == .weights || maxW > 0 { line += " · " + (kind == .bodyweight ? "+" : "") + Format.weight(maxW) + " kg" }
+        return line + " · " + muscle
+    }
+
     private func rows(for items: [PlanItem]) -> [Row] {
         var out: [Row] = []
         var superLetterIndex = 0
@@ -34,9 +46,7 @@ struct OverviewScreen: View {
                 pos += 1
                 j -= 1
             }
-            let maxReps = x.sets.map { $0.r }.max() ?? 0
-            let maxW = x.sets.map { $0.w }.max() ?? 0
-            let sub = (x.warm != nil ? "W + " : "") + "\(x.sets.count) × \(maxReps) · \(Format.weight(maxW)) kg · " + Catalog.info(x.name).muscle
+            let sub = (x.warm != nil ? "W + " : "") + OverviewScreen.planLine(x)
             let letter = String(letters[min(max(superLetterIndex - 1, 0), letters.count - 1)])
             out.append(Row(header: false, name: x.name, sub: sub, badge: inSS ? letter + String(pos) : String(blockNo)))
         }
@@ -304,7 +314,7 @@ struct EditorScreen: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
-                    Text(Catalog.info(it.name).muscle + " · " + Format.weight(it.w) + " kg").sa(13).foregroundColor(Tokens.text2)
+                    Text(Catalog.info(it.name).muscle + " · " + Catalog.kind(it.name).title).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
                 Button { moveUp(i) } label: {
@@ -319,15 +329,42 @@ struct EditorScreen: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Verwijder oefening")
             }
-            HStack(spacing: 8) {
-                counter(value: String(it.sets), unit: " sets", minus: "Minder sets", plus: "Meer sets",
-                        onMinus: { edit(i) { $0.sets = max(1, $0.sets - 1) } },
-                        onPlus: { edit(i) { $0.sets = min(10, $0.sets + 1) } })
-                counter(value: String(it.reps), unit: " reps", minus: "Minder reps", plus: "Meer reps",
-                        onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
-                        onPlus: { edit(i) { $0.reps += 1 } })
+            if Catalog.kind(it.name) == .cardio {
+                HStack(spacing: 8) {
+                    counter(value: Format.weight(it.w), unit: " km", minus: "Minder kilometers", plus: "Meer kilometers",
+                            onMinus: { edit(i) { $0.w = max(0, (($0.w - 0.1) * 100).rounded() / 100) } },
+                            onPlus: { edit(i) { $0.w = (($0.w + 0.1) * 100).rounded() / 100 } })
+                    counter(value: String(it.reps), unit: " min", minus: "Minder minuten", plus: "Meer minuten",
+                            onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
+                            onPlus: { edit(i) { $0.reps += 1 } })
+                }
+                .padding(.top, 10).padding(.trailing, 8)
+            } else {
+                HStack(spacing: 8) {
+                    counter(value: String(it.sets), unit: " sets", minus: "Minder sets", plus: "Meer sets",
+                            onMinus: { edit(i) { $0.sets = max(1, $0.sets - 1) } },
+                            onPlus: { edit(i) { $0.sets = min(10, $0.sets + 1) } })
+                    counter(value: Format.weight(it.w), unit: Catalog.kind(it.name) == .bodyweight ? " + kg" : " kg",
+                            minus: "Minder gewicht", plus: "Meer gewicht",
+                            onMinus: { edit(i) { $0.w = Catalog.step($0.name, weight: $0.w, dir: -1) } },
+                            onPlus: { edit(i) { $0.w = Catalog.step($0.name, weight: $0.w, dir: 1) } })
+                }
+                .padding(.top, 10).padding(.trailing, 8)
+                HStack(spacing: 8) {
+                    counter(value: String(it.reps), unit: " reps", minus: "Minder reps", plus: "Meer reps",
+                            onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
+                            onPlus: { edit(i) {
+                                $0.reps += 1
+                                if let m = $0.repsMax, m <= $0.reps { $0.repsMax = nil }
+                            } })
+                    counter(value: it.repsMax.map { String($0) } ?? "–", unit: " tot", minus: "Minder maximum reps", plus: "Meer maximum reps",
+                            onMinus: { edit(i) {
+                                if let m = $0.repsMax { $0.repsMax = m - 1 <= $0.reps ? nil : m - 1 }
+                            } },
+                            onPlus: { edit(i) { $0.repsMax = ($0.repsMax ?? $0.reps) + 1 } })
+                }
+                .padding(.top, 8).padding(.trailing, 8)
             }
-            .padding(.top, 10).padding(.trailing, 8)
 
             Button { edit(i) { $0.warm.toggle() } } label: {
                 HStack(spacing: 10) {

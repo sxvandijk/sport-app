@@ -167,7 +167,7 @@ private struct ClosedExerciseRow: View {
 
     var body: some View {
         let allDone = !exercise.sets.isEmpty && exercise.sets.allSatisfy { $0.done }
-        let summary = LiveSession.summary(of: exercise.sets) + (exercise.from.map { " · vervangt " + $0 } ?? "")
+        let summary = LiveSession.summary(of: exercise.sets, kind: Catalog.kind(exercise.name)) + (exercise.from.map { " · vervangt " + $0 } ?? "")
         Button {
             model.focusID = exercise.id
         } label: {
@@ -246,6 +246,14 @@ private struct OpenExerciseCard: View {
         return out
     }
 
+    private var kindUnits: (first: String, second: String) {
+        switch Catalog.kind(exercise.name) {
+        case .weights: return ("KG", "REPS")
+        case .bodyweight: return ("+ KG", "REPS")
+        case .cardio: return ("KM", "MIN")
+        }
+    }
+
     var body: some View {
         let labels = OpenExerciseCard.labels(for: exercise.sets)
         let rows: [(set: LiveSet, label: String)] = Array(zip(exercise.sets, labels)).map { (set: $0.0, label: $0.1) }
@@ -279,8 +287,8 @@ private struct OpenExerciseCard: View {
 
             HStack(spacing: 0) {
                 Text("SET").frame(width: 48, alignment: .leading)
-                Text("KG").frame(maxWidth: .infinity, alignment: .leading)
-                Text("REPS").frame(maxWidth: .infinity, alignment: .leading)
+                Text(kindUnits.first).frame(maxWidth: .infinity, alignment: .leading)
+                Text(kindUnits.second).frame(maxWidth: .infinity, alignment: .leading)
                 Spacer().frame(width: 40)
             }
             .sa(12, .semibold, tracking: 0.48).foregroundColor(Tokens.text3)
@@ -371,7 +379,7 @@ private struct SetRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Settype wijzigen, nu \(set.type.name)")
 
-                Text(Format.weight(set.w)).sa(17, .medium, mono: true).foregroundColor(valueColor)
+                Text(Catalog.kind(exercise.name) == .bodyweight && set.w == 0 ? "–" : Format.weight(set.w)).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text(String(set.r)).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -530,12 +538,14 @@ private struct Dock: View {
 
     var body: some View {
         let t = tag
-        let prev: String
+        let kind = Catalog.kind(exercise.name)
+        var prev: String
         if let pw = set.pw, let pr = set.pr {
-            prev = "Vorige keer \(Format.weight(pw)) kg × \(pr)"
+            prev = "Vorige keer " + Format.setText(kind, pw, pr)
         } else {
             prev = "Nog geen vorige keer"
         }
+        if let m = set.rmax, let lo = set.rmin, m > lo, kind != .cardio { prev += " · doel \(lo)–\(m) reps" }
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
@@ -547,9 +557,9 @@ private struct Dock: View {
                 .padding(.horizontal, 4).padding(.top, 1)
 
             HStack(spacing: 10) {
-                stepper(value: Format.weight(set.w), unit: " kg", minus: "Minder gewicht", plus: "Meer gewicht",
+                stepper(value: Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
                         onMinus: { model.stepWeight(-1) }, onPlus: { model.stepWeight(1) })
-                stepper(value: String(set.r), unit: " reps", minus: "Minder reps", plus: "Meer reps",
+                stepper(value: String(set.r), unit: kind == .cardio ? " min" : " reps", minus: "Minder reps", plus: "Meer reps",
                         onMinus: { model.stepReps(-1) }, onPlus: { model.stepReps(1) })
             }
             .padding(.top, 10)

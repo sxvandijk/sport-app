@@ -44,6 +44,9 @@ struct LiveSet: Identifiable, Codable, Hashable {
     var pw: Double?
     var pr: Int?
     var done = false
+    /// Bovengrens van het herhalingsbereik (alleen om te laten zien).
+    var rmax: Int? = nil
+    var rmin: Int? = nil
 }
 
 struct LiveExercise: Identifiable, Codable, Hashable {
@@ -100,29 +103,42 @@ struct LiveSession: Codable, Hashable {
 
     // MARK: Opbouwen
 
-    static func makeExercise(name: String, group: Int, plan: PlanItem?) -> LiveExercise {
+    /// Laatste keer dat je deze oefening echt deed (nieuwste training eerst).
+    static func lastLogged(_ name: String, in history: [HistoryEntry]) -> LoggedExercise? {
+        let sorted = history.sorted { $0.date > $1.date }
+        for h in sorted {
+            if let e = h.exercises?.first(where: { $0.name == name && $0.sets.contains(where: { $0.type != .warmup }) }) {
+                return e
+            }
+        }
+        return nil
+    }
+
+    static func makeExercise(name: String, group: Int, plan: PlanItem?, last: LoggedExercise? = nil) -> LiveExercise {
         var sets: [LiveSet] = []
-        if let plan = plan {
-            if let warm = plan.warm {
-                sets.append(LiveSet(type: .warmup, w: warm.w, r: warm.r, pw: warm.w, pr: warm.r))
-            }
-            for s in plan.sets {
-                sets.append(LiveSet(type: .work, w: s.w, r: s.r, pw: s.w, pr: s.r))
-            }
-        } else {
-            let d = Catalog.info(name).defaultWeight
-            for _ in 0..<3 {
-                sets.append(LiveSet(type: .work, w: d, r: 10, pw: nil, pr: nil))
-            }
+        let lastWork = (last?.sets ?? []).filter { $0.type != .warmup }
+        let kind = Catalog.kind(name)
+        if let warm = plan?.warm {
+            sets.append(LiveSet(type: .warmup, w: warm.w, r: warm.r, pw: nil, pr: nil))
+        }
+        let planned = plan?.sets ?? []
+        let count: Int
+        if !planned.isEmpty { count = planned.count } else if !lastWork.isEmpty { count = lastWork.count } else { count = kind == .cardio ? 1 : 3 }
+        for i in 0..<count {
+            let base: PlanSet? = planned.isEmpty ? nil : planned[i]
+            let prev: LoggedSet? = lastWork.isEmpty ? nil : lastWork[min(i, lastWork.count - 1)]
+            let w = prev?.w ?? base?.w ?? Catalog.info(name).defaultWeight
+            let r = prev?.r ?? base?.r ?? (kind == .cardio ? 10 : 10)
+            sets.append(LiveSet(type: .work, w: w, r: r, pw: prev?.w, pr: prev?.r, rmax: base?.rmax, rmin: base?.r))
         }
         return LiveExercise(name: name, group: group, from: nil, sets: sets)
     }
 
-    static func make(name: String, startAt: Date, templates: [String: [PlanItem]]) -> LiveSession {
+    static func make(name: String, startAt: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = []) -> LiveSession {
         let plans = templates[name] ?? []
         var list: [LiveExercise] = []
         for item in plans {
-            list.append(makeExercise(name: item.name, group: item.group, plan: item))
+            list.append(makeExercise(name: item.name, group: item.group, plan: item, last: lastLogged(item.name, in: history)))
         }
         return LiveSession(name: name.isEmpty ? "Lege training" : name, startAt: startAt, exercises: list, nextGroup: 100)
     }
@@ -332,34 +348,38 @@ struct LiveSession: Codable, Hashable {
         exercises[e].sets.insert(removed.set, at: at)
     }
 
-    mutating func addExercise(_ name: String) {
+    mutating func addExercise(_ name: String, history: [HistoryEntry] = []) {
         nextGroup += 1
-        exercises.append(LiveSession.makeExercise(name: name, group: nextGroup, plan: nil))
+        exercises.append(LiveSession.makeExercise(name: name, group: nextGroup, plan: nil,
+                                                  last: LiveSession.lastLogged(name, in: history)))
     }
 
     /// "Machine bezet": de open sets gaan naar de nieuwe oefening, gedane sets blijven staan.
-    mutating func swap(exID: UUID, to name: String) {
+    mutating func swap(exID: UUID, to name: String, history: [HistoryEntry] = []) {
         guard let e = index(of: exID) else { return }
         let old = exercises[e].name
         if exercises[e].from == nil { exercises[e].from = old }
         exercises[e].name = name
         let d = Catalog.info(name).defaultWeight
+        let lastWork = (LiveSession.lastLogged(name, in: history)?.sets ?? []).filter { $0.type != .warmup }
         for i in exercises[e].sets.indices where !exercises[e].sets[i].done {
-            exercises[e].sets[i].w = d
-            exercises[e].sets[i].pw = nil
-            exercises[e].sets[i].pr = nil
+            let prev: LoggedSet? = lastWork.isEmpty ? nil : lastWork[min(i, lastWork.count - 1)]
+            exercises[e].sets[i].w = prev?.w ?? d
+            exercises[e].sets[i].pw = prev?.w
+            exercises[e].sets[i].pr = prev?.r
+            exercises[e].sets[i].rmax = nil
         }
     }
 
     /// Koppelt bestaande oefeningen (`existing`) en nieuwe (`newNames`) aan de basisoefening tot één superset.
-    mutating func link(base exID: UUID, existing: [UUID], newNames: [String]) {
+    mutating func link(base exID: UUID, existing: [UUID], newNames: [String], history: [HistoryEntry] = []) {
         guard let baseIndex = index(of: exID) else { return }
         if existing.isEmpty && newNames.isEmpty { return }
         let g = exercises[baseIndex].group
         var moving = exercises.filter { existing.contains($0.id) }
         exercises.removeAll { existing.contains($0.id) }
         for i in moving.indices { moving[i].group = g }
-        for n in newNames { moving.append(LiveSession.makeExercise(name: n, group: g, plan: nil)) }
+        for n in newNames { moving.append(LiveSession.makeExercise(name: n, group: g, plan: nil, last: LiveSession.lastLogged(n, in: history))) }
         var lastIdx = -1
         for (i, e) in exercises.enumerated() where e.group == g { lastIdx = i }
         exercises.insert(contentsOf: moving, at: lastIdx + 1)
@@ -377,29 +397,37 @@ struct LiveSession: Codable, Hashable {
     }
 
     func summary(of e: LiveExercise) -> String {
-        LiveSession.summary(of: e.sets)
+        LiveSession.summary(of: e.sets, kind: Catalog.kind(e.name))
     }
 
     // MARK: Samenvattingen
 
     /// "3 × 26 kg · 8, 8, 7 reps", "2 van 3 gedaan · 55 kg × 9" of "3 sets · 55 kg × 10".
-    static func summary(of sets: [LiveSet]) -> String {
+    static func summary(of sets: [LiveSet], kind: ExerciseKind = .weights) -> String {
         let work = sets.filter { $0.type != .warmup }
         let done = work.filter { $0.done }
         if work.isEmpty { return "Geen sets" }
+        if kind == .cardio {
+            let km = done.reduce(0) { $0 + $1.w }
+            let min = done.reduce(0) { $0 + $1.r }
+            if done.isEmpty { return "\(Format.setText(kind, work[0].w, work[0].r))" }
+            return "\(Format.weight(km)) km · \(min) min"
+        }
         if done.count == work.count {
             let weights = done.map { $0.w }
             let mn = weights.min() ?? 0
             let mx = weights.max() ?? 0
-            let wt = mn == mx ? Format.weight(mn) + " kg" : Format.weight(mn) + "–" + Format.weight(mx) + " kg"
             let reps = done.map { String($0.r) }.joined(separator: ", ")
+            if kind == .bodyweight && mx == 0 { return "\(done.count) × \(reps) reps" }
+            let pre = kind == .bodyweight ? "+" : ""
+            let wt = mn == mx ? pre + Format.weight(mn) + " kg" : pre + Format.weight(mn) + "–" + Format.weight(mx) + " kg"
             return "\(done.count) × \(wt) · \(reps) reps"
         }
         let next = work.first(where: { !$0.done }) ?? work[0]
         if !done.isEmpty {
-            return "\(done.count) van \(work.count) gedaan · \(Format.weight(next.w)) kg × \(next.r)"
+            return "\(done.count) van \(work.count) gedaan · \(Format.setText(kind, next.w, next.r))"
         }
-        return "\(work.count) sets · \(Format.weight(next.w)) kg × \(next.r)"
+        return "\(work.count) sets · \(Format.setText(kind, next.w, next.r))"
     }
 
     func finishSummary(now: Date, note: String?) -> (summary: SessionSummary, workSets: Int) {
@@ -408,12 +436,12 @@ struct LiveSession: Codable, Hashable {
         for e in exercises {
             for s in e.sets where s.type != .warmup && s.done {
                 workDone += 1
-                volume += s.w * Double(s.r)
+                if Catalog.kind(e.name) != .cardio { volume += s.w * Double(s.r) }
             }
         }
         var lines: [SummaryLine] = []
         for e in exercises where e.sets.contains(where: { $0.done && $0.type != .warmup }) {
-            lines.append(SummaryLine(name: e.name, summary: LiveSession.summary(of: e.sets.filter { $0.done })))
+            lines.append(SummaryLine(name: e.name, summary: LiveSession.summary(of: e.sets.filter { $0.done }, kind: Catalog.kind(e.name))))
         }
         let seconds = Int(now.timeIntervalSince(startAt))
         let summary = SessionSummary(title: name + " afgerond",
@@ -428,6 +456,21 @@ struct LiveSession: Codable, Hashable {
 
 /// Opmaak van getallen en tijden zoals in het prototype.
 enum Format {
+    /// "55 kg × 9", "9 reps", "+10 kg × 9" of "2,37 km · 3 min"
+    static func setText(_ kind: ExerciseKind, _ w: Double, _ r: Int) -> String {
+        switch kind {
+        case .weights: return weight(w) + " kg × " + String(r)
+        case .bodyweight: return w == 0 ? String(r) + " reps" : "+" + weight(w) + " kg × " + String(r)
+        case .cardio: return weight(w) + " km · " + String(r) + " min"
+        }
+    }
+
+    /// "8–12" of "12"
+    static func reps(_ r: Int, _ rmax: Int?) -> String {
+        if let m = rmax, m > r { return "\(r)–\(m)" }
+        return String(r)
+    }
+
     /// 7.5 → "7,5", 55 → "55"
     static func weight(_ w: Double) -> String {
         let rounded = (w * 10).rounded() / 10

@@ -138,8 +138,6 @@ struct TrainingTab: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
-    private let weekdays = ["M", "D", "W", "D", "V", "Z", "Z"]
-
     var body: some View {
         let now = Date()
         VStack(alignment: .leading, spacing: 0) {
@@ -165,7 +163,7 @@ struct TrainingTab: View {
             }
             ScreenTitle(text: "Training")
 
-            calendarCard(now: now).padding(.top, 14)
+            CalendarCard(expandable: true).padding(.top, 14)
 
             SectionLabel(text: "Mijn schema").padding(.top, 22)
             programButton
@@ -226,13 +224,10 @@ struct TrainingTab: View {
                     Text(sub).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                HStack(spacing: 4) {
-                    Text("Wissel").sa(14, .semibold)
-                    Icon.chevronDown(14)
-                }
-                .foregroundColor(Tokens.text)
-                .padding(.horizontal, 12).frame(height: 32)
-                .background(Capsule().fill(Tokens.raised))
+                Icon.updown(18)
+                    .foregroundColor(Tokens.text)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(Tokens.raised))
             }
             .frame(minHeight: 52)
             .contentShape(Rectangle())
@@ -281,145 +276,16 @@ struct TrainingTab: View {
         .card(Tokens.surface, radius: Radius.button)
         .padding(.bottom, 8)
     }
-
-    // MARK: Kalender
-
-    private func calendarCard(now: Date) -> some View {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: now)
-        let dow = (cal.component(.weekday, from: today) + 5) % 7
-        let live = model.session != nil
-
-        var lastText = "Nog niet"
-        var lastOff: Int?
-        for o in 0..<60 where model.training(atOffset: o, now: now) != nil {
-            lastOff = o
-            break
-        }
-        if let off = lastOff, let entry = model.training(atOffset: off, now: now) {
-            if off == 0 {
-                lastText = "Vandaag · " + entry.name
-            } else {
-                let d = cal.date(byAdding: .day, value: -off, to: today) ?? today
-                lastText = DateText.short(d) + " · " + (off == 1 ? "gisteren" : "\(off) dagen geleden")
-            }
-        }
-        var weekCount = 0
-        for o in 0...dow where model.training(atOffset: o, now: now) != nil { weekCount += 1 }
-
-        return VStack(spacing: 0) {
-            Button {
-                model.calOpen.toggle()
-                model.calSel = nil
-            } label: {
-                HStack(spacing: 10) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Laatst getraind").sa(13).foregroundColor(Tokens.text2)
-                        Text(lastText).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text("\(weekCount)×").sa(20, .semibold, mono: true).foregroundColor(Tokens.text)
-                        Text("deze week").sa(12).foregroundColor(Tokens.text2)
-                    }
-                    Icon.chevronDown(18).foregroundColor(Tokens.text2)
-                        .rotationEffect(.degrees(model.calOpen ? 180 : 0))
-                }
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .frame(maxWidth: .infinity, minHeight: 52)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityValue(model.calOpen ? "uitgeklapt" : "ingeklapt")
-
-            HStack(spacing: 0) {
-                ForEach(0..<7, id: \.self) { i in
-                    Text(weekdays[i]).sa(11, .semibold).foregroundColor(Tokens.text3)
-                        .frame(maxWidth: .infinity).padding(.bottom, 2)
-                }
-            }
-
-            ForEach(Array((model.calOpen ? 0 : 4)...4), id: \.self) { wr in
-                HStack(spacing: 0) {
-                    ForEach(0..<7, id: \.self) { dc in
-                        dayCell(wr: wr, dc: dc, dow: dow, today: today, now: now, live: live)
-                    }
-                }
-            }
-
-            if model.calSel != nil && !model.calInfo.isEmpty {
-                Text(model.calInfo).sa(13).foregroundColor(Tokens.text2)
-                    .padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 6)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .padding(.horizontal, 10).padding(.vertical, 6)
-        .card(Tokens.surface, radius: Radius.card)
-    }
-
-    private func dayCell(wr: Int, dc: Int, dow: Int, today: Date, now: Date, live: Bool) -> some View {
-        let cal = Calendar.current
-        let off = dow + 28 - (wr * 7 + dc)
-        let date = cal.date(byAdding: .day, value: -off, to: today) ?? today
-        let trained = off >= 0 ? model.training(atOffset: off, now: now) : nil
-        let isToday = off == 0
-        let future = off < 0
-        let running = isToday && live && trained == nil
-        let selected = model.calSel == off
-
-        var fill = Color.clear
-        if trained != nil { fill = ac.accent }
-        else if running { fill = ac.accentSoft }
-        else if selected { fill = Tokens.raised }
-
-        var textColor = Tokens.text2
-        if trained != nil { textColor = ac.onAccent }
-        else if future { textColor = Tokens.text3 }
-        else if isToday { textColor = Tokens.text }
-
-        let showRing = isToday && trained == nil
-        let number = String(cal.component(.day, from: date))
-        let bold = trained != nil || isToday
-
-        return Button {
-            model.calSel = off
-            if let t = trained {
-                model.calInfo = DateText.short(date) + " · " + t.name + " · \(t.minutes) min"
-            } else if running, let s = model.session {
-                model.calInfo = "Vandaag · " + s.name + " loopt nog"
-            } else {
-                model.calInfo = DateText.short(date) + " · rustdag"
-            }
-        } label: {
-            Text(number).sa(14, bold ? .bold : .medium, mono: true)
-                .foregroundColor(textColor)
-                .frame(width: 32, height: 32)
-                .background(Circle().fill(fill))
-                .overlay(Circle().stroke(showRing ? ac.accentLine : Color.clear, lineWidth: 2))
-                .frame(maxWidth: .infinity).frame(height: 42)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(DateText.short(date) + (trained.map { ", " + $0.name } ?? ""))
-    }
 }
 
-// MARK: - Progressie (voorbeeldgegevens, zoals in het prototype)
+// MARK: - Progressie
 
 struct ProgressTab: View {
+    @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
-    private let stats: [(String, String)] = [("11", "trainingen"), ("48.230", "kg volume"), ("3", "nieuwe PR’s")]
-    private let volumes: [Double] = [9.8, 11.2, 10.4, 12.1, 11.6, 12.8, 13.4, 6.2]
-    private let muscles: [(String, Int)] = [("Borst", 12), ("Schouders", 9), ("Quadriceps", 8), ("Lats", 6),
-                                            ("Bovenrug", 6), ("Triceps", 6), ("Hamstrings", 4), ("Biceps", 3)]
-    private let records: [(String, String, String)] = [
-        ("Incline dumbbell press", "26 kg × 8 · geschat 1RM 33 kg", "9 okt"),
-        ("Leg press", "120 kg × 10 · geschat 1RM 160 kg", "7 okt"),
-        ("Chest press machine", "55 kg × 10 · geschat 1RM 73 kg", "2 okt")
-    ]
-
     var body: some View {
+        let stats = ProgressStats.make(history: model.history, now: Date())
         VStack(alignment: .leading, spacing: 0) {
             Text("Laatste 4 weken").sa(13, .medium).foregroundColor(Tokens.text2)
                 .frame(height: 44, alignment: .leading)
@@ -427,36 +293,32 @@ struct ProgressTab: View {
                 .accessibilityAddTraits(.isHeader)
 
             HStack(alignment: .top, spacing: 12) {
-                ForEach(0..<stats.count, id: \.self) { i in
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(stats[i].0).sa(26, .semibold, tracking: -0.4, mono: true).foregroundColor(Tokens.text)
-                        Text(stats[i].1).sa(13).foregroundColor(Tokens.text2)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                statView(String(stats.trainings), "trainingen")
+                statView(Format.thousands(stats.volume), "kg volume")
+                statView(String(stats.newRecords), "nieuwe PR\u{2019}s")
             }
             .padding(.top, 18)
 
-            volumeCard.padding(.top, 20)
-            muscleCard.padding(.top, 12)
-
-            SectionLabel(text: "Persoonlijke records").padding(.top, 24).padding(.bottom, 4)
-            ForEach(0..<records.count, id: \.self) { i in
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(records[i].0).sa(16, .medium).foregroundColor(Tokens.text)
-                        Text(records[i].1).sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    Text(records[i].2).sa(13).foregroundColor(Tokens.text2)
-                }
-                .padding(.vertical, 10)
-            }
+            CalendarCard(expandable: false).padding(.top, 20)
+            volumeCard(stats).padding(.top, 12)
+            muscleCard(stats).padding(.top, 12)
+            recordsSection(stats).padding(.top, 24)
         }
     }
 
-    private var volumeCard: some View {
+    private func statView(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
+            Text(value).sa(26, .semibold, tracking: -0.4, mono: true).foregroundColor(Tokens.text)
+            Text(label).sa(13).foregroundColor(Tokens.text2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func volumeCard(_ stats: ProgressStats) -> some View {
+        let volumes = stats.weekVolumes
+        let top = max(volumes.max() ?? 0, 0.001)
+        let thisWeek = volumes.last ?? 0
+        return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Volume per week").sa(17, .semibold).foregroundColor(Tokens.text)
                 Spacer()
@@ -466,46 +328,52 @@ struct ProgressTab: View {
                 ForEach(0..<volumes.count, id: \.self) { i in
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(i == volumes.count - 1 ? ac.accentLine : ac.accentSoft)
-                        .frame(height: CGFloat((volumes[i] / 14 * 120).rounded()))
+                        .frame(height: max(4, CGFloat((volumes[i] / top * 120).rounded())))
                         .frame(maxWidth: .infinity)
                 }
             }
             .frame(height: 120, alignment: .bottom)
             .padding(.top, 14)
             HStack(spacing: 8) {
-                ForEach(0..<volumes.count, id: \.self) { i in
-                    Text("W\(35 + i)").sa(11, .regular, mono: true).foregroundColor(Tokens.text3)
+                ForEach(0..<stats.weekLabels.count, id: \.self) { i in
+                    Text(stats.weekLabels[i]).sa(11, .regular, mono: true).foregroundColor(Tokens.text3)
                         .frame(maxWidth: .infinity)
                 }
             }
             .padding(.top, 6)
-            Text("Deze week tot nu toe 6.240 kg").sa(13).foregroundColor(Tokens.text2).padding(.top, 10)
+            Text(thisWeek > 0 ? "Deze week tot nu toe \(Format.thousands(thisWeek * 1000)) kg" : "Nog geen volume deze week")
+                .sa(13).foregroundColor(Tokens.text2).padding(.top, 10)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.card)
     }
 
-    private var muscleCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
+    private func muscleCard(_ stats: ProgressStats) -> some View {
+        let rows = Array(stats.muscleSets.prefix(8))
+        let top = max(rows.map { $0.sets }.max() ?? 1, 1)
+        return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Sets per spiergroep").sa(17, .semibold).foregroundColor(Tokens.text)
                 Spacer()
                 Text("deze week").sa(13).foregroundColor(Tokens.text2)
             }
             .padding(.bottom, 8)
-            ForEach(0..<muscles.count, id: \.self) { i in
+            if rows.isEmpty {
+                Text("Nog geen sets deze week.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 6)
+            }
+            ForEach(0..<rows.count, id: \.self) { i in
                 HStack(spacing: 12) {
-                    Text(muscles[i].0).sa(15).foregroundColor(Tokens.text).frame(width: 92, alignment: .leading)
+                    Text(rows[i].muscle).sa(15).foregroundColor(Tokens.text).frame(width: 92, alignment: .leading)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Tokens.track)
                             Capsule().fill(ac.accentLine)
-                                .frame(width: geo.size.width * CGFloat(muscles[i].1) / 12)
+                                .frame(width: geo.size.width * CGFloat(rows[i].sets) / CGFloat(top))
                         }
                     }
                     .frame(height: 8)
-                    Text("\(muscles[i].1)").sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
+                    Text("\(rows[i].sets)").sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
                         .frame(width: 24, alignment: .trailing)
                 }
                 .frame(height: 30)
@@ -514,6 +382,66 @@ struct ProgressTab: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.card)
+    }
+
+    // MARK: Persoonlijke records
+
+    private func recordsSection(_ stats: ProgressStats) -> some View {
+        let list = Array(stats.records.prefix(10))
+        return VStack(alignment: .leading, spacing: 0) {
+            SectionLabel(text: "Persoonlijke records").padding(.bottom, 8)
+            if list.isEmpty {
+                Text("Rond een training af, dan verschijnen hier je zwaarste sets.")
+                    .sa(15).foregroundColor(Tokens.text2)
+                    .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                    .card(Tokens.surface, radius: Radius.card)
+            }
+            ForEach(list) { r in recordCard(r) }
+        }
+    }
+
+    private func recordCard(_ r: PersonalRecord) -> some View {
+        let fresh = Date().timeIntervalSince(r.date) < 7 * 86400
+        let main: String
+        switch r.kind {
+        case .bodyweight where r.weight == 0: main = "\(r.reps)"
+        case .bodyweight: main = "+" + Format.weight(r.weight)
+        default: main = Format.weight(r.weight)
+        }
+        let unit: String
+        switch r.kind {
+        case .bodyweight where r.weight == 0: unit = " reps"
+        default: unit = " kg \u{00D7} \(r.reps)"
+        }
+        return HStack(spacing: 14) {
+            Icon.star(20).foregroundColor(ac.accentText)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(ac.accentSoft))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(r.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                HStack(spacing: 8) {
+                    Text(DateText.short(r.date)).sa(13).foregroundColor(Tokens.text2)
+                    if fresh {
+                        Text("Nieuw").sa(11, .bold).foregroundColor(ac.accentText)
+                            .padding(.horizontal, 7).frame(height: 20)
+                            .background(Capsule().fill(ac.accentSoft))
+                    }
+                }
+                if r.oneRM > 0 {
+                    Text("Geschat 1RM " + Format.weight((r.oneRM).rounded()) + " kg").sa(12, .regular, mono: true)
+                        .foregroundColor(Tokens.text3)
+                }
+            }
+            Spacer(minLength: 8)
+            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                Text(main).sa(24, .semibold, tracking: -0.4, mono: true).foregroundColor(Tokens.text)
+                Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(Tokens.surface, radius: Radius.button)
+        .padding(.bottom, 8)
     }
 }
 
@@ -543,7 +471,8 @@ struct GymTab: View {
                         Text(gym.summary).sa(13).foregroundColor(Tokens.text2)
                     }
                     Spacer(minLength: 0)
-                    Text("Wissel").sa(15, .semibold).foregroundColor(ac.accentText)
+                    Icon.updown(18).foregroundColor(Tokens.text)
+                        .frame(width: 36, height: 36).background(Circle().fill(Tokens.raised))
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
                 .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
@@ -696,9 +625,11 @@ struct AccentPicker: View {
         return Color(.sRGB, red: r, green: g, blue: b, opacity: 1)
     }
 
-    var body: some View {
+    @State private var expanded = false
+
+    private func row(_ ids: [AccentID]) -> some View {
         HStack(spacing: 2) {
-            ForEach(AccentID.allCases) { id in
+            ForEach(ids) { id in
                 let on = model.accent == id
                 Button {
                     model.accent = id
@@ -717,6 +648,31 @@ struct AccentPicker: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, -4)
+    }
+
+    var body: some View {
+        let showExtras = expanded || AccentID.extras.contains(model.accent)
+        VStack(alignment: .leading, spacing: 0) {
+            row(AccentID.primary)
+            if showExtras {
+                row(Array(AccentID.extras.prefix(6)))
+                row(Array(AccentID.extras.dropFirst(6)))
+            }
+            Button {
+                expanded.toggle()
+            } label: {
+                HStack(spacing: 6) {
+                    Text(showExtras ? "Minder kleuren" : "Meer kleuren").sa(14, .semibold)
+                    Icon.chevronDown(14).rotationEffect(.degrees(showExtras ? 180 : 0))
+                }
+                .foregroundColor(Tokens.text2)
+                .frame(height: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(AccentID.extras.contains(model.accent))
+            .opacity(AccentID.extras.contains(model.accent) ? 0.4 : 1)
+        }
     }
 }
 
