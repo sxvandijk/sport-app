@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versies
+        run: |
+          xcodebuild -version
+          swift --version
+          sw_vers
+
+      - name: XcodeGen installeren en project maken
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Simulator kiezen
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json,sys
+          data=json.load(sys.stdin)['devices']
+          pick=None
+          for runtime in sorted(data):
+              if 'iOS' not in runtime: continue
+              for d in data[runtime]:
+                  if not d['name'].startswith('iPhone') or not d['isAvailable']: continue
+                  if pick is None or ('Pro' in d['name'] and 'Max' not in d['name']):
+                      pick=d['udid']
+          print(pick)
+          ")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl list devices available | grep "$UDID" || true
+
+      - name: Bouwen en testen
+        run: |
+          set -o pipefail
+          mkdir -p ci-results
+          xcodebuild test \
+            -project SportApp.xcodeproj \
+            -scheme SportApp \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            -resultBundlePath ci-results/tests.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee ci-results/xcodebuild.log
+
+      - name: Screenshots maken
+        if: success()
+        run: |
+          UDID=${{ steps.sim.outputs.udid }}
+          APP=$(find build/Build/Products -name "SportApp.app" -maxdepth 3 | head -1)
+          echo "App: $APP"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p ci-results/screenshots
+          shoot () { # naam scherm modus accent
+            xcrun simctl terminate "$UDID" com.sxvandijk.sportapp 2>/dev/null || true
+            xcrun simctl ui "$UDID" appearance "$3" || true
+            xcrun simctl launch "$UDID" com.sxvandijk.sportapp \
+              -screenshotScreen "$2" -screenshotAppearance "$3" -screenshotAccent "$4"
+            sleep 3
+            xcrun simctl io "$UDID" screenshot "ci-results/screenshots/$1.png"
+          }
+          for mode in dark light; do
+            for screen in training training-running calendar-open progress gym profile \
+                          workout workout-rest workout-superset workout-toast workout-done \
+                          overview editor summary \
+                          sheet-menu sheet-stop sheet-start sheet-explain sheet-swap sheet-superset \
+                          sheet-add sheet-settype sheet-gym sheet-program sheet-tplmenu; do
+              shoot "$screen-$mode" "$screen" "$mode" olive
+            done
+          done
+          shoot accent-viola-dark  workout dark  viola
+          shoot accent-lime-dark   workout dark  lime
+          shoot accent-lime-light  workout light lime
+          shoot accent-mint-dark   training dark mint
+          shoot accent-ice-light   training light ice
+          shoot accent-pink-dark   workout dark  pink
+
+      - name: Project als artifact bewaren
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-results
+          path: |
+            ci-results/screenshots
+            ci-results/xcodebuild.log
+          if-no-files-found: ignore
+
+      - name: Gegenereerd project op main zetten
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          set +e
+          git checkout main
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          # Info.plist en .xcodeproj horen bij het gegenereerde project; het project staat zo klaar voor Xcode 14.2.
+          git add -f SportApp.xcodeproj SportApp/Info.plist
+          if ! git diff --cached --quiet; then
+            git commit -m "Gegenereerd Xcode-project bijwerken [skip ci]"
+            git push origin main
+          fi
+
+      - name: Uitkomst op branch ci-results zetten (zodat die leesbaar is zonder inloggen)
+        if: always()
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set +e
+          SAFE=$(echo "$BRANCH_NAME" | tr '/' '_')
+          mkdir -p out
+          {
+            echo "branch: $BRANCH_NAME"
+            echo "commit: $GITHUB_SHA"
+            echo "status: $JOB_STATUS"
+            echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > out/status.txt
+          if [ -f ci-results/xcodebuild.log ]; then
+            tail -n 400 ci-results/xcodebuild.log > out/xcodebuild-tail.log
+            grep -E "error:|warning:|Test Case .* (passed|failed)|Executed [0-9]+ tests|\*\* (BUILD|TEST) " ci-results/xcodebuild.log > out/summary.log
+          fi
+          [ -d ci-results/screenshots ] && cp -R ci-results/screenshots out/screenshots
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git fetch origin ci-results 2>/dev/null
+          if git rev-parse --verify origin/ci-results >/dev/null 2>&1; then
+            git checkout -B ci-results origin/ci-results
+          else
+            git checkout --orphan ci-results
+            git rm -rf . >/dev/null 2>&1
+          fi
+          rm -rf "results/$SAFE"
+          mkdir -p "results/$SAFE"
+          cp -R out/. "results/$SAFE/"
+          git add -f results
+          git commit -m "CI-uitkomst voor $BRANCH_NAME ($JOB_STATUS)" >/dev/null 2>&1
+          git push origin ci-results

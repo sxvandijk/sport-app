@@ -1,0 +1,8 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+.DS_Store
+# De Info.plist wordt door XcodeGen gemaakt
+SportApp/Info.plist

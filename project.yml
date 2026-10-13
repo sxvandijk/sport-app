@@ -1,0 +1,61 @@
+name: SportApp
+
+options:
+  bundleIdPrefix: com.sxvandijk
+  deploymentTarget:
+    iOS: "16.0"
+  # Laat XcodeGen een projectbestand schrijven dat ook met Xcode 14.2 te openen is.
+  xcodeVersion: "1420"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+
+targets:
+  SportApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: SportApp
+    info:
+      path: SportApp/Info.plist
+      properties:
+        CFBundleDisplayName: Sport App
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sxvandijk.sportapp
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: "NO"
+
+  SportAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SportAppTests
+    dependencies:
+      - target: SportApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sxvandijk.sportapp.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+
+schemes:
+  SportApp:
+    build:
+      targets:
+        SportApp: all
+        SportAppTests: [test]
+    test:
+      targets:
+        - SportAppTests
+    run:
+      config: Debug
