@@ -1,0 +1,4 @@
+branch: fix-typecheck
+commit: 33cdb744015d41d8a80ff679091cfeb9b6c7ef75
+status: success
+run: https://github.com/sxvandijk/sport-app/actions/runs/38409815098
