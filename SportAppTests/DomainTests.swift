@@ -224,7 +224,8 @@ final class WorkoutSessionTests: XCTestCase {
             SessionExercise(plannedExerciseID: id, exerciseID: id, sets: sets)
         ])
         XCTAssertEqual(session.completedWorkingSetCount, 3, "Dropset en tot falen tellen mee, warming-up en open set niet")
-        XCTAssertEqual(session.totalVolume, 50 * 10 + 40 * 8 + 50 * 6, accuracy: 0.001)
+        let expectedVolume: Double = 500 + 320 + 300   // 50×10 + 40×8 + 50×6
+        XCTAssertEqual(session.totalVolume, expectedVolume, accuracy: 0.001)
     }
 
     func testAddWarmupSetGoesBeforeTheWorkingSets() {
