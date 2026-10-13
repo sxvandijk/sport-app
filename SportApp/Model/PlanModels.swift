@@ -16,6 +16,8 @@ struct PlanItem: Codable, Hashable, Identifiable {
     var sets: [PlanSet]
     /// Hoort bij het warming-upblok vooraan in de training (bijv. rotator cuff of fietsen).
     var isWarmup: Bool?
+    /// Aantal warming-upsets vooraf (nil = 1 als `warm` is ingesteld).
+    var warmCount: Int?
 
     init(name: String, group: Int, warm: PlanSet? = nil, sets: [PlanSet], isWarmup: Bool? = nil) {
         self.name = name

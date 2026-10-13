@@ -33,7 +33,7 @@ struct OverviewScreen: View {
             NumberBadge(text: String(number), hue: hue)
             VStack(alignment: .leading, spacing: 2) {
                 Text(x.name).sa(17, .medium).foregroundColor(Tokens.text)
-                Text((x.warm != nil ? "W + " : "") + OverviewScreen.planLine(x)).sa(13, .regular, mono: true)
+                Text((x.warm != nil ? "\(x.warmCount ?? 1)W + " : "") + OverviewScreen.planLine(x)).sa(13, .regular, mono: true)
                     .foregroundColor(Tokens.text2)
             }
             Spacer(minLength: 0)
@@ -183,7 +183,7 @@ struct EditorScreen: View {
             let workItems = draft.items.filter { !$0.isWarmup }
             let warmCount = draft.items.filter { $0.isWarmup }.count
             let sets = workItems.reduce(0) { $0 + $1.sets }
-            let warm = workItems.filter { $0.warm }.count
+            let warm = workItems.reduce(0) { $0 + $1.warmSets }
             let minutes = Int((Double(sets) * 2.25 + Double(warm)).rounded())
             VStack(spacing: 0) {
                 HStack {
@@ -487,18 +487,25 @@ struct EditorScreen: View {
     }
 
     private func warmupSwitch(_ i: Int, _ it: DraftItem) -> some View {
-        HStack(spacing: 4) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Warming-up").sa(13, .semibold).foregroundColor(Tokens.text)
-                Text(it.warm ? "Aan" : "Uit").sa(12, .medium).foregroundColor(it.warm ? ac.accentText : Tokens.text3)
+        HStack(spacing: 0) {
+            Button { edit(i) { $0.warmSets = max(0, $0.warmSets - 1) } } label: {
+                Text("\u{2212}").sa(20, .medium).foregroundColor(Tokens.text).frame(width: 40, height: 44).contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Minder warming-upsets")
+            VStack(spacing: 0) {
+                Text(it.warmSets == 0 ? "Uit" : String(it.warmSets)).sa(18, .semibold, mono: true)
+                    .foregroundColor(it.warmSets == 0 ? Tokens.text3 : Tokens.warm)
+                Text("warming-up").sa(11, .medium).foregroundColor(Tokens.text2)
+            }
+            .frame(maxWidth: .infinity)
             .lineLimit(1).minimumScaleFactor(0.8)
-            Spacer(minLength: 0)
-            SAToggle(isOn: it.warm, onColor: ac.accentLine, label: "Warming-up set") {
-                edit(i) { $0.warm.toggle() }
+            Button { edit(i) { $0.warmSets = min(5, $0.warmSets + 1) } } label: {
+                Text("+").sa(20, .medium).foregroundColor(Tokens.text).frame(width: 40, height: 44).contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Meer warming-upsets")
         }
-        .padding(.leading, 12).padding(.trailing, 2)
         .frame(maxWidth: .infinity).frame(height: 44)
         .card(Tokens.raised, radius: Radius.field)
     }

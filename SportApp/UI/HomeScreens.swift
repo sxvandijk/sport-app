@@ -224,7 +224,6 @@ struct TrainingTab: View {
                 .buttonStyle(.plain)
                 .padding(.top, 16)
 
-                CreatineCheckRow().padding(.top, 10)
             }
         }
     }
@@ -716,39 +715,6 @@ private func timeBinding(_ value: Int, _ set: @escaping (Int) -> Void) -> Bindin
     )
 }
 
-/// Afvinkrij voor vandaag (op het Training-tabblad).
-struct CreatineCheckRow: View {
-    @EnvironmentObject private var model: AppModel
-    @Environment(\.accentColors) private var ac
-
-    var body: some View {
-        if model.crea {
-            let done = model.creaDoneToday
-            Button { model.toggleCreaDone() } label: {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle().fill(done ? ac.accentLine : Color.clear)
-                        Circle().stroke(done ? ac.accentLine : Tokens.line, lineWidth: 2)
-                        if done { Icon.check(16).foregroundColor(ac.onAccent) }
-                    }
-                    .frame(width: 28, height: 28)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Creatine").sa(16, .medium).foregroundColor(Tokens.text)
-                        Text(done ? "Vandaag gehad" : "Vandaag nog niet gehad").sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-                .card(Tokens.surface, radius: Radius.button)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(done ? "Creatine vandaag gehad, tik om ongedaan te maken" : "Creatine vandaag afvinken")
-        }
-    }
-}
-
 private struct CreatineSettings: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
@@ -780,14 +746,14 @@ private struct CreatineSettings: View {
                     Text("Eerste herinnering").sa(15).foregroundColor(Tokens.text)
                     Spacer(minLength: 0)
                     DatePicker("", selection: timeBinding(model.creaTime) { model.setCreaTime($0) }, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
+                        .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
                 }
                 .frame(minHeight: 52)
                 Divider().background(Tokens.line)
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Nog niet gehad? Herinner me later").sa(15).foregroundColor(Tokens.text)
-                        Text("Bijvoorbeeld bij het avondeten. Als je hem afvinkt, komt er geen tweede melding.")
+                        Text("Bijvoorbeeld bij het avondeten. Tik in de melding op ‘Gehad’ of vink hem af, dan komt er geen tweede melding. Tik je op ‘Later’ of negeer je hem, dan komt de tweede wel.")
                             .sa(12).foregroundColor(Tokens.text2)
                     }
                     Spacer(minLength: 0)
@@ -802,7 +768,7 @@ private struct CreatineSettings: View {
                         Text("Tweede herinnering").sa(15).foregroundColor(Tokens.text)
                         Spacer(minLength: 0)
                         DatePicker("", selection: timeBinding(model.creaLateTime) { model.setCreaLateTime($0) }, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
+                            .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
                     }
                     .frame(minHeight: 52)
                 }

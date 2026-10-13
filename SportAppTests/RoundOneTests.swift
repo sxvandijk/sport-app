@@ -120,4 +120,19 @@ final class RoundOneTests: XCTestCase {
         XCTAssertEqual(model.session?.exercises.first?.name, ex.name)
         XCTAssertEqual(model.prefs[ex.name], "Dumbbell Shrug")
     }
+
+    func testMultipleWarmupSetsRampUp() {
+        var plan = PlanItem(name: "Dumbbell Bench Press", group: 1, sets: [PlanSet(w: 20, r: 8, rmax: nil)])
+        plan.warm = PlanSet(w: 10, r: 12)
+        plan.warmCount = 3
+        let ex = LiveSession.makeExercise(name: plan.name, group: 1, plan: plan)
+        let warm = ex.sets.filter { $0.type == .warmup }
+        XCTAssertEqual(warm.count, 3)
+        XCTAssertTrue(warm[0].w < warm[1].w && warm[1].w < warm[2].w)
+        XCTAssertTrue(warm[2].w < 20)
+        var draft = Draft(name: "X", plans: [plan])
+        XCTAssertEqual(draft.items[0].warmSets, 3)
+        draft.items[0].warmSets = 0
+        XCTAssertNil(draft.toPlans()[0].warm)
+    }
 }

@@ -690,7 +690,7 @@ private struct SearchList: View {
             } else if model.addToDraft {
                 guard var d = model.draft else { return }
                 let w = Catalog.info(name).defaultWeight
-                d.items.append(DraftItem(name: name, warm: false, warmW: nil, sets: Catalog.kind(name) == .cardio ? 1 : 3,
+                d.items.append(DraftItem(name: name, warmSets: 0, warmW: nil, sets: Catalog.kind(name) == .cardio ? 1 : 3,
                                          reps: Catalog.kind(name) == .cardio ? 10 : 8,
                                          repsMax: Catalog.kind(name) == .cardio ? nil : 12, w: w, link: false))
                 model.draft = d
