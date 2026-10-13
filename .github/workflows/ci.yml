@@ -1,9 +1,11 @@
 name: CI
 
+# Zuinig met macOS-minuten (die tellen 10x): alleen het project bijwerken na een push naar main.
+# Volledig bouwen, testen en screenshots maken doe je handmatig via "Run workflow" (workflow_dispatch).
 on:
   push:
-    branches: ["**"]
-  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -37,6 +39,7 @@ jobs:
 
       - name: Simulator kiezen
         id: sim
+        if: github.event_name == 'workflow_dispatch'
         run: |
           UDID=$(xcrun simctl list devices available -j | python3 -c "
           import json,sys
@@ -54,6 +57,7 @@ jobs:
           xcrun simctl list devices available | grep "$UDID" || true
 
       - name: Bouwen en testen
+        if: github.event_name == 'workflow_dispatch'
         run: |
           set -o pipefail
           mkdir -p ci-results
@@ -67,7 +71,7 @@ jobs:
             2>&1 | tee ci-results/xcodebuild.log
 
       - name: Screenshots maken
-        if: success()
+        if: success() && github.event_name == 'workflow_dispatch'
         run: |
           UDID=${{ steps.sim.outputs.udid }}
           APP=$(find build/Build/Products -name "SportApp.app" -maxdepth 3 | head -1)
@@ -101,7 +105,7 @@ jobs:
           shoot accent-pink-dark   workout dark  pink
 
       - name: Project als artifact bewaren
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: ci-results
@@ -125,7 +129,7 @@ jobs:
           fi
 
       - name: Uitkomst op branch ci-results zetten (zodat die leesbaar is zonder inloggen)
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch'
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           JOB_STATUS: ${{ job.status }}

@@ -274,110 +274,146 @@ struct EditorScreen: View {
     @ViewBuilder
     private func itemView(_ i: Int, _ it: DraftItem, ss: Int?) -> some View {
         let hue: Color? = ss.map { SupersetStyle.color($0) }
-        if i > 0 {
-            HStack {
-                Spacer()
-                Button { edit(i) { $0.link.toggle() } } label: {
-                    HStack(spacing: 6) {
-                        Icon.link(14, 2.4)
-                        Text(it.link ? "Superset met vorige" : "Koppel als superset").sa(13, .semibold)
-                    }
-                    .foregroundColor(it.link ? (hue ?? ac.accentText) : Tokens.text3)
-                    .padding(.horizontal, 12).frame(minWidth: 44).frame(height: 36)
-                    .background(Capsule().fill(it.link ? (hue ?? ac.accent).opacity(0.18) : Color.clear))
-                }
-                .buttonStyle(.plain)
-                .accessibilityValue(it.link ? "aan" : "uit")
-                Spacer()
-            }
-            .padding(.top, -4).padding(.bottom, 4)
-        }
+        let isCardio = Catalog.kind(it.name) == .cardio
+        if i > 0 { linkToggle(i, it, hue: hue) }
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 10) {
-                NumberBadge(text: String(i + 1), hue: hue, size: 28).padding(.top, 2)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
-                    Text(Catalog.info(it.name).muscle + " \u{00B7} " + Catalog.kind(it.name).title).sa(13).foregroundColor(Tokens.text2)
-                }
-                Spacer(minLength: 0)
-                Button { moveUp(i) } label: {
-                    Icon.chevronUp(18).foregroundColor(Tokens.text2).frame(width: 36, height: 44)
-                        .opacity(i == 0 ? 0.3 : 1).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Omhoog")
-                Button { remove(i) } label: {
-                    Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Verwijder oefening")
-            }
-            if Catalog.kind(it.name) == .cardio {
-                HStack(spacing: 8) {
-                    counter(value: Format.km(it.w), unit: " km", minus: "Minder kilometers", plus: "Meer kilometers",
-                            onMinus: { edit(i) { $0.w = max(0, (($0.w - 0.1) * 100).rounded() / 100) } },
-                            onPlus: { edit(i) { $0.w = (($0.w + 0.1) * 100).rounded() / 100 } })
-                    counter(value: String(it.reps), unit: " min", minus: "Minder minuten", plus: "Meer minuten",
-                            onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
-                            onPlus: { edit(i) { $0.reps += 1 } })
-                }
-                .padding(.top, 10).padding(.trailing, 8)
+            itemHeader(i, it, hue: hue)
+            if isCardio {
+                cardioCounters(i, it)
             } else {
-                HStack(spacing: 8) {
-                    counter(value: String(it.sets), unit: " sets", minus: "Minder sets", plus: "Meer sets",
-                            onMinus: { edit(i) { $0.sets = max(1, $0.sets - 1) } },
-                            onPlus: { edit(i) { $0.sets = min(10, $0.sets + 1) } })
-                    counter(value: String(it.reps), unit: " reps", minus: "Minder reps", plus: "Meer reps",
-                            onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
-                            onPlus: { edit(i) {
-                                $0.reps += 1
-                                if let m = $0.repsMax, m <= $0.reps { $0.repsMax = nil }
-                            } })
-                }
-                .padding(.top, 10).padding(.trailing, 8)
-                HStack(spacing: 8) {
-                    counter(value: it.repsMax.map { String($0) } ?? "\u{2013}", unit: " tot", minus: "Minder maximum reps", plus: "Meer maximum reps",
-                            onMinus: { edit(i) {
-                                if let m = $0.repsMax { $0.repsMax = m - 1 <= $0.reps ? nil : m - 1 }
-                            } },
-                            onPlus: { edit(i) { $0.repsMax = ($0.repsMax ?? $0.reps) + 1 } })
-                    Button { edit(i) { $0.warm.toggle() } } label: {
-                        HStack(spacing: 6) {
-                            Icon.plus(16, 2.4)
-                            Text("Warming-up").sa(14, .semibold)
-                        }
-                        .foregroundColor(it.warm ? Color.black.opacity(0.85) : Tokens.warm)
-                        .frame(maxWidth: .infinity).frame(height: 44)
-                        .card(it.warm ? Tokens.warm : Tokens.raised, radius: Radius.field)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityValue(it.warm ? "aan" : "uit")
-                }
-                .padding(.top, 8).padding(.trailing, 8)
-                HStack(spacing: 6) {
-                    Text("Advies").sa(12, .medium).foregroundColor(Tokens.text3)
-                    ForEach(0..<EditorScreen.presets.count, id: \.self) { k in
-                        let p = EditorScreen.presets[k]
-                        let on = it.reps == p.lo && it.repsMax == p.hi
-                        Button { edit(i) { $0.reps = p.lo; $0.repsMax = p.hi } } label: {
-                            Text(p.title).sa(13, .semibold, mono: true)
-                                .foregroundColor(on ? Tokens.text : Tokens.text2)
-                                .padding(.horizontal, 12).frame(height: 32)
-                                .background(Capsule().fill(on ? ac.accentSoft : Tokens.raised))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .padding(.top, 8)
+                setsAndReps(i, it)
+                maxAndWarmup(i, it)
+                presetRow(i, it)
             }
         }
         .padding(.leading, 16).padding(.trailing, 8).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.button)
-        .overlay(RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
-                    .stroke(hue?.opacity(0.7) ?? Color.clear, lineWidth: 1.5))
+        .overlay(itemBorder(hue))
         .padding(.bottom, 8)
+    }
+
+    private func itemBorder(_ hue: Color?) -> some View {
+        let color: Color = hue?.opacity(0.7) ?? Color.clear
+        return RoundedRectangle(cornerRadius: Radius.button, style: .continuous).stroke(color, lineWidth: 1.5)
+    }
+
+    private func linkToggle(_ i: Int, _ it: DraftItem, hue: Color?) -> some View {
+        let tint: Color = hue ?? ac.accentText
+        let textColor: Color = it.link ? tint : Tokens.text3
+        let fillColor: Color = it.link ? tint.opacity(0.18) : Color.clear
+        let title = it.link ? "Superset met vorige" : "Koppel als superset"
+        return HStack {
+            Spacer()
+            Button { edit(i) { $0.link.toggle() } } label: {
+                HStack(spacing: 6) {
+                    Icon.link(14, 2.4)
+                    Text(title).sa(13, .semibold)
+                }
+                .foregroundColor(textColor)
+                .padding(.horizontal, 12).frame(minWidth: 44).frame(height: 36)
+                .background(Capsule().fill(fillColor))
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(it.link ? "aan" : "uit")
+            Spacer()
+        }
+        .padding(.top, -4).padding(.bottom, 4)
+    }
+
+    private func itemHeader(_ i: Int, _ it: DraftItem, hue: Color?) -> some View {
+        let info = Catalog.info(it.name)
+        let sub = info.muscle + " \u{00B7} " + info.kind.title
+        return HStack(alignment: .top, spacing: 10) {
+            NumberBadge(text: String(i + 1), hue: hue, size: 28).padding(.top, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
+                Text(sub).sa(13).foregroundColor(Tokens.text2)
+            }
+            Spacer(minLength: 0)
+            Button { moveUp(i) } label: {
+                Icon.chevronUp(18).foregroundColor(Tokens.text2).frame(width: 36, height: 44)
+                    .opacity(i == 0 ? 0.3 : 1).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Omhoog")
+            Button { remove(i) } label: {
+                Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Verwijder oefening")
+        }
+    }
+
+    private func cardioCounters(_ i: Int, _ it: DraftItem) -> some View {
+        HStack(spacing: 8) {
+            counter(value: Format.km(it.w), unit: " km", minus: "Minder kilometers", plus: "Meer kilometers",
+                    onMinus: { edit(i) { $0.w = max(0, (($0.w - 0.1) * 100).rounded() / 100) } },
+                    onPlus: { edit(i) { $0.w = (($0.w + 0.1) * 100).rounded() / 100 } })
+            counter(value: String(it.reps), unit: " min", minus: "Minder minuten", plus: "Meer minuten",
+                    onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
+                    onPlus: { edit(i) { $0.reps += 1 } })
+        }
+        .padding(.top, 10).padding(.trailing, 8)
+    }
+
+    private func setsAndReps(_ i: Int, _ it: DraftItem) -> some View {
+        HStack(spacing: 8) {
+            counter(value: String(it.sets), unit: " sets", minus: "Minder sets", plus: "Meer sets",
+                    onMinus: { edit(i) { $0.sets = max(1, $0.sets - 1) } },
+                    onPlus: { edit(i) { $0.sets = min(10, $0.sets + 1) } })
+            counter(value: String(it.reps), unit: " reps", minus: "Minder reps", plus: "Meer reps",
+                    onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
+                    onPlus: { edit(i) { $0.repsUp() } })
+        }
+        .padding(.top, 10).padding(.trailing, 8)
+    }
+
+    private func maxAndWarmup(_ i: Int, _ it: DraftItem) -> some View {
+        let maxText: String = it.repsMax.map { String($0) } ?? "\u{2013}"
+        let warmText: Color = it.warm ? Color.black.opacity(0.85) : Tokens.warm
+        let warmFill: Color = it.warm ? Tokens.warm : Tokens.raised
+        return HStack(spacing: 8) {
+            counter(value: maxText, unit: " tot", minus: "Minder maximum reps", plus: "Meer maximum reps",
+                    onMinus: { edit(i) { $0.maxDown() } },
+                    onPlus: { edit(i) { $0.maxUp() } })
+            Button { edit(i) { $0.warm.toggle() } } label: {
+                HStack(spacing: 6) {
+                    Icon.plus(16, 2.4)
+                    Text("Warming-up").sa(14, .semibold)
+                }
+                .foregroundColor(warmText)
+                .frame(maxWidth: .infinity).frame(height: 44)
+                .card(warmFill, radius: Radius.field)
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(it.warm ? "aan" : "uit")
+        }
+        .padding(.top, 8).padding(.trailing, 8)
+    }
+
+    private func presetRow(_ i: Int, _ it: DraftItem) -> some View {
+        HStack(spacing: 6) {
+            Text("Advies").sa(12, .medium).foregroundColor(Tokens.text3)
+            ForEach(0..<EditorScreen.presets.count, id: \.self) { k in
+                presetChip(i, it, EditorScreen.presets[k])
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 8)
+    }
+
+    private func presetChip(_ i: Int, _ it: DraftItem, _ p: (title: String, lo: Int, hi: Int)) -> some View {
+        let on = it.reps == p.lo && it.repsMax == p.hi
+        let fill: Color = on ? ac.accentSoft : Tokens.raised
+        let text: Color = on ? Tokens.text : Tokens.text2
+        return Button { edit(i) { $0.reps = p.lo; $0.repsMax = p.hi } } label: {
+            Text(p.title).sa(13, .semibold, mono: true)
+                .foregroundColor(text)
+                .padding(.horizontal, 12).frame(height: 32)
+                .background(Capsule().fill(fill))
+        }
+        .buttonStyle(.plain)
     }
 
     private func counter(value: String, unit: String, minus: String, plus: String,

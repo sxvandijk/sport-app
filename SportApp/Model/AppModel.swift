@@ -32,6 +32,21 @@ struct DraftItem: Identifiable, Hashable {
     var link: Bool
 }
 
+extension DraftItem {
+    mutating func repsUp() {
+        reps += 1
+        if let m = repsMax, m <= reps { repsMax = nil }
+    }
+
+    mutating func maxUp() {
+        repsMax = (repsMax ?? reps) + 1
+    }
+
+    mutating func maxDown() {
+        if let m = repsMax { repsMax = m - 1 <= reps ? nil : m - 1 }
+    }
+}
+
 struct Draft: Hashable {
     var orig: String?
     var name: String
