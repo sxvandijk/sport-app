@@ -1,148 +1,3 @@
-Command line invocation:
-    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild test -project SportApp.xcodeproj -scheme SportApp -destination "platform=iOS Simulator,id=291E4B86-C951-41A7-8327-84BF0304D0A9" -derivedDataPath build -resultBundlePath ci-results/tests.xcresult CODE_SIGNING_ALLOWED=NO
-
-Build settings from command line:
-    CODE_SIGNING_ALLOWED = NO
-
-Writing result bundle at path:
-	/Users/runner/work/sport-app/sport-app/ci-results/tests.xcresult
-
---- xcodebuild: WARNING: Using the first of multiple matching destinations:
-{ platform:iOS Simulator, arch:arm64, id:291E4B86-C951-41A7-8327-84BF0304D0A9, OS:26.2, name:iPhone 16 Pro }
-{ platform:iOS Simulator, arch:x86_64, id:291E4B86-C951-41A7-8327-84BF0304D0A9, OS:26.2, name:iPhone 16 Pro }
-ComputePackagePrebuildTargetDependencyGraph
-
-Prepare packages
-
-CreateBuildRequest
-
-SendProjectDescription
-
-CreateBuildOperation
-
-ComputeTargetDependencyGraph
-note: Building targets in dependency order
-note: Target dependency graph (2 targets)
-    Target 'SportAppTests' in project 'SportApp'
-        ➜ Explicit dependency on target 'SportApp' in project 'SportApp'
-    Target 'SportApp' in project 'SportApp' (no dependencies)
-
-GatherProvisioningInputs
-
-CreateBuildDescription
-
-ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets
-
-ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
-
-ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -x c -c /dev/null
-
-ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
-
-ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/actool --version --output-format xml1
-
-Build description signature: 6d2b2e353f452097d8ab1666ddfd2196
-Build description path: /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/XCBuildData/6d2b2e353f452097d8ab1666ddfd2196.xcbuilddata
-ClangStatCache /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache
-    cd /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -o /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache
-
-CreateBuildDirectory /Users/runner/work/sport-app/sport-app/build/Build/Products
-    cd /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj
-    builtin-create-build-directory /Users/runner/work/sport-app/sport-app/build/Build/Products
-
-CreateBuildDirectory /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex
-    cd /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj
-    builtin-create-build-directory /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex
-
-CreateBuildDirectory /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator
-    cd /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj
-    builtin-create-build-directory /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator
-
-CreateBuildDirectory /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
-    cd /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj
-    builtin-create-build-directory /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp-5d1aeaa207093ff5d106ad28d53575c4-VFS-iphonesimulator/all-product-headers.yaml
-    cd /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp-5d1aeaa207093ff5d106ad28d53575c4-VFS-iphonesimulator/all-product-headers.yaml
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/empty-SportAppTests.plist (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/empty-SportAppTests.plist
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.DependencyMetadataFileList (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.DependencyMetadataFileList
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.DependencyStaticMetadataFileList (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.DependencyStaticMetadataFileList
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.hmap (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-project-headers.hmap (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-project-headers.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-own-target-headers.hmap (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-own-target-headers.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-generated-files.hmap (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-generated-files.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-target-headers.hmap (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-target-headers.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-non-framework-target-headers.hmap (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-non-framework-target-headers.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests_const_extract_protocols.json (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests_const_extract_protocols.json
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftFileList (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftFileList
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftConstValuesFileList (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftConstValuesFileList
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.LinkFileList (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.LinkFileList
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-OutputFileMap.json (in target 'SportAppTests' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-OutputFileMap.json
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.hmap (in target 'SportApp' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyStaticMetadataFileList (in target 'SportApp' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyStaticMetadataFileList
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyMetadataFileList (in target 'SportApp' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyMetadataFileList
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-project-headers.hmap (in target 'SportApp' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-project-headers.hmap
-
-WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-own-target-headers.hmap (in target 'SportApp' from project 'SportApp')
-    cd /Users/runner/work/sport-app/sport-app
-    write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-own-target-headers.hmap
-
 WriteAuxiliaryFile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-generated-files.hmap (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     write-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-generated-files.hmap
@@ -259,10 +114,10 @@ Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesim
 CompileAssetCatalogVariant thinned /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app /Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/actool /Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets --compile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --filter-for-thinning-device-configuration iPhone17,1 --filter-for-device-os-version 26.2 --development-region en --target-device iphone --minimum-deployment-target 16.0 --platform iphonesimulator
-/* com.apple.actool.errors */
-/Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets: error: None of the input catalogs contained a matching stickers icon set or app icon set named  "AppIcon".
 /* com.apple.actool.compilation-results */
 /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_generated_info.plist_thinned
+/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_output/thinned/AppIcon60x60@2x.png
+/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_output/thinned/AppIcon76x76@2x~ipad.png
 /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_output/thinned/Assets.car
 
 
@@ -270,7 +125,53 @@ SwiftDriver SportApp normal arm64 com.apple.xcode.tools.swift.compiler (in targe
     cd /Users/runner/work/sport-app/sport-app
     builtin-SwiftDriver -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SportApp -Onone -enforce-exclusivity\=checked @/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -swift-version 5 -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -c -j5 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-Swift.h -working-directory /Users/runner/work/sport-app/sport-app -experimental-emit-module-separately -disable-cmo
 
+SwiftCompile normal arm64 Compiling\ WorkoutSession.swift,\ WorkoutStore.swift,\ WorkoutTemplate.swift,\ GeneratedAssetSymbols.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutSession.swift /Users/runner/work/sport-app/sport-app/SportApp/Data/WorkoutStore.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutTemplate.swift /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'SportApp' from project 'SportApp')
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutSession.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Data/WorkoutStore.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutTemplate.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 Compiling\ PlaceholderScreen.swift,\ Program.swift,\ RootView.swift,\ SportAppApp.swift,\ TabBarStyle.swift /Users/runner/work/sport-app/sport-app/SportApp/App/PlaceholderScreen.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/Program.swift /Users/runner/work/sport-app/sport-app/SportApp/App/RootView.swift /Users/runner/work/sport-app/sport-app/SportApp/App/SportAppApp.swift /Users/runner/work/sport-app/sport-app/SportApp/App/TabBarStyle.swift (in target 'SportApp' from project 'SportApp')
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/App/PlaceholderScreen.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/Program.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/App/RootView.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/App/SportAppApp.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/App/TabBarStyle.swift (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ SportApp (in target 'SportApp' from project 'SportApp')
+
+EmitSwiftModule normal arm64 (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
 SwiftCompile normal arm64 Compiling\ Gym.swift,\ LaunchConfig.swift,\ MockData.swift,\ MuscleGroup.swift,\ PersonalRecords.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/Gym.swift /Users/runner/work/sport-app/sport-app/SportApp/App/LaunchConfig.swift /Users/runner/work/sport-app/sport-app/SportApp/Data/MockData.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/MuscleGroup.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/PersonalRecords.swift (in target 'SportApp' from project 'SportApp')
+
 SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/Gym.swift (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     
@@ -291,28 +192,64 @@ SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain
     cd /Users/runner/work/sport-app/sport-app
     
 
-SwiftCompile normal arm64 Compiling\ WorkoutSession.swift,\ WorkoutStore.swift,\ WorkoutTemplate.swift,\ GeneratedAssetSymbols.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutSession.swift /Users/runner/work/sport-app/sport-app/SportApp/Data/WorkoutStore.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutTemplate.swift /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'SportApp' from project 'SportApp')
-SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutSession.swift (in target 'SportApp' from project 'SportApp')
+SwiftCompile normal arm64 Compiling\ Tokens.swift,\ Typography.swift,\ UserSettings.swift,\ WeightScale.swift,\ WorkoutHistory.swift /Users/runner/work/sport-app/sport-app/SportApp/Design/Tokens.swift /Users/runner/work/sport-app/sport-app/SportApp/Design/Typography.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/UserSettings.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/WeightScale.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutHistory.swift (in target 'SportApp' from project 'SportApp')
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Design/Tokens.swift (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     
 
-SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Data/WorkoutStore.swift (in target 'SportApp' from project 'SportApp')
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Design/Typography.swift (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     
 
-SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutTemplate.swift (in target 'SportApp' from project 'SportApp')
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/UserSettings.swift (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     
 
-SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'SportApp' from project 'SportApp')
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/WeightScale.swift (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     
 
-SwiftEmitModule normal arm64 Emitting\ module\ for\ SportApp (in target 'SportApp' from project 'SportApp')
-
-EmitSwiftModule normal arm64 (in target 'SportApp' from project 'SportApp')
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain/WorkoutHistory.swift (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     
+
+LinkAssetCatalog /Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-linkAssetCatalog --thinned /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_output/thinned --thinned-dependencies /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_generated_info.plist_unthinned --output /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app --plist-output /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_generated_info.plist
+note: Emplaced /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/AppIcon76x76@2x~ipad.png (in target 'SportApp' from project 'SportApp')
+note: Emplaced /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Assets.car (in target 'SportApp' from project 'SportApp')
+note: Emplaced /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/AppIcon60x60@2x.png (in target 'SportApp' from project 'SportApp')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for SportApp (in target 'SportApp' from project 'SportApp')
+
+SwiftDriver\ Compilation\ Requirements SportApp normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SportApp -Onone -enforce-exclusivity\=checked @/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -swift-version 5 -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -c -j5 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-Swift.h -working-directory /Users/runner/work/sport-app/sport-app -experimental-emit-module-separately -disable-cmo
+
+ProcessInfoPlistFile /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Info.plist /Users/runner/work/sport-app/sport-app/SportApp/Info.plist (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-infoPlistUtility /Users/runner/work/sport-app/sport-app/SportApp/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/assetcatalog_generated_info.plist -o /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Info.plist
+
+SwiftMergeGeneratedHeaders /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/SportApp-Swift.h /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-Swift.h (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-swiftHeaderTool -arch arm64 /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-Swift.h -o /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/SportApp-Swift.h
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftdoc (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftdoc /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.abi.json (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.abi.json /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftsourceinfo (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftsourceinfo /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
 
 SwiftCompile normal arm64 Compiling\ AccentPalette.swift,\ AlternativeSuggester.swift,\ DurationEstimator.swift,\ EquipmentType.swift,\ Exercise.swift /Users/runner/work/sport-app/sport-app/SportApp/Design/AccentPalette.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/AlternativeSuggester.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/DurationEstimator.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/EquipmentType.swift /Users/runner/work/sport-app/sport-app/SportApp/Domain/Exercise.swift (in target 'SportApp' from project 'SportApp')
 
@@ -336,18 +273,128 @@ SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportApp/Domain
     cd /Users/runner/work/sport-app/sport-app
     
 
+SwiftDriverJobDiscovery normal arm64 Compiling AccentPalette.swift, AlternativeSuggester.swift, DurationEstimator.swift, EquipmentType.swift, Exercise.swift (in target 'SportApp' from project 'SportApp')
+
+SwiftDriverJobDiscovery normal arm64 Compiling Gym.swift, LaunchConfig.swift, MockData.swift, MuscleGroup.swift, PersonalRecords.swift (in target 'SportApp' from project 'SportApp')
+
+SwiftDriver SportAppTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-SwiftDriver -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SportAppTests -Onone -enforce-exclusivity\=checked @/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftFileList -DDEBUG -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -swift-version 5 -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk/Developer/Library/Frameworks -c -j5 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-Swift.h -working-directory /Users/runner/work/sport-app/sport-app -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ DesignTests.swift /Users/runner/work/sport-app/sport-app/SportAppTests/DesignTests.swift (in target 'SportAppTests' from project 'SportApp')
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportAppTests/DesignTests.swift (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ SportAppTests (in target 'SportAppTests' from project 'SportApp')
+
+EmitSwiftModule normal arm64 (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftCompile normal arm64 Compiling\ DomainTests.swift /Users/runner/work/sport-app/sport-app/SportAppTests/DomainTests.swift (in target 'SportAppTests' from project 'SportApp')
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportAppTests/DomainTests.swift (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+/Users/runner/work/sport-app/sport-app/SportAppTests/DomainTests.swift:227:9: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
+        XCTAssertEqual(session.totalVolume, 50 * 10 + 40 * 8 + 50 * 6, accuracy: 0.001)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Failed frontend command:
+/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/sport-app/sport-app/SportAppTests/DesignTests.swift -primary-file /Users/runner/work/sport-app/sport-app/SportAppTests/DomainTests.swift /Users/runner/work/sport-app/sport-app/SportAppTests/StoreTests.swift -emit-dependencies-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/DomainTests.d -emit-const-values-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/DomainTests.swiftconstvalues -emit-reference-dependencies-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/DomainTests.swiftdeps -serialize-diagnostics-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/DomainTests.dia -target arm64-apple-ios16.0-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk/Developer/Library/Frameworks -no-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=4 -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/runner/work/sport-app/sport-app -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/sport-app/sport-app -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources -Xcc -DDEBUG\=1 -module-name SportAppTests -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.5 -target-sdk-name iphonesimulator18.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -o /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/DomainTests.o -index-unit-output-path /SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/DomainTests.o -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -index-system-modules
+SwiftDriverJobDiscovery normal arm64 Compiling Tokens.swift, Typography.swift, UserSettings.swift, WeightScale.swift, WorkoutHistory.swift (in target 'SportApp' from project 'SportApp')
+
+SwiftCompile normal arm64 Compiling\ StoreTests.swift /Users/runner/work/sport-app/sport-app/SportAppTests/StoreTests.swift (in target 'SportAppTests' from project 'SportApp')
+
+SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportAppTests/StoreTests.swift (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling PlaceholderScreen.swift, Program.swift, RootView.swift, SportAppApp.swift, TabBarStyle.swift (in target 'SportApp' from project 'SportApp')
+
+SwiftDriverJobDiscovery normal arm64 Compiling WorkoutSession.swift, WorkoutStore.swift, WorkoutTemplate.swift, GeneratedAssetSymbols.swift (in target 'SportApp' from project 'SportApp')
+
+SwiftDriver\ Compilation SportApp normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-Swift-Compilation -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SportApp -Onone -enforce-exclusivity\=checked @/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -swift-version 5 -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -c -j5 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-Swift.h -working-directory /Users/runner/work/sport-app/sport-app -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp.debug.dylib normal (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0-simulator -dynamiclib -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -O0 -L/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -L/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -filelist /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.LinkFileList -install_name @rpath/SportApp.debug.dylib -Xlinker -rpath -Xlinker @executable_path/Frameworks -dead_strip -Xlinker -object_path_lto -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -dependency_info -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -o /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp.debug.dylib
+
+ConstructStubExecutorLinkFileList /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-ExecutorLinkFileList-normal-arm64.txt (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    construct-stub-executor-link-file-list /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp.debug.dylib /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'SportApp' from project 'SportApp')
+
+Ld /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp normal (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0-simulator -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -O0 -L/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/Frameworks -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-ExecutorLinkFileList-normal-arm64.txt /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp.debug.dylib -o /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp
+
+ExtractAppIntentsMetadata (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SportApp --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 16.0 --bundle-identifier com.sxvandijk.sportapp --output /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app --target-triple arm64-apple-ios16.0-simulator --binary-file /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp --dependency-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_dependency_info.dat --stringsdata-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftFileList --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-13 12:16:13.231 appintentsmetadataprocessor[1484:7857] Starting appintentsmetadataprocessor export
+2026-10-13 12:16:13.233 appintentsmetadataprocessor[1484:7857] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CopySwiftLibs /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp.debug.dylib --scan-folder /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Frameworks --scan-folder /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns --scan-folder /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SystemExtensions --scan-folder /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Extensions --platform iphonesimulator --toolchain /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+AppIntentsSSUTraining (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Info.plist --temp-dir-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/ssu --bundle-id com.sxvandijk.sportapp --product-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app --extracted-metadata-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Metadata.appintents --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyMetadataFileList --archive-ssu-assets
+2026-10-13 12:16:13.290 appintentsnltrainingprocessor[1485:7861] Parsing options for appintentsnltrainingprocessor
+2026-10-13 12:16:13.291 appintentsnltrainingprocessor[1485:7861] No AppShortcuts found - Skipping.
+
+ProcessInfoPlistFile /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest/Info.plist /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/empty-SportAppTests.plist (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-infoPlistUtility /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/empty-SportAppTests.plist -producttype com.apple.product-type.bundle.unit-test -expandbuildsettings -format binary -platform iphonesimulator -o /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest/Info.plist
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for SportAppTests (in target 'SportAppTests' from project 'SportApp')
+
+SwiftDriver\ Compilation\ Requirements SportAppTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SportAppTests -Onone -enforce-exclusivity\=checked @/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftFileList -DDEBUG -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -swift-version 5 -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk/Developer/Library/Frameworks -c -j5 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-Swift.h -working-directory /Users/runner/work/sport-app/sport-app -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/SportAppTests-Swift.h /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-Swift.h (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-swiftHeaderTool -arch arm64 /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-Swift.h -o /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/SportAppTests-Swift.h
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftmodule (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftmodule /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftdoc (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftdoc /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.abi.json (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.abi.json /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftsourceinfo (in target 'SportAppTests' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftsourceinfo /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling DesignTests.swift (in target 'SportAppTests' from project 'SportApp')
+
+SwiftDriverJobDiscovery normal arm64 Compiling StoreTests.swift (in target 'SportAppTests' from project 'SportApp')
+
 
 Test session results, code coverage, and logs:
 	/Users/runner/work/sport-app/sport-app/ci-results/tests.xcresult
 
 Testing failed:
-	None of the input catalogs contained a matching stickers icon set or app icon set named  "AppIcon".
+	The compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
 	Testing cancelled because the build failed.
 
 ** TEST FAILED **
 
 
 The following build commands failed:
-	CompileAssetCatalogVariant thinned /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app /Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets (in target 'SportApp' from project 'SportApp')
+	SwiftCompile normal arm64 /Users/runner/work/sport-app/sport-app/SportAppTests/DomainTests.swift (in target 'SportAppTests' from project 'SportApp')
+	SwiftCompile normal arm64 Compiling\ DomainTests.swift /Users/runner/work/sport-app/sport-app/SportAppTests/DomainTests.swift (in target 'SportAppTests' from project 'SportApp')
 	Testing project SportApp with scheme SportApp
-(2 failures)
+(3 failures)

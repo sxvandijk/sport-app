@@ -1,2 +1,3 @@
-/Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets: error: None of the input catalogs contained a matching stickers icon set or app icon set named  "AppIcon".
+/Users/runner/work/sport-app/sport-app/SportAppTests/DomainTests.swift:227:9: error: the compiler is unable to type-check this expression in reasonable time; try breaking up the expression into distinct sub-expressions
+2026-10-13 12:16:13.233 appintentsmetadataprocessor[1484:7857] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 ** TEST FAILED **
