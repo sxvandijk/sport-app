@@ -21,11 +21,6 @@ struct SheetOverlay: View {
     }
 }
 
-private struct SheetHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
 private struct SheetBody: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
@@ -61,39 +56,49 @@ private struct SheetBody: View {
     }
 
     var body: some View {
-        let h = heading
         GeometryReader { geo in
+            let maxHeight = min(740, geo.size.height - 40)
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
-                VStack(spacing: 0) {
-                    Capsule().fill(Tokens.line).frame(width: 36, height: 5).padding(.top, 8)
-                    HStack(alignment: .top, spacing: 8) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(h.title).sa(20, .bold, tracking: -0.2).foregroundColor(Tokens.text)
-                                .accessibilityAddTraits(.isHeader)
-                            if !h.sub.isEmpty {
-                                Text(h.sub).sa(14).foregroundColor(Tokens.text2)
-                            }
-                        }
-                        .padding(.top, 8)
-                        Spacer(minLength: 0)
-                        Button { model.closeSheet() } label: {
-                            Icon.close(20).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Sluiten")
-                    }
-                    .padding(.top, 10).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
-
-                    ViewThatFits(in: .vertical) {
-                        padded.fixedSize(horizontal: false, vertical: true)
-                        ScrollView { padded }
-                    }
+                ViewThatFits(in: .vertical) {
+                    sheet(scrolls: false)
+                    sheet(scrolls: true).frame(height: maxHeight)
                 }
-                .frame(maxHeight: min(740, geo.size.height - 40))
-                .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
+                .frame(maxHeight: maxHeight)
             }
         }
+    }
+
+    private func sheet(scrolls: Bool) -> some View {
+        let h = heading
+        return VStack(spacing: 0) {
+            Capsule().fill(Tokens.line).frame(width: 36, height: 5).padding(.top, 8)
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(h.title).sa(20, .bold, tracking: -0.2).foregroundColor(Tokens.text)
+                        .accessibilityAddTraits(.isHeader)
+                    if !h.sub.isEmpty {
+                        Text(h.sub).sa(14).foregroundColor(Tokens.text2)
+                    }
+                }
+                .padding(.top, 8)
+                Spacer(minLength: 0)
+                Button { model.closeSheet() } label: {
+                    Icon.close(20).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Sluiten")
+            }
+            .padding(.top, 10).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
+
+            if scrolls {
+                ScrollView { padded }
+            } else {
+                padded.fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
     }
 
     private var padded: some View {
