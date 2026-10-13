@@ -61,7 +61,7 @@ private struct SheetBody: View {
             let inset = geo.safeAreaInsets.bottom
             let maxHeight = min(740, geo.size.height - 40)
             ViewThatFits(in: .vertical) {
-                sheet(scrolls: false, inset: inset)
+                sheet(scrolls: false, inset: inset).frame(maxHeight: .infinity, alignment: .bottom)
                 sheet(scrolls: true, inset: inset).frame(height: maxHeight)
             }
             .frame(maxHeight: maxHeight)
