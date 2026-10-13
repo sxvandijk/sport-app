@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import UserNotifications
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records }
 enum HomeTab: Int, CaseIterable, Identifiable {
     case training, progress, gym, profile
     var id: Int { rawValue }
@@ -17,7 +17,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, superset, add, settype, gym, program, tplmenu
+    case menu, stop, start, explain, swap, superset, add, settype, gym, program, tplmenu, exmenu
 }
 
 struct DraftItem: Identifiable, Hashable {
@@ -97,6 +97,8 @@ struct PersistedState: Codable {
     var prefs: [String: String]
     /// Nieuwere velden zijn optioneel, zodat een oud opslagbestand nog te lezen is.
     var customExercises: [CustomExercise]? = nil
+    var warmupOn: Bool? = nil
+    var warmupMinutes: Int? = nil
     var dataVersion: Int? = nil
 }
 
@@ -127,6 +129,8 @@ final class AppModel: ObservableObject {
     @Published var links: [String: String]
     @Published var prefs: [String: String]
     @Published var customExercises: [CustomExercise]
+    @Published var warmupOn: Bool
+    @Published var warmupMinutes: Int
 
     // Werkscherm
     @Published var focusID: UUID?
@@ -150,6 +154,7 @@ final class AppModel: ObservableObject {
 
     // Kalender
     @Published var calOpen = false
+    @Published var calOpenProgress = false
     @Published var calSel: Int?
     @Published var calInfo = ""
 
@@ -174,6 +179,8 @@ final class AppModel: ObservableObject {
         links = state.links
         prefs = state.prefs
         customExercises = state.customExercises ?? []
+        warmupOn = state.warmupOn ?? true
+        warmupMinutes = state.warmupMinutes ?? 5
         Catalog.setCustom(customExercises)
     }
 
@@ -182,8 +189,8 @@ final class AppModel: ObservableObject {
     static func defaultState(now: Date) -> PersistedState {
         PersistedState(templates: SeedData.templates, programs: SeedData.programs, progID: "p1",
                        gyms: SeedData.gyms, gymID: "g1", history: [], session: nil,
-                       accent: .olive, themeMode: .system, restDefault: 90, warmFirst: true, crea: true,
-                       links: [:], prefs: [:], customExercises: [], dataVersion: AppModel.dataVersion)
+                       accent: .olive, themeMode: .system, restDefault: 180, warmFirst: true, crea: true,
+                       links: [:], prefs: [:], customExercises: [], warmupOn: true, warmupMinutes: 5, dataVersion: AppModel.dataVersion)
     }
 
     // MARK: Opslag
@@ -215,7 +222,8 @@ final class AppModel: ObservableObject {
         PersistedState(templates: templates, programs: programs, progID: progID, gyms: gyms, gymID: gymID,
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
-                       customExercises: customExercises, dataVersion: AppModel.dataVersion)
+                       customExercises: customExercises, warmupOn: warmupOn, warmupMinutes: warmupMinutes,
+                       dataVersion: AppModel.dataVersion)
     }
 
     func save() {
@@ -286,7 +294,8 @@ final class AppModel: ObservableObject {
     }
 
     func doStart(_ name: String) {
-        session = LiveSession.make(name: name, startAt: Date(), templates: templates, history: history)
+        session = LiveSession.make(name: name, startAt: Date(), templates: templates, history: history,
+                                  startWarmupMinutes: warmupOn ? warmupMinutes : nil)
         screen = .workout
         focusID = nil
         restEnd = nil
@@ -572,6 +581,20 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    /// Verwijdert een schema en de trainingen die nergens anders in zitten.
+    func deleteProgram(_ id: String) {
+        guard let gone = programs.first(where: { $0.id == id }) else { return }
+        programs.removeAll { $0.id == id }
+        let stillUsed = Set(programs.flatMap { $0.workouts })
+        for name in gone.workouts where !stillUsed.contains(name) { templates[name] = nil }
+        if programs.isEmpty {
+            programs = [PlanProgram(id: "p\(Int(Date().timeIntervalSince1970))", name: "Mijn schema", workouts: [])]
+        }
+        if !programs.contains(where: { $0.id == progID }) { progID = programs[0].id }
+        sheet = nil
+        save()
+    }
+
     func chooseProgram(_ id: String) {
         progID = id
         sheet = nil
@@ -624,6 +647,16 @@ final class AppModel: ObservableObject {
 
     func setRestDefault(_ value: Int) {
         restDefault = min(300, max(30, value))
+        save()
+    }
+
+    func setWarmup(on: Bool) {
+        warmupOn = on
+        save()
+    }
+
+    func setWarmupMinutes(_ value: Int) {
+        warmupMinutes = min(30, max(1, value))
         save()
     }
 

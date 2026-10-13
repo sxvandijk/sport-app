@@ -50,6 +50,7 @@ private struct SheetBody: View {
         case .add: return ("Oefening toevoegen", model.addToDraft ? "Wordt onderaan je schema gezet" : "Wordt onderaan je workout gezet")
         case .program: return ("Kies je schema", "Je schema bepaalt welke trainingen je op het startscherm ziet.")
         case .tplmenu: return (model.tmName ?? "", "Opties voor deze training")
+        case .exmenu: return (name, "Opties voor deze oefening")
         case .settype: return ("Soort set", name)
         case .gym: return ("Kies je gym", "Machine bezet en de plus/min-stappen volgen de apparaten van deze gym.")
         }
@@ -57,19 +58,19 @@ private struct SheetBody: View {
 
     var body: some View {
         GeometryReader { geo in
+            let inset = geo.safeAreaInsets.bottom
             let maxHeight = min(740, geo.size.height - 40)
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-                ViewThatFits(in: .vertical) {
-                    sheet(scrolls: false)
-                    sheet(scrolls: true).frame(height: maxHeight)
-                }
-                .frame(maxHeight: maxHeight)
+            ViewThatFits(in: .vertical) {
+                sheet(scrolls: false, inset: inset)
+                sheet(scrolls: true, inset: inset).frame(height: maxHeight)
             }
+            .frame(maxHeight: maxHeight)
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
         }
+        .ignoresSafeArea(edges: .bottom)
     }
 
-    private func sheet(scrolls: Bool) -> some View {
+    private func sheet(scrolls: Bool, inset: CGFloat) -> some View {
         let h = heading
         return VStack(spacing: 0) {
             Capsule().fill(Tokens.line).frame(width: 36, height: 5).padding(.top, 8)
@@ -96,9 +97,10 @@ private struct SheetBody: View {
             } else {
                 padded.fixedSize(horizontal: false, vertical: true)
             }
+            Color.clear.frame(height: inset)
         }
         .frame(maxWidth: .infinity)
-        .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
+        .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface))
     }
 
     private var padded: some View {
@@ -123,6 +125,7 @@ private struct SheetBody: View {
         case .gym: GymSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
+        case .exmenu: ExerciseMenuSheet()
         }
     }
 }
@@ -210,6 +213,27 @@ private struct MenuSheet: View {
                 .padding(.horizontal, 16).frame(minHeight: 52, alignment: .leading)
         }
         .padding(.top, 22)
+    }
+}
+
+private struct ExerciseMenuSheet: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        SheetRowButton(action: {
+            if let id = model.sheetEx { model.addWarmup(id) }
+            model.closeSheet()
+        }) {
+            HStack(spacing: 12) {
+                Icon.plus(20).foregroundColor(Tokens.warm)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Warming-upset toevoegen").sa(17, .medium).foregroundColor(Tokens.text)
+                    Text("Ongeveer de helft van je eerste werkset").sa(13).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16).frame(minHeight: 60)
+        }
     }
 }
 
@@ -531,7 +555,7 @@ private struct SearchList: View {
             if creating {
                 VStack(alignment: .leading, spacing: 10) {
                     Picker("Soort", selection: $newKind) {
-                        ForEach(ExerciseKind.allCases, id: \.self) { k in Text(k.title).tag(k) }
+                        ForEach([ExerciseKind.weights, .bodyweight, .cardio], id: \.self) { k in Text(k.title).tag(k) }
                     }
                     .pickerStyle(.segmented)
                     if newKind != .cardio {
@@ -576,7 +600,8 @@ private struct SearchList: View {
                 guard var d = model.draft else { return }
                 let w = Catalog.info(name).defaultWeight
                 d.items.append(DraftItem(name: name, warm: false, warmW: nil, sets: Catalog.kind(name) == .cardio ? 1 : 3,
-                                         reps: 10, w: w, link: false))
+                                         reps: Catalog.kind(name) == .cardio ? 10 : 8,
+                                         repsMax: Catalog.kind(name) == .cardio ? nil : 12, w: w, link: false))
                 model.draft = d
                 model.sheet = nil
             } else {
@@ -652,12 +677,39 @@ private struct GymSheet: View {
 private struct ProgramSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @State private var confirm: String?
 
     var body: some View {
         ForEach(model.programs) { p in
-            ListRow(title: p.name,
-                    sub: p.workouts.isEmpty ? "Nog geen trainingen" : p.workouts.joined(separator: " · "),
-                    selected: p.id == model.program.id) { model.chooseProgram(p.id) }
+            HStack(spacing: 4) {
+                ListRow(title: p.name,
+                        sub: p.workouts.isEmpty ? "Nog geen trainingen" : p.workouts.joined(separator: " \u{00B7} "),
+                        selected: p.id == model.program.id) { model.chooseProgram(p.id) }
+                Button { confirm = confirm == p.id ? nil : p.id } label: {
+                    Icon.trash(20).foregroundColor(Tokens.danger).frame(width: 48, height: 60).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 6)
+                .accessibilityLabel("Verwijder schema \(p.name)")
+            }
+            if confirm == p.id {
+                HStack(spacing: 8) {
+                    Button { confirm = nil } label: {
+                        Text("Annuleer").sa(16, .semibold).foregroundColor(Tokens.text)
+                            .frame(maxWidth: .infinity).frame(height: 48).card(Tokens.raised, radius: Radius.field)
+                    }
+                    .buttonStyle(.plain)
+                    Button {
+                        confirm = nil
+                        model.deleteProgram(p.id)
+                    } label: {
+                        Text("Verwijder schema").sa(16, .bold).foregroundColor(Tokens.onDanger)
+                            .frame(maxWidth: .infinity).frame(height: 48).card(Tokens.danger, radius: Radius.field)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.bottom, 8)
+            }
         }
         FlatButton(title: "+ Nieuw schema", color: ac.accentText) { model.newProgram() }.padding(.top, 6)
     }

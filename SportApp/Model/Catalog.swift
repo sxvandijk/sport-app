@@ -2,13 +2,14 @@ import Foundation
 
 /// Soort oefening: met gewicht, lichaamsgewicht (gewicht = extra kg, vaak 0) of cardio (w = kilometer, r = minuten).
 enum ExerciseKind: String, Codable, CaseIterable {
-    case weights, bodyweight, cardio
+    case weights, bodyweight, cardio, timed
 
     var title: String {
         switch self {
         case .weights: return "Met gewicht"
         case .bodyweight: return "Lichaamsgewicht"
         case .cardio: return "Cardio"
+        case .timed: return "Op tijd"
         }
     }
 }
@@ -64,6 +65,7 @@ enum Catalog {
         ("Calf raise machine", ExerciseInfo("Kuiten", "Machine", step: 5, d: 50)),
         ("Cable crunch", ExerciseInfo("Core", "Kabel", step: 2.5, d: 30)),
         // Jouw schema's
+        (Catalog.generalWarmupName, ExerciseInfo("Warming-up", "Vrij", step: 1, d: 0, kind: .timed)),
         ("Pullups", ExerciseInfo("Lats", "Rekstok", step: 2.5, d: 0, kind: .bodyweight)),
         ("Muscle Up", ExerciseInfo("Lats", "Rekstok", step: 2.5, d: 0, kind: .bodyweight)),
         ("Hanging Leg Raise", ExerciseInfo("Core", "Rekstok", step: 2.5, d: 0, kind: .bodyweight)),
@@ -91,6 +93,9 @@ enum Catalog {
         ("Cable One Arm Tricep Extension", ExerciseInfo("Triceps", "Kabel", step: 2.5, d: 10)),
         ("Bayesian Bicep Cable Curl", ExerciseInfo("Biceps", "Kabel", step: 0.5, d: 10))
     ]
+
+    /// De algemene warming-up aan het begin van een training.
+    static let generalWarmupName = "Warming-up"
 
     /// Zelf toegevoegde oefeningen (door `AppModel` gevuld).
     static var custom: [String: ExerciseInfo] = [:]

@@ -27,7 +27,8 @@ struct LaunchConfig {
 
         let needsSession = screen.hasPrefix("workout") || screen.hasPrefix("sheet-") || screen == "training-running"
         if needsSession {
-            model.session = ScreenshotScenario.session(now: now, templates: model.templates, history: model.history)
+            model.session = ScreenshotScenario.session(now: now, templates: model.templates, history: model.history,
+                                                       warmupMinutes: model.warmupOn ? model.warmupMinutes : nil)
         }
 
         switch screen {
@@ -38,6 +39,7 @@ struct LaunchConfig {
             model.calOpen = true
         case "progress": model.tab = .progress
         case "progress-empty": model.tab = .progress
+        case "records": model.screen = .records
         case "training-empty": model.tab = .training
         case "gym": model.tab = .gym
         case "profile": model.tab = .profile
@@ -53,7 +55,7 @@ struct LaunchConfig {
             }
         case "workout-toast":
             model.screen = .workout
-            if let s = model.session, let ex = s.exercises.first, let set = ex.sets.last {
+            if let s = model.session, let ex = s.exercises.first(where: { $0.name != Catalog.generalWarmupName }), let set = ex.sets.last {
                 model.deleteSet(exID: ex.id, setID: set.id)
             }
         case "workout-done":
@@ -106,6 +108,9 @@ struct LaunchConfig {
         case "settype":
             model.screen = .workout
             model.openSheet(.settype, exID: exID, setID: current?.setID)
+        case "exmenu":
+            model.screen = .workout
+            model.openSheet(.exmenu, exID: exID)
         case "gym":
             model.openSheet(.gym)
         case "program":
@@ -144,14 +149,18 @@ enum ScreenshotScenario {
         return out
     }
 
-    static func session(now: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = []) -> LiveSession {
-        var s = LiveSession.make(name: "Push", startAt: now.addingTimeInterval(-(23 * 60 + 14)), templates: templates, history: history)
-        if s.exercises.count >= 3 {
-            for i in s.exercises[0].sets.indices { s.exercises[0].sets[i].done = true }
-            if s.exercises[0].sets.count > 3 { s.exercises[0].sets[3].r = 8 }
-            s.exercises[1].sets[0].done = true
-            s.exercises[1].sets[1].done = true
-            s.exercises[2].sets[0].done = true
+    static func session(now: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = [],
+                        warmupMinutes: Int? = nil) -> LiveSession {
+        var s = LiveSession.make(name: "Push", startAt: now.addingTimeInterval(-(23 * 60 + 14)), templates: templates, history: history,
+                                 startWarmupMinutes: warmupMinutes)
+        let off = s.exercises.first?.name == Catalog.generalWarmupName ? 1 : 0
+        if off == 1 { s.exercises[0].sets[0].done = true }
+        if s.exercises.count >= 3 + off {
+            for i in s.exercises[off].sets.indices { s.exercises[off].sets[i].done = true }
+            if s.exercises[off].sets.count > 3 { s.exercises[off].sets[3].r = 8 }
+            s.exercises[off + 1].sets[0].done = true
+            s.exercises[off + 1].sets[1].done = true
+            s.exercises[off + 2].sets[0].done = true
         }
         return s
     }

@@ -165,7 +165,23 @@ struct TrainingTab: View {
 
             CalendarCard(expandable: true).padding(.top, 14)
 
-            SectionLabel(text: "Mijn schema").padding(.top, 22)
+            HStack(alignment: .center) {
+                SectionLabel(text: "Mijn schema")
+                Spacer(minLength: 0)
+                Button { model.openSheet(.program) } label: {
+                    HStack(spacing: 6) {
+                        Icon.updown(16)
+                        Text("Wissel schema").sa(14, .semibold)
+                    }
+                    .foregroundColor(ac.accentText)
+                    .padding(.horizontal, 12).frame(height: 34)
+                    .background(Capsule().fill(ac.accentSoft))
+                    .frame(height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Wissel schema")
+            }
+            .padding(.top, 14)
             programButton
             Spacer().frame(height: 8)
             ForEach(model.program.workouts, id: \.self) { name in
@@ -224,10 +240,6 @@ struct TrainingTab: View {
                     Text(sub).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                Icon.updown(18)
-                    .foregroundColor(Tokens.text)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(Tokens.raised))
             }
             .frame(minHeight: 52)
             .contentShape(Rectangle())
@@ -299,10 +311,10 @@ struct ProgressTab: View {
             }
             .padding(.top, 18)
 
-            CalendarCard(expandable: false).padding(.top, 20)
+            CalendarCard(expandable: true, openKey: \.calOpenProgress).padding(.top, 20)
             volumeCard(stats).padding(.top, 12)
             muscleCard(stats).padding(.top, 12)
-            recordsSection(stats).padding(.top, 24)
+            recordsSection(stats).padding(.top, 12)
         }
     }
 
@@ -319,20 +331,22 @@ struct ProgressTab: View {
         let top = max(volumes.max() ?? 0, 0.001)
         let thisWeek = volumes.last ?? 0
         return VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Volume per week").sa(17, .semibold).foregroundColor(Tokens.text)
-                Spacer()
-                Text("x 1.000 kg").sa(13).foregroundColor(Tokens.text2)
-            }
+            Text("Volume per week").sa(17, .semibold).foregroundColor(Tokens.text)
+            Text("Totaal getild gewicht: kg \u{00D7} herhalingen, opgeteld. 9,8k = 9.800 kg.")
+                .sa(13).foregroundColor(Tokens.text2).padding(.top, 2)
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(0..<volumes.count, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(i == volumes.count - 1 ? ac.accentLine : ac.accentSoft)
-                        .frame(height: max(4, CGFloat((volumes[i] / top * 120).rounded())))
-                        .frame(maxWidth: .infinity)
+                    VStack(spacing: 4) {
+                        Text(volumes[i] > 0 ? Format.weight(volumes[i]) + "k" : "").sa(10, .regular, mono: true)
+                            .foregroundColor(Tokens.text2).lineLimit(1).minimumScaleFactor(0.7)
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(i == volumes.count - 1 ? ac.accentLine : ac.accentSoft)
+                            .frame(height: max(4, CGFloat((volumes[i] / top * 100).rounded())))
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
-            .frame(height: 120, alignment: .bottom)
+            .frame(height: 124, alignment: .bottom)
             .padding(.top, 14)
             HStack(spacing: 8) {
                 ForEach(0..<stats.weekLabels.count, id: \.self) { i in
@@ -384,64 +398,30 @@ struct ProgressTab: View {
         .card(Tokens.surface, radius: Radius.card)
     }
 
-    // MARK: Persoonlijke records
+    // MARK: Persoonlijke records (eigen pagina)
 
     private func recordsSection(_ stats: ProgressStats) -> some View {
-        let list = Array(stats.records.prefix(10))
-        return VStack(alignment: .leading, spacing: 0) {
-            SectionLabel(text: "Persoonlijke records").padding(.bottom, 8)
-            if list.isEmpty {
-                Text("Rond een training af, dan verschijnen hier je zwaarste sets.")
-                    .sa(15).foregroundColor(Tokens.text2)
-                    .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-                    .card(Tokens.surface, radius: Radius.card)
-            }
-            ForEach(list) { r in recordCard(r) }
-        }
-    }
-
-    private func recordCard(_ r: PersonalRecord) -> some View {
-        let fresh = Date().timeIntervalSince(r.date) < 7 * 86400
-        let main: String
-        switch r.kind {
-        case .bodyweight where r.weight == 0: main = "\(r.reps)"
-        case .bodyweight: main = "+" + Format.weight(r.weight)
-        default: main = Format.weight(r.weight)
-        }
-        let unit: String
-        switch r.kind {
-        case .bodyweight where r.weight == 0: unit = " reps"
-        default: unit = " kg \u{00D7} \(r.reps)"
-        }
-        return HStack(spacing: 14) {
-            Icon.star(20).foregroundColor(ac.accentText)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(ac.accentSoft))
-            VStack(alignment: .leading, spacing: 3) {
-                Text(r.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
-                HStack(spacing: 8) {
-                    Text(DateText.short(r.date)).sa(13).foregroundColor(Tokens.text2)
-                    if fresh {
-                        Text("Nieuw").sa(11, .bold).foregroundColor(ac.accentText)
-                            .padding(.horizontal, 7).frame(height: 20)
-                            .background(Capsule().fill(ac.accentSoft))
-                    }
+        let n = stats.records.count
+        let sub = n == 0 ? "Rond een training af om records te zien" : "\(n) \(n == 1 ? "record" : "records") \u{00B7} laatste: " + (stats.records.first?.name ?? "")
+        return Button {
+            model.screen = .records
+        } label: {
+            HStack(spacing: 14) {
+                Icon.star(22).foregroundColor(ac.accentText)
+                    .frame(width: 48, height: 48).background(Circle().fill(ac.accentSoft))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Persoonlijke records").sa(17, .semibold).foregroundColor(Tokens.text)
+                    Text(sub).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
                 }
-                if r.oneRM > 0 {
-                    Text("Geschat 1RM " + Format.weight((r.oneRM).rounded()) + " kg").sa(12, .regular, mono: true)
-                        .foregroundColor(Tokens.text3)
-                }
+                Spacer(minLength: 0)
+                Icon.chevronRight(18).foregroundColor(Tokens.text2)
             }
-            Spacer(minLength: 8)
-            HStack(alignment: .firstTextBaseline, spacing: 0) {
-                Text(main).sa(24, .semibold, tracking: -0.4, mono: true).foregroundColor(Tokens.text)
-                Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
-            }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .card(Tokens.surface, radius: Radius.card)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 14).padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.surface, radius: Radius.button)
-        .padding(.bottom, 8)
+        .buttonStyle(.plain)
     }
 }
 
@@ -471,8 +451,13 @@ struct GymTab: View {
                         Text(gym.summary).sa(13).foregroundColor(Tokens.text2)
                     }
                     Spacer(minLength: 0)
-                    Icon.updown(18).foregroundColor(Tokens.text)
-                        .frame(width: 36, height: 36).background(Circle().fill(Tokens.raised))
+                    HStack(spacing: 6) {
+                        Icon.updown(16)
+                        Text("Wissel gym").sa(14, .semibold)
+                    }
+                    .foregroundColor(ac.accentText)
+                    .padding(.horizontal, 12).frame(height: 34)
+                    .background(Capsule().fill(ac.accentSoft))
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
                 .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
@@ -592,6 +577,36 @@ struct ProfileTab: View {
                     SAToggle(isOn: model.warmFirst, onColor: ac.accentLine, label: "Warming-up in superset") {
                         model.warmFirst.toggle()
                         model.save()
+                    }
+                }
+                .frame(minHeight: 64)
+
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Algemene warming-up").sa(16, .medium).foregroundColor(Tokens.text)
+                        Text(model.warmupOn ? "\(model.warmupMinutes) min aan het begin van elke training" : "Uit")
+                            .sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    if model.warmupOn {
+                        HStack(spacing: 0) {
+                            Button { model.setWarmupMinutes(model.warmupMinutes - 1) } label: {
+                                Text("\u{2212}").sa(20).foregroundColor(Tokens.text).frame(width: 40, height: 44)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Kortere warming-up")
+                            Text("\(model.warmupMinutes)").sa(16, .semibold, mono: true)
+                                .foregroundColor(Tokens.text).frame(minWidth: 28)
+                            Button { model.setWarmupMinutes(model.warmupMinutes + 1) } label: {
+                                Text("+").sa(20).foregroundColor(Tokens.text).frame(width: 40, height: 44)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Langere warming-up")
+                        }
+                        .card(Tokens.raised, radius: Radius.field)
+                    }
+                    SAToggle(isOn: model.warmupOn, onColor: ac.accentLine, label: "Algemene warming-up") {
+                        model.setWarmup(on: !model.warmupOn)
                     }
                 }
                 .frame(minHeight: 64)

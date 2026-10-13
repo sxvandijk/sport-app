@@ -134,9 +134,14 @@ struct LiveSession: Codable, Hashable {
         return LiveExercise(name: name, group: group, from: nil, sets: sets)
     }
 
-    static func make(name: String, startAt: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = []) -> LiveSession {
+    static func make(name: String, startAt: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = [],
+                     startWarmupMinutes: Int? = nil) -> LiveSession {
         let plans = templates[name] ?? []
         var list: [LiveExercise] = []
+        if let m = startWarmupMinutes {
+            list.append(LiveExercise(name: Catalog.generalWarmupName, group: 0, from: nil,
+                                     sets: [LiveSet(type: .warmup, w: 0, r: m)]))
+        }
         for item in plans {
             list.append(makeExercise(name: item.name, group: item.group, plan: item, last: lastLogged(item.name, in: history)))
         }
@@ -407,6 +412,9 @@ struct LiveSession: Codable, Hashable {
         let work = sets.filter { $0.type != .warmup }
         let done = work.filter { $0.done }
         if work.isEmpty { return "Geen sets" }
+        if kind == .timed {
+            return done.isEmpty ? Format.setText(kind, 0, work.first?.r ?? 0) : "Klaar"
+        }
         if kind == .cardio {
             let km = done.reduce(0) { $0 + $1.w }
             let min = done.reduce(0) { $0 + $1.r }
@@ -462,6 +470,7 @@ enum Format {
         case .weights: return weight(w) + " kg × " + String(r)
         case .bodyweight: return w == 0 ? String(r) + " reps" : "+" + weight(w) + " kg × " + String(r)
         case .cardio: return km(w) + " km · " + String(r) + " min"
+        case .timed: return String(r) + " min"
         }
     }
 

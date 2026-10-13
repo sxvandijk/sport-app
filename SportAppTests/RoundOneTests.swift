@@ -67,4 +67,23 @@ final class RoundOneTests: XCTestCase {
         XCTAssertEqual(model.addCustomExercise(name: "farmer walk", muscle: "Core", equipment: "Eigen", kind: .weights), "Farmer walk")
         Catalog.setCustom([])
     }
+
+    func testGeneralWarmupIsFirstExerciseAndNotAWorkSet() {
+        let s = LiveSession.make(name: "Push", startAt: Date(), templates: SeedData.templates, startWarmupMinutes: 5)
+        XCTAssertEqual(s.exercises.first?.name, Catalog.generalWarmupName)
+        XCTAssertEqual(s.exercises.first?.sets.first?.type, .warmup)
+        XCTAssertEqual(s.exercises.first?.sets.first?.r, 5)
+        XCTAssertEqual(s.workSetCounts.total, 27)
+        let none = LiveSession.make(name: "Push", startAt: Date(), templates: SeedData.templates)
+        XCTAssertNotEqual(none.exercises.first?.name, Catalog.generalWarmupName)
+    }
+
+    func testDeleteProgramRemovesItsTrainings() {
+        let model = AppModel(fileURL: nil)
+        XCTAssertEqual(model.restDefault, 180)
+        model.deleteProgram(model.program.id)
+        XCTAssertEqual(model.programs.count, 1)
+        XCTAssertTrue(model.program.workouts.isEmpty)
+        XCTAssertTrue(model.templates.isEmpty)
+    }
 }

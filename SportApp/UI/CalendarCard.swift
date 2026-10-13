@@ -6,6 +6,7 @@ struct CalendarCard: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     let expandable: Bool
+    var openKey: ReferenceWritableKeyPath<AppModel, Bool> = \.calOpen
 
     @State private var monthShift = 0
     @State private var selected: Date?
@@ -17,7 +18,7 @@ struct CalendarCard: View {
         return c
     }
 
-    private var isOpen: Bool { !expandable || model.calOpen }
+    private var isOpen: Bool { !expandable || model[keyPath: openKey] }
 
     // MARK: Gegevens
 
@@ -110,7 +111,7 @@ struct CalendarCard: View {
         let monday = cal.date(byAdding: .day, value: -dow, to: today) ?? today
         let weekCount = model.history.filter { $0.date >= monday }.count
         return Button {
-            model.calOpen.toggle()
+            model[keyPath: openKey].toggle()
             selected = nil
             monthShift = 0
         } label: {
@@ -125,14 +126,14 @@ struct CalendarCard: View {
                     Text("deze week").sa(12).foregroundColor(Tokens.text2)
                 }
                 Icon.chevronDown(18).foregroundColor(Tokens.text2)
-                    .rotationEffect(.degrees(model.calOpen ? 180 : 0))
+                    .rotationEffect(.degrees(model[keyPath: openKey] ? 180 : 0))
             }
             .padding(.horizontal, 8).padding(.vertical, 4)
             .frame(maxWidth: .infinity, minHeight: 52)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityValue(model.calOpen ? "uitgeklapt" : "ingeklapt")
+        .accessibilityValue(model[keyPath: openKey] ? "uitgeklapt" : "ingeklapt")
     }
 
     private func monthNav(now: Date) -> some View {
