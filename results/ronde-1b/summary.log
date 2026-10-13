@@ -1,6 +1,74 @@
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:275:34: error: cannot find 'set' in scope
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:275:74: error: cannot find 'set' in scope
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:276:40: error: cannot find 'set' in scope
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:277:45: error: cannot find 'set' in scope
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:411:22: error: cannot find 'firstColumn' in scope
-** TEST FAILED **
+2026-10-13 19:21:59.814 appintentsmetadataprocessor[1543:8163] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-13 19:22:00.197 appintentsmetadataprocessor[1547:8196] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+Test Case '-[SportAppTests.AccentPaletteTests testContrastReferenceValues]' passed (0.001 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInDarkModeGetsLighterText]' passed (0.000 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInLightMode]' passed (0.000 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInDarkMode]' passed (0.009 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInLightModeGetsDarkerText]' passed (0.001 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testTextOnAccentHasEnoughContrast]' passed (0.001 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testWhichAccentsCountAsDark]' passed (0.000 seconds).
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.013 (0.014) seconds
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testExcludedExercisesAreSkipped]' passed (0.003 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testExerciseNamesAreEnglish]' passed (0.001 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testMockDataIsConsistent]' passed (0.002 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testPlaceholdersComeFromTheLastSessionOnTheSameMachine]' passed (0.001 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsCuratedFirst]' passed (0.001 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsOnlyContainWhatYourGymHas]' passed (0.001 seconds).
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.008 (0.046) seconds
+Test Case '-[SportAppTests.DesignTokenTests testTextStylesFollowTheDesign]' passed (0.001 seconds).
+Test Case '-[SportAppTests.DesignTokenTests testTouchTargetsAreAtLeast44]' passed (0.000 seconds).
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Case '-[SportAppTests.DurationEstimatorTests testCalibrationNeedsEnoughData]' passed (0.000 seconds).
+Test Case '-[SportAppTests.DurationEstimatorTests testFinishedWorkoutHasNothingLeft]' passed (0.001 seconds).
+Test Case '-[SportAppTests.DurationEstimatorTests testSingleExercise]' passed (0.001 seconds).
+Test Case '-[SportAppTests.DurationEstimatorTests testSupersetRestsOncePerRound]' passed (0.001 seconds).
+Test Case '-[SportAppTests.DurationEstimatorTests testWarmupSetCountsWithHalfRest]' passed (0.000 seconds).
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.003 (0.018) seconds
+Test Case '-[SportAppTests.FormatTests testClock]' passed (0.000 seconds).
+Test Case '-[SportAppTests.FormatTests testDutchNumberFormatting]' passed (0.001 seconds).
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Case '-[SportAppTests.PersonalRecordTests testEpley]' passed (0.001 seconds).
+Test Case '-[SportAppTests.PersonalRecordTests testFirstTimeAndWarmupsAreNoRecords]' passed (0.000 seconds).
+Test Case '-[SportAppTests.PersonalRecordTests testNewRecordDetection]' passed (0.001 seconds).
+Test Case '-[SportAppTests.PersonalRecordTests testRecordsPickHeaviestAndBestEstimate]' passed (0.000 seconds).
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.036) seconds
+Test Case '-[SportAppTests.ProgramTests testEmptyProgramHasNoNextWorkout]' passed (0.000 seconds).
+Test Case '-[SportAppTests.ProgramTests testFirstWorkoutIsNextWhenNothingIsDone]' passed (0.007 seconds).
+Test Case '-[SportAppTests.ProgramTests testNextFollowsTheLastDoneWorkoutAndWrapsAround]' passed (0.001 seconds).
+Test Case '-[SportAppTests.ProgramTests testWorkoutsOutsideTheProgramAreIgnored]' passed (0.001 seconds).
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.009 (0.009) seconds
+Test Case '-[SportAppTests.RoundOneTests testCardioAndBodyweightText]' passed (0.001 seconds).
+Test Case '-[SportAppTests.RoundOneTests testCustomExerciseIsRemembered]' passed (0.001 seconds).
+Test Case '-[SportAppTests.RoundOneTests testDeleteProgramRemovesItsTrainings]' passed (0.001 seconds).
+Test Case '-[SportAppTests.RoundOneTests testGeneralWarmupIsFirstExerciseAndNotAWorkSet]' passed (0.001 seconds).
+Test Case '-[SportAppTests.RoundOneTests testPreviousTimeComesFromHistory]' passed (0.001 seconds).
+Test Case '-[SportAppTests.RoundOneTests testProgressStatsRecordsAndVolume]' passed (0.002 seconds).
+Test Case '-[SportAppTests.RoundOneTests testSeedHasFourSchemasAndNoHistory]' passed (0.001 seconds).
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.007 (0.011) seconds
+Test Case '-[SportAppTests.WeightScaleTests testAddOnPlateCreatesHalfSteps]' passed (0.000 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testBarbellNeverGoesBelowTheEmptyBar]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testCodableRoundTrip]' passed (0.003 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testFallbackScaleIsUnbounded]' passed (0.000 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testInferIncrementFromScannedNumbers]' passed (0.000 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testIrregularStackUsesTheList]' passed (0.000 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testRegularStackSnapsAndSteps]' passed (0.000 seconds).
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.006 (0.011) seconds
+Test Case '-[SportAppTests.WorkoutSessionTests testAddWarmupSetGoesBeforeTheWorkingSets]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testLinkAndUnlinkSuperset]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testMakeFromTemplate]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testNormalExerciseAlwaysRests]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testOnlyWarmupsAreLeftOutOfSetsAndVolume]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testSupersetTimerFiresAfterTheLastExercise]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testSwapKeepsCompletedSetsAndSnapsOpenWeights]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testWarmupSetOnlyWhenTheTemplateAsksForIt]' passed (0.001 seconds).
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.006 (0.009) seconds
+Test Case '-[SportAppTests.WorkoutStoreTests testCurrentProgramAndGymComeFromSettings]' passed (0.002 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testDefaultSettingsFollowTheDesign]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testRunningWorkoutSurvivesRestart]' passed (0.050 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testSettingsAreSavedAndReloaded]' passed (0.006 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testStartAndFinishWorkout]' passed (0.003 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testUnreadableFileIsKeptAndReplacedBySeed]' passed (0.053 seconds).
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.114 (0.117) seconds
+	 Executed 58 tests, with 0 failures (0 unexpected) in 0.172 (0.293) seconds
+	 Executed 58 tests, with 0 failures (0 unexpected) in 0.172 (0.294) seconds
+** TEST SUCCEEDED **
