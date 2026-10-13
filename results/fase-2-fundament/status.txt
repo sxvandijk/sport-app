@@ -1,4 +1,4 @@
 branch: fase-2-fundament
-commit: f135475da4db9a720b81bb03bd63b46f8447e6d6
+commit: 8cae06b370289ef8ec2d722753c93f3bafd42677
 status: success
-run: https://github.com/sxvandijk/sport-app/actions/runs/38396181075
+run: https://github.com/sxvandijk/sport-app/actions/runs/38396762944
