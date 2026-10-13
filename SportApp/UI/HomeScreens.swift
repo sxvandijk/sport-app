@@ -687,7 +687,14 @@ struct ProfileTab: View {
 
 struct AccentPicker: View {
     @EnvironmentObject private var model: AppModel
-    @Environment(\.colorScheme) private var scheme
+
+    private func swatch(_ id: AccentID) -> Color {
+        let hex = id.hex
+        let r = Double((hex >> 16) & 0xFF) / 255.0
+        let g = Double((hex >> 8) & 0xFF) / 255.0
+        let b = Double(hex & 0xFF) / 255.0
+        return Color(.sRGB, red: r, green: g, blue: b, opacity: 1)
+    }
 
     var body: some View {
         HStack(spacing: 2) {
@@ -697,9 +704,7 @@ struct AccentPicker: View {
                     model.accent = id
                     model.save()
                 } label: {
-                    Circle().fill(Color(.sRGB, red: Double((id.hex >> 16) & 0xFF) / 255,
-                                        green: Double((id.hex >> 8) & 0xFF) / 255,
-                                        blue: Double(id.hex & 0xFF) / 255, opacity: 1))
+                    Circle().fill(swatch(id))
                         .frame(width: 34, height: 34)
                         .frame(width: 48, height: 48)
                         .overlay(Circle().stroke(on ? Tokens.text : Color.clear, lineWidth: 2).frame(width: 48, height: 48))
