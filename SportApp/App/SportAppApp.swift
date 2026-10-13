@@ -20,6 +20,7 @@ struct SportAppApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(model)
+                .onAppear { if !LaunchConfig().isScreenshotRun { model.rescheduleCreatine() } }
         }
     }
 }

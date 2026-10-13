@@ -42,10 +42,34 @@ struct OverviewScreen: View {
         .frame(minHeight: 60)
     }
 
+    private func warmupRow(_ x: PlanItem) -> some View {
+        HStack(spacing: 12) {
+            Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(x.name).sa(17, .medium).foregroundColor(Tokens.text)
+                Text(OverviewScreen.warmupLine(x)).sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 8)
+        .frame(minHeight: 56)
+    }
+
+    /// "2 × 15 · Schouders" of "5 min · Cardio".
+    static func warmupLine(_ x: PlanItem) -> String {
+        let kind = Catalog.kind(x.name)
+        let muscle = Catalog.info(x.name).muscle
+        guard let f = x.sets.first else { return muscle }
+        if kind == .timed { return "\(f.r) min \u{00B7} " + muscle }
+        if kind == .cardio { return Format.setText(.cardio, f.w, f.r) + " \u{00B7} " + muscle }
+        return "\(x.sets.count) \u{00D7} \(f.r) \u{00B7} " + muscle
+    }
+
     var body: some View {
         if let name = model.ovName, model.templates[name] != nil {
             let info = model.planSummary(name)
-            let blockList = blocks(of: info.items)
+            let blockList = blocks(of: info.items.filter { $0.isWarmup != true })
+            let warmItems = info.items.filter { $0.isWarmup == true }
             VStack(spacing: 0) {
                 HStack {
                     Button {
@@ -88,6 +112,10 @@ struct OverviewScreen: View {
                         .card(Tokens.surface, radius: Radius.row)
                         .padding(.top, 14)
 
+                        if !warmItems.isEmpty {
+                            SectionLabel(text: "Warming-up").padding(.top, 22).padding(.bottom, 4)
+                            ForEach(warmItems) { x in warmupRow(x) }
+                        }
                         SectionLabel(text: "Oefeningen").padding(.top, 22).padding(.bottom, 4)
                         overviewBlocks(blockList)
                     }
@@ -152,8 +180,10 @@ struct EditorScreen: View {
     var body: some View {
         if let draft = model.draft {
             let nameOk = !draft.name.trimmingCharacters(in: .whitespaces).isEmpty
-            let sets = draft.items.reduce(0) { $0 + $1.sets }
-            let warm = draft.items.filter { $0.warm }.count
+            let workItems = draft.items.filter { !$0.isWarmup }
+            let warmCount = draft.items.filter { $0.isWarmup }.count
+            let sets = workItems.reduce(0) { $0 + $1.sets }
+            let warm = workItems.filter { $0.warm }.count
             let minutes = Int((Double(sets) * 2.25 + Double(warm)).rounded())
             VStack(spacing: 0) {
                 HStack {
@@ -181,25 +211,27 @@ struct EditorScreen: View {
                             .padding(.horizontal, 16).frame(height: 56)
                             .card(Tokens.surface, radius: Radius.row)
 
+                        warmupSection(draft, warmCount: warmCount)
+
                         HStack(alignment: .firstTextBaseline) {
                             SectionLabel(text: "Oefeningen")
                             Spacer()
-                            if !draft.items.isEmpty {
-                                Text("\(draft.items.count) · \(sets) sets · ~\(minutes) min")
+                            if !workItems.isEmpty {
+                                Text("\(workItems.count) · \(sets) sets · ~\(minutes) min")
                                     .sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
                             }
                         }
                         .padding(.top, 24).padding(.bottom, 8)
 
-                        if draft.items.isEmpty {
+                        if workItems.isEmpty {
                             Text("Nog geen oefeningen. Voeg je eerste oefening toe.").sa(15).foregroundColor(Tokens.text2)
                                 .frame(maxWidth: .infinity).multilineTextAlignment(.center)
                                 .padding(.vertical, 28).padding(.horizontal, 12)
                         }
 
                         let ssList = supersetIndices(draft)
-                        ForEach(0..<draft.items.count, id: \.self) { i in
-                            itemView(i, draft.items[i], ss: ssList[i])
+                        ForEach(warmCount..<draft.items.count, id: \.self) { i in
+                            itemView(i, draft.items[i], ss: ssList[i], first: warmCount)
                         }
 
                         Button {
@@ -246,6 +278,68 @@ struct EditorScreen: View {
                 })
     }
 
+    private func warmupSection(_ draft: Draft, warmCount: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionLabel(text: "Warming-up").padding(.top, 24).padding(.bottom, 4)
+            Text("Staat vooraan in deze training. Bijvoorbeeld rotator cuff of fietsen.")
+                .sa(13).foregroundColor(Tokens.text2).padding(.bottom, 8)
+            ForEach(0..<warmCount, id: \.self) { i in
+                warmupCard(i, draft.items[i], isFirst: i == 0)
+            }
+            Button {
+                model.openSheet(.add)
+                model.addToDraft = true
+                model.addToDraftWarmup = true
+            } label: {
+                HStack(spacing: 6) {
+                    Icon.plus(18, 2.4)
+                    Text("Warming-up toevoegen").sa(16, .semibold)
+                }
+                .foregroundColor(Tokens.warm)
+                .frame(maxWidth: .infinity).frame(height: 48)
+                .card(Tokens.raised, radius: Radius.button)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func warmupCard(_ i: Int, _ it: DraftItem, isFirst: Bool) -> some View {
+        let info = Catalog.info(it.name)
+        let kind = info.kind
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 10) {
+                Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
+                    Text(info.muscle + " \u{00B7} " + kind.title).sa(13).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+                Button { remove(i) } label: {
+                    Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Verwijder warming-up")
+            }
+            if kind == .timed {
+                HStack(spacing: 8) {
+                    counter(value: String(it.reps), unit: " min", minus: "Minder minuten", plus: "Meer minuten",
+                            onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
+                            onPlus: { edit(i) { $0.reps += 1 } })
+                    Spacer().frame(maxWidth: .infinity)
+                }
+                .padding(.top, 10).padding(.trailing, 8)
+            } else if kind == .cardio {
+                cardioCounters(i, it)
+            } else {
+                setsAndReps(i, it)
+            }
+        }
+        .padding(.leading, 16).padding(.trailing, 8).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(Tokens.surface, radius: Radius.button)
+        .padding(.bottom, 8)
+    }
+
     /// Per oefening: hoeveelste superset (voor de kleur), of nil als de oefening alleen staat.
     private func supersetIndices(_ draft: Draft) -> [Int?] {
         var groups: [Int] = []
@@ -272,17 +366,19 @@ struct EditorScreen: View {
     private static let presets: [(title: String, lo: Int, hi: Int)] = [("5\u{2013}8", 5, 8), ("8\u{2013}12", 8, 12), ("12\u{2013}15", 12, 15)]
 
     @ViewBuilder
-    private func itemView(_ i: Int, _ it: DraftItem, ss: Int?) -> some View {
+    private func itemView(_ i: Int, _ it: DraftItem, ss: Int?, first: Int) -> some View {
         let hue: Color? = ss.map { SupersetStyle.color($0) }
-        let isCardio = Catalog.kind(it.name) == .cardio
-        if i > 0 { linkToggle(i, it, hue: hue) }
+        let kind = Catalog.kind(it.name)
+        if i > first { linkToggle(i, it, hue: hue) }
         VStack(alignment: .leading, spacing: 0) {
-            itemHeader(i, it, hue: hue)
-            if isCardio {
+            itemHeader(i, it, hue: hue, number: i - first + 1, canMoveUp: i > first)
+            if kind == .cardio {
                 cardioCounters(i, it)
+            } else if kind == .timed {
+                timedCounter(i, it)
             } else {
-                setsAndReps(i, it)
-                maxAndWarmup(i, it)
+                warmupAndSets(i, it)
+                repRange(i, it)
                 presetRow(i, it)
             }
         }
@@ -321,11 +417,11 @@ struct EditorScreen: View {
         .padding(.top, -4).padding(.bottom, 4)
     }
 
-    private func itemHeader(_ i: Int, _ it: DraftItem, hue: Color?) -> some View {
+    private func itemHeader(_ i: Int, _ it: DraftItem, hue: Color?, number: Int, canMoveUp: Bool) -> some View {
         let info = Catalog.info(it.name)
         let sub = info.muscle + " \u{00B7} " + info.kind.title
         return HStack(alignment: .top, spacing: 10) {
-            NumberBadge(text: String(i + 1), hue: hue, size: 28).padding(.top, 2)
+            NumberBadge(text: String(number), hue: hue, size: 28).padding(.top, 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
                 Text(sub).sa(13).foregroundColor(Tokens.text2)
@@ -333,7 +429,7 @@ struct EditorScreen: View {
             Spacer(minLength: 0)
             Button { moveUp(i) } label: {
                 Icon.chevronUp(18).foregroundColor(Tokens.text2).frame(width: 36, height: 44)
-                    .opacity(i == 0 ? 0.3 : 1).contentShape(Rectangle())
+                    .opacity(canMoveUp ? 1 : 0.3).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Omhoog")
@@ -369,32 +465,64 @@ struct EditorScreen: View {
         .padding(.top, 10).padding(.trailing, 8)
     }
 
-    private func maxAndWarmup(_ i: Int, _ it: DraftItem) -> some View {
-        let maxText: String = it.repsMax.map { String($0) } ?? "\u{2013}"
-        let warmText: Color = it.warm ? Color.black.opacity(0.85) : Tokens.warm
-        let warmFill: Color = it.warm ? Tokens.warm : Tokens.raised
-        return HStack(spacing: 8) {
-            counter(value: maxText, unit: " tot", minus: "Minder maximum reps", plus: "Meer maximum reps",
-                    onMinus: { edit(i) { $0.maxDown() } },
-                    onPlus: { edit(i) { $0.maxUp() } })
-            Button { edit(i) { $0.warm.toggle() } } label: {
-                HStack(spacing: 6) {
-                    Icon.plus(16, 2.4)
-                    Text("Warming-up").sa(14, .semibold)
-                }
-                .foregroundColor(warmText)
-                .frame(maxWidth: .infinity).frame(height: 44)
-                .card(warmFill, radius: Radius.field)
-            }
-            .buttonStyle(.plain)
-            .accessibilityValue(it.warm ? "aan" : "uit")
+    private func timedCounter(_ i: Int, _ it: DraftItem) -> some View {
+        HStack(spacing: 8) {
+            counter(value: String(it.reps), unit: " min", minus: "Minder minuten", plus: "Meer minuten",
+                    onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
+                    onPlus: { edit(i) { $0.reps += 1 } })
+            Spacer().frame(maxWidth: .infinity)
         }
-        .padding(.top, 8).padding(.trailing, 8)
+        .padding(.top, 10).padding(.trailing, 8)
+    }
+
+    /// Rij 1: warming-up aan/uit, ernaast het aantal sets.
+    private func warmupAndSets(_ i: Int, _ it: DraftItem) -> some View {
+        HStack(spacing: 8) {
+            warmupSwitch(i, it)
+            counter(value: String(it.sets), unit: " sets", minus: "Minder sets", plus: "Meer sets",
+                    onMinus: { edit(i) { $0.sets = max(1, $0.sets - 1) } },
+                    onPlus: { edit(i) { $0.sets = min(10, $0.sets + 1) } })
+        }
+        .padding(.top, 10).padding(.trailing, 8)
+    }
+
+    private func warmupSwitch(_ i: Int, _ it: DraftItem) -> some View {
+        HStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Warming-up").sa(13, .semibold).foregroundColor(Tokens.text)
+                Text(it.warm ? "Aan" : "Uit").sa(12, .medium).foregroundColor(it.warm ? ac.accentText : Tokens.text3)
+            }
+            .lineLimit(1).minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
+            SAToggle(isOn: it.warm, onColor: ac.accentLine, label: "Warming-up set") {
+                edit(i) { $0.warm.toggle() }
+            }
+        }
+        .padding(.leading, 12).padding(.trailing, 2)
+        .frame(maxWidth: .infinity).frame(height: 44)
+        .card(Tokens.raised, radius: Radius.field)
+    }
+
+    /// Rij 2: rep range van-tot.
+    private func repRange(_ i: Int, _ it: DraftItem) -> some View {
+        let maxText: String = it.repsMax.map { String($0) } ?? "\u{2013}"
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("Rep range").sa(12, .semibold, tracking: 0.4).foregroundColor(Tokens.text3)
+            HStack(spacing: 8) {
+                counter(value: String(it.reps), unit: " reps", minus: "Minder reps", plus: "Meer reps",
+                        onMinus: { edit(i) { $0.reps = max(1, $0.reps - 1) } },
+                        onPlus: { edit(i) { $0.repsUp() } })
+                counter(value: maxText, unit: " tot", minus: "Minder maximum reps", plus: "Meer maximum reps",
+                        onMinus: { edit(i) { $0.maxDown() } },
+                        onPlus: { edit(i) { $0.maxUp() } })
+            }
+        }
+        .padding(.top, 12).padding(.trailing, 8)
     }
 
     private func presetRow(_ i: Int, _ it: DraftItem) -> some View {
         HStack(spacing: 6) {
-            Text("Advies").sa(12, .medium).foregroundColor(Tokens.text3)
+            Text("Advies rep range").sa(12, .medium).foregroundColor(Tokens.text3)
             ForEach(0..<EditorScreen.presets.count, id: \.self) { k in
                 presetChip(i, it, EditorScreen.presets[k])
             }
@@ -441,16 +569,30 @@ struct EditorScreen: View {
 
     private func moveUp(_ i: Int) {
         guard var d = model.draft, i > 0, d.items.indices.contains(i) else { return }
+        if d.items[i - 1].isWarmup != d.items[i].isWarmup { return }
         d.items.swapAt(i, i - 1)
-        d.items[0].link = false
+        EditorScreen.normalize(&d)
         model.draft = d
     }
 
     private func remove(_ i: Int) {
         guard var d = model.draft, d.items.indices.contains(i) else { return }
         d.items.remove(at: i)
-        if !d.items.isEmpty { d.items[0].link = false }
+        EditorScreen.normalize(&d)
         model.draft = d
+    }
+
+    /// Warming-ups staan vooraan en zijn nooit gekoppeld; de eerste echte oefening heeft niets om aan te koppelen.
+    static func normalize(_ d: inout Draft) {
+        var seenWork = false
+        for k in d.items.indices {
+            if d.items[k].isWarmup {
+                d.items[k].link = false
+            } else if !seenWork {
+                d.items[k].link = false
+                seenWork = true
+            }
+        }
     }
 }
 

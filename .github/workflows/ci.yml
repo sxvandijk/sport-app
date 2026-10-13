@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      screens:
+        description: "Schermen voor screenshots (spatiegescheiden), of 'alle'"
+        default: "workout overview editor sheet-swap sheet-exmenu sheet-program profile training progress"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -88,21 +92,26 @@ jobs:
             sleep 3
             xcrun simctl io "$UDID" screenshot "ci-results/screenshots/$1.png"
           }
-          for mode in dark light; do
-            for screen in training training-empty progress-empty training-running calendar-open progress gym profile \
-                          workout workout-rest workout-superset workout-toast workout-done \
-                          overview editor summary \
-                          sheet-menu sheet-stop sheet-start sheet-explain sheet-swap sheet-superset \
-                          sheet-add sheet-exmenu records sheet-settype sheet-gym sheet-program sheet-tplmenu; do
+          SCREENS="${{ inputs.screens }}"
+          if [ "$SCREENS" = "alle" ]; then
+            SCREENS="training training-empty progress-empty training-running calendar-open progress gym profile workout workout-rest workout-superset workout-toast workout-done workout-select overview editor summary sheet-menu sheet-stop sheet-start sheet-explain sheet-swap sheet-superset sheet-add sheet-exmenu records sheet-settype sheet-gym sheet-program sheet-tplmenu"
+            MODES="dark light"
+          else
+            MODES="dark"
+          fi
+          for mode in $MODES; do
+            for screen in $SCREENS; do
               shoot "$screen-$mode" "$screen" "$mode" olive
             done
           done
-          shoot accent-viola-dark  workout dark  viola
-          shoot accent-lime-dark   workout dark  lime
-          shoot accent-lime-light  workout light lime
-          shoot accent-mint-dark   training dark mint
-          shoot accent-ice-light   training light ice
-          shoot accent-pink-dark   workout dark  pink
+          if [ "${{ inputs.screens }}" = "alle" ]; then
+            shoot accent-viola-dark  workout dark  viola
+            shoot accent-lime-dark   workout dark  lime
+            shoot accent-lime-light  workout light lime
+            shoot accent-mint-dark   training dark mint
+            shoot accent-ice-light   training light ice
+            shoot accent-pink-dark   workout dark  pink
+          fi
 
       - name: Project als artifact bewaren
         if: always() && github.event_name == 'workflow_dispatch'

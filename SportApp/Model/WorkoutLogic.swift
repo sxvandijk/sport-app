@@ -114,11 +114,21 @@ struct LiveSession: Codable, Hashable {
         return nil
     }
 
+    /// Laatste keer dat deze oefening als warming-upblok is gedaan.
+    static func lastLoggedWarmup(_ name: String, in history: [HistoryEntry]) -> LoggedExercise? {
+        for h in history.sorted(by: { $0.date > $1.date }) {
+            if let e = h.exercises?.first(where: { $0.name == name && $0.sets.contains(where: { $0.type == .warmup }) }) { return e }
+        }
+        return nil
+    }
+
     static func makeExercise(name: String, group: Int, plan: PlanItem?, last: LoggedExercise? = nil) -> LiveExercise {
         var sets: [LiveSet] = []
-        let lastWork = (last?.sets ?? []).filter { $0.type != .warmup }
+        let isWarmupBlock = plan?.isWarmup == true
+        let lastWork = (last?.sets ?? []).filter { isWarmupBlock ? $0.type == .warmup : $0.type != .warmup }
         let kind = Catalog.kind(name)
-        if let warm = plan?.warm {
+        let workType: SetType = isWarmupBlock ? .warmup : .work
+        if !isWarmupBlock, let warm = plan?.warm {
             sets.append(LiveSet(type: .warmup, w: warm.w, r: warm.r, pw: nil, pr: nil))
         }
         let planned = plan?.sets ?? []
@@ -129,21 +139,17 @@ struct LiveSession: Codable, Hashable {
             let prev: LoggedSet? = lastWork.isEmpty ? nil : lastWork[min(i, lastWork.count - 1)]
             let w = prev?.w ?? base?.w ?? Catalog.info(name).defaultWeight
             let r = prev?.r ?? base?.r ?? (kind == .cardio ? 10 : 10)
-            sets.append(LiveSet(type: .work, w: w, r: r, pw: prev?.w, pr: prev?.r, rmax: base?.rmax, rmin: base?.r))
+            sets.append(LiveSet(type: workType, w: w, r: r, pw: prev?.w, pr: prev?.r, rmax: base?.rmax, rmin: base?.r))
         }
         return LiveExercise(name: name, group: group, from: nil, sets: sets)
     }
 
-    static func make(name: String, startAt: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = [],
-                     startWarmupMinutes: Int? = nil) -> LiveSession {
+    static func make(name: String, startAt: Date, templates: [String: [PlanItem]], history: [HistoryEntry] = []) -> LiveSession {
         let plans = templates[name] ?? []
         var list: [LiveExercise] = []
-        if let m = startWarmupMinutes {
-            list.append(LiveExercise(name: Catalog.generalWarmupName, group: 0, from: nil,
-                                     sets: [LiveSet(type: .warmup, w: 0, r: m)]))
-        }
         for item in plans {
-            list.append(makeExercise(name: item.name, group: item.group, plan: item, last: lastLogged(item.name, in: history)))
+            let last = item.isWarmup == true ? lastLoggedWarmup(item.name, in: history) : lastLogged(item.name, in: history)
+            list.append(makeExercise(name: item.name, group: item.group, plan: item, last: last))
         }
         return LiveSession(name: name.isEmpty ? "Lege training" : name, startAt: startAt, exercises: list, nextGroup: 100)
     }
@@ -222,11 +228,14 @@ struct LiveSession: Codable, Hashable {
     }
 
     /// De set waar je nu mee bezig bent (of de set van de aangetikte oefening).
-    func current(focus: UUID?, warmFirst: Bool) -> (queue: [QueueItem], cur: QueueItem?) {
+    func current(focus: UUID?, focusSet: UUID? = nil, warmFirst: Bool) -> (queue: [QueueItem], cur: QueueItem?) {
         let q = queue(warmFirst: warmFirst)
         let undone = q.filter { !isDone($0) }
         var cur: QueueItem?
-        if let focus = focus {
+        if let fs = focusSet {
+            cur = q.first(where: { $0.setID == fs })
+        }
+        if cur == nil, let focus = focus {
             cur = undone.first(where: { $0.exID == focus })
         }
         if cur == nil { cur = undone.first }
@@ -282,17 +291,22 @@ struct LiveSession: Codable, Hashable {
     }
 
     /// Rondt de huidige set af en zegt wat er daarna gebeurt.
-    mutating func complete(focus: UUID?, warmFirst: Bool, restDefault: Int) -> CompletionResult? {
-        let info = current(focus: focus, warmFirst: warmFirst)
+    mutating func complete(focus: UUID?, focusSet: UUID? = nil, warmFirst: Bool, restDefault: Int) -> CompletionResult? {
+        let info = current(focus: focus, focusSet: focusSet, warmFirst: warmFirst)
         guard let c = info.cur,
               let e = index(of: c.exID),
               let s = exercises[e].sets.firstIndex(where: { $0.id == c.setID }) else { return nil }
+        if exercises[e].sets[s].done { return nil }
+        let explicit = focusSet != nil && focusSet == c.setID
         let completedType = exercises[e].sets[s].type
         exercises[e].sets[s].done = true
 
         let q = info.queue
         var next: QueueItem?
-        if let pos = q.firstIndex(of: c) {
+        if explicit {
+            // Je koos zelf een set: daarna ga je terug naar waar je gebleven was.
+            next = q.first(where: { !isDone($0) })
+        } else if let pos = q.firstIndex(of: c) {
             var i = pos + 1
             while i < q.count {
                 if !isDone(q[i]) { next = q[i]; break }
@@ -317,7 +331,8 @@ struct LiveSession: Codable, Hashable {
         let last = exercises[e].sets.last
         let w = last?.w ?? Catalog.info(exercises[e].name).defaultWeight
         let r = last?.r ?? 10
-        exercises[e].sets.append(LiveSet(type: .work, w: w, r: r))
+        let onlyWarmups = !exercises[e].sets.isEmpty && exercises[e].sets.allSatisfy { $0.type == .warmup }
+        exercises[e].sets.append(LiveSet(type: onlyWarmups ? .warmup : .work, w: w, r: r))
     }
 
     /// Nieuwe warming-up: ongeveer de helft van je eerste werkset, 12 herhalingen, na de laatste bestaande warming-up.
@@ -409,7 +424,8 @@ struct LiveSession: Codable, Hashable {
 
     /// "3 × 26 kg · 8, 8, 7 reps", "2 van 3 gedaan · 55 kg × 9" of "3 sets · 55 kg × 10".
     static func summary(of sets: [LiveSet], kind: ExerciseKind = .weights) -> String {
-        let work = sets.filter { $0.type != .warmup }
+        let nonWarm = sets.filter { $0.type != .warmup }
+        let work = nonWarm.isEmpty ? sets : nonWarm
         let done = work.filter { $0.done }
         if work.isEmpty { return "Geen sets" }
         if kind == .timed {

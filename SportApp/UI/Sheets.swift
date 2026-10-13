@@ -45,9 +45,11 @@ private struct SheetBody: View {
             }
             return ("Er loopt al een workout", "")
         case .explain: return ("Uitleg", name)
-        case .swap: return ("Machine bezet", name.isEmpty ? "" : "Vervang \(name) voor de sets die nog open staan. Gedane sets blijven staan.")
+        case .swap: return ("Oefening wisselen", name.isEmpty ? "" : "Bijvoorbeeld als de machine bezet is. Gedane sets van \(name) blijven staan.")
         case .superset: return ("Superset", name.isEmpty ? "" : "Koppel oefeningen aan \(name). Je wisselt na elke set.")
-        case .add: return ("Oefening toevoegen", model.addToDraft ? "Wordt onderaan je schema gezet" : "Wordt onderaan je workout gezet")
+        case .add:
+            if model.addToDraftWarmup { return ("Warming-up toevoegen", "Komt vooraan in deze training") }
+            return ("Oefening toevoegen", model.addToDraft ? "Wordt onderaan je schema gezet" : "Wordt onderaan je workout gezet")
         case .program: return ("Kies je schema", "Je schema bepaalt welke trainingen je op het startscherm ziet.")
         case .tplmenu: return (model.tmName ?? "", "Opties voor deze training")
         case .exmenu: return (name, "Opties voor deze oefening")
@@ -221,6 +223,21 @@ private struct ExerciseMenuSheet: View {
 
     var body: some View {
         SheetRowButton(action: {
+            let id = model.sheetEx
+            model.openSheet(.swap, exID: id)
+        }) {
+            HStack(spacing: 12) {
+                Icon.swap(20).foregroundColor(Tokens.text)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Oefening wisselen").sa(17, .medium).foregroundColor(Tokens.text)
+                    Text("Een keer of vast in je schema").sa(13).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16).frame(minHeight: 60)
+        }
+        .padding(.bottom, 6)
+        SheetRowButton(action: {
             if let id = model.sheetEx { model.addWarmup(id) }
             model.closeSheet()
         }) {
@@ -351,14 +368,51 @@ private struct SwapSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
+    private func scopeText(_ scope: SwapScope) -> String {
+        switch scope {
+        case .now: return "Alleen nu"
+        case .schema: return "Vast in schema"
+        case .prefOnly: return "Als voorkeur"
+        }
+    }
+
+    private var scopeHelp: String {
+        switch model.swapScope {
+        case .now: return "Alleen in deze workout. Je schema blijft zoals het was."
+        case .schema: return "De oefening wordt ook in je schema vervangen."
+        case .prefOnly: return "Je wisselt nu niet, maar de app onthoudt je keuze voor als het apparaat bezet is."
+        }
+    }
+
     var body: some View {
         let ex = model.session?.exercise(model.sheetEx)
         let name = ex?.name ?? ""
+        let original = ex?.from ?? name
         let inWorkout = model.session?.exercises.map { $0.name } ?? []
         let suggestion = Catalog.suggestion(for: name, excluding: inWorkout)
-        let preference = model.prefs[ex?.from ?? name] ?? model.prefs[name]
+        let preference = model.prefs[original]
 
-        SectionLabel(text: "Suggestie van de app").padding(.top, 4).padding(.bottom, 8)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach([SwapScope.now, .schema, .prefOnly], id: \.self) { scope in
+                    let on = model.swapScope == scope
+                    Button { model.swapScope = scope } label: {
+                        Text(scopeText(scope)).sa(14, .semibold)
+                            .foregroundColor(on ? ac.onAccent : Tokens.text)
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                            .frame(maxWidth: .infinity).frame(height: 40)
+                            .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(on ? ac.accentLine : Color.clear))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(on ? .isSelected : [])
+                }
+            }
+            .padding(3)
+            .card(Tokens.raised, radius: Radius.row)
+            Text(scopeHelp).sa(13).foregroundColor(Tokens.text2).padding(.top, 8).padding(.horizontal, 4)
+        }
+
+        SectionLabel(text: "Suggestie van de app").padding(.top, 18).padding(.bottom, 8)
         SheetRowButton(action: { model.swapExercise(to: suggestion, manual: false) }) {
             HStack(spacing: 12) {
                 TitleSub(title: suggestion, sub: Catalog.meta(suggestion))
@@ -378,24 +432,31 @@ private struct SwapSheet: View {
                 }
                 .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 60)
             }
+            Button { model.clearPreference(for: original) } label: {
+                Text("Voorkeur wissen").sa(14, .medium).foregroundColor(Tokens.text2)
+                    .frame(height: 40, alignment: .leading)
+            }
+            .buttonStyle(.plain)
         } else {
-            Text("Nog geen voorkeur. Kies hieronder een oefening en zet ‘Bewaar als voorkeur’ aan.")
+            Text("Nog geen voorkeur. Kies ‘Als voorkeur’ hierboven en tik daarna een oefening aan.")
                 .sa(15).foregroundColor(Tokens.text2).padding(.vertical, 4)
         }
 
         SectionLabel(text: "Zelf kiezen").padding(.top, 20).padding(.bottom, 8)
         SearchList(mode: .swap)
 
-        HStack(spacing: 12) {
-            Text("Bewaar mijn keuze als voorkeur").sa(15, .medium).foregroundColor(Tokens.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            SAToggle(isOn: model.savePref, onColor: ac.accentLine, label: "Bewaar als voorkeur") {
-                model.savePref.toggle()
+        if model.swapScope != .prefOnly {
+            HStack(spacing: 12) {
+                Text("Bewaar mijn keuze ook als voorkeur").sa(15, .medium).foregroundColor(Tokens.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                SAToggle(isOn: model.savePref, onColor: ac.accentLine, label: "Bewaar als voorkeur") {
+                    model.savePref.toggle()
+                }
             }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .card(Tokens.raised, radius: Radius.row)
+            .padding(.top, 12)
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        .card(Tokens.raised, radius: Radius.row)
-        .padding(.top, 12)
     }
 }
 
@@ -473,6 +534,7 @@ private struct SearchList: View {
     @State private var creating = false
     @State private var newKind: ExerciseKind = .weights
     @State private var newMuscle = "Overig"
+    @State private var muscleFilter: String?
 
     private static let muscles = ["Borst", "Schouders", "Triceps", "Biceps", "Onderarmen", "Lats", "Bovenrug", "Traps",
                                   "Quadriceps", "Hamstrings", "Billen", "Kuiten", "Core", "Cardio", "Overig"]
@@ -483,15 +545,19 @@ private struct SearchList: View {
         let pool: [(name: String, info: ExerciseInfo)] = Catalog.all + Catalog.custom.keys.sorted().map { (name: $0, info: Catalog.info($0)) }
         var names = pool.filter { item in
             if mode == .swap, let c = current, item.name == c.name { return false }
+            if let m = muscleFilter, item.info.muscle != m { return false }
             return q.isEmpty || item.name.lowercased().contains(q) || item.info.muscle.lowercased().contains(q)
         }
-        if mode == .swap && q.isEmpty, let c = current {
+        if model.addToDraftWarmup && q.isEmpty && muscleFilter == nil {
+            let first = names.filter { Catalog.warmupNames.contains($0.name) }
+            names = first + names.filter { !Catalog.warmupNames.contains($0.name) }
+        } else if mode == .swap && q.isEmpty && muscleFilter == nil, let c = current {
             let muscle = Catalog.info(c.name).muscle
             let same = names.filter { $0.info.muscle == muscle }
             let other = names.filter { $0.info.muscle != muscle }
             names = same + other
         }
-        return Array(names.prefix(10))
+        return Array(names.prefix((q.isEmpty && muscleFilter == nil) ? 10 : 40))
     }
 
     var body: some View {
@@ -507,7 +573,8 @@ private struct SearchList: View {
             }
             .padding(.horizontal, 14).frame(height: 48)
             .card(Tokens.raised, radius: Radius.field)
-            Spacer().frame(height: 8)
+            muscleChips.padding(.top, 8)
+            Spacer().frame(height: 4)
 
             ForEach(0..<shown.count, id: \.self) { i in
                 let item = shown[i]
@@ -532,6 +599,28 @@ private struct SearchList: View {
             }
             createSection
         }
+    }
+
+    private var muscleChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                chip("Alle", on: muscleFilter == nil) { muscleFilter = nil }
+                ForEach(Catalog.muscleGroups, id: \.self) { m in
+                    chip(m, on: muscleFilter == m) { muscleFilter = (muscleFilter == m) ? nil : m }
+                }
+            }
+        }
+    }
+
+    private func chip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).sa(14, .medium)
+                .foregroundColor(on ? ac.onAccent : Tokens.text)
+                .padding(.horizontal, 14).frame(height: 36)
+                .background(Capsule().fill(on ? ac.accentLine : Tokens.raised))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private var queryName: String { model.query.trimmingCharacters(in: .whitespaces) }
@@ -596,7 +685,9 @@ private struct SearchList: View {
     private func pick(_ name: String) {
         switch mode {
         case .add:
-            if model.addToDraft {
+            if model.addToDraftWarmup {
+                model.addDraftWarmup(name)
+            } else if model.addToDraft {
                 guard var d = model.draft else { return }
                 let w = Catalog.info(name).defaultWeight
                 d.items.append(DraftItem(name: name, warm: false, warmW: nil, sets: Catalog.kind(name) == .cardio ? 1 : 3,
@@ -677,7 +768,9 @@ private struct GymSheet: View {
 private struct ProgramSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    @State private var confirm: String?
+    @State private var menuFor: String?
+    @State private var confirm = false
+    @State private var newName = ""
 
     var body: some View {
         ForEach(model.programs) { p in
@@ -685,33 +778,71 @@ private struct ProgramSheet: View {
                 ListRow(title: p.name,
                         sub: p.workouts.isEmpty ? "Nog geen trainingen" : p.workouts.joined(separator: " \u{00B7} "),
                         selected: p.id == model.program.id) { model.chooseProgram(p.id) }
-                Button { confirm = confirm == p.id ? nil : p.id } label: {
-                    Icon.trash(20).foregroundColor(Tokens.danger).frame(width: 48, height: 60).contentShape(Rectangle())
+                Button {
+                    confirm = false
+                    newName = p.name
+                    menuFor = menuFor == p.id ? nil : p.id
+                } label: {
+                    Icon.more(20).foregroundColor(Tokens.text2).frame(width: 44, height: 60).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .padding(.bottom, 6)
-                .accessibilityLabel("Verwijder schema \(p.name)")
+                .accessibilityLabel("Opties voor schema \(p.name)")
             }
-            if confirm == p.id {
+            if menuFor == p.id { optionsPanel(p) }
+        }
+        FlatButton(title: "+ Nieuw schema", color: ac.accentText) { model.newProgram() }.padding(.top, 6)
+    }
+
+    private func optionsPanel(_ p: PlanProgram) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                TextField("Naam van het schema", text: $newName)
+                    .sa(16).foregroundColor(Tokens.text)
+                    .padding(.horizontal, 12).frame(height: 44)
+                    .card(Tokens.surface, radius: Radius.field)
+                Button {
+                    model.renameProgram(p.id, to: newName)
+                    menuFor = nil
+                } label: {
+                    Text("Opslaan").sa(15, .semibold).foregroundColor(ac.onAccent)
+                        .padding(.horizontal, 14).frame(height: 44)
+                        .card(ac.accentLine, radius: Radius.field)
+                }
+                .buttonStyle(.plain)
+            }
+            if confirm {
                 HStack(spacing: 8) {
-                    Button { confirm = nil } label: {
+                    Button { confirm = false } label: {
                         Text("Annuleer").sa(16, .semibold).foregroundColor(Tokens.text)
-                            .frame(maxWidth: .infinity).frame(height: 48).card(Tokens.raised, radius: Radius.field)
+                            .frame(maxWidth: .infinity).frame(height: 46).card(Tokens.surface, radius: Radius.field)
                     }
                     .buttonStyle(.plain)
                     Button {
-                        confirm = nil
+                        confirm = false
+                        menuFor = nil
                         model.deleteProgram(p.id)
                     } label: {
                         Text("Verwijder schema").sa(16, .bold).foregroundColor(Tokens.onDanger)
-                            .frame(maxWidth: .infinity).frame(height: 48).card(Tokens.danger, radius: Radius.field)
+                            .frame(maxWidth: .infinity).frame(height: 46).card(Tokens.danger, radius: Radius.field)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.bottom, 8)
+            } else {
+                Button { confirm = true } label: {
+                    HStack(spacing: 8) {
+                        Icon.trash(18)
+                        Text("Schema verwijderen").sa(16, .semibold)
+                    }
+                    .foregroundColor(Tokens.danger)
+                    .frame(height: 44, alignment: .leading)
+                }
+                .buttonStyle(.plain)
             }
         }
-        FlatButton(title: "+ Nieuw schema", color: ac.accentText) { model.newProgram() }.padding(.top, 6)
+        .padding(12)
+        .card(Tokens.raised, radius: Radius.row)
+        .padding(.bottom, 8)
     }
 }
 
