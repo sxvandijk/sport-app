@@ -269,15 +269,6 @@ private struct OpenExerciseCard: View {
         return out
     }
 
-    private var firstColumn: String {
-        switch Catalog.kind(exercise.name) {
-        case .timed: return ""
-        case .bodyweight: return set.w == 0 ? "\u{2013}" : Format.weight(set.w)
-        case .cardio: return Format.km(set.w)
-        case .weights: return Format.weight(set.w)
-        }
-    }
-
     private var kindUnits: (first: String, second: String) {
         switch Catalog.kind(exercise.name) {
         case .weights: return ("KG", "REPS")
@@ -373,6 +364,15 @@ private struct SetRow: View {
     let label: String
     let isCur: Bool
     @State private var dx: CGFloat = 0
+
+    private var firstColumn: String {
+        switch Catalog.kind(exercise.name) {
+        case .timed: return ""
+        case .bodyweight: return set.w == 0 ? "\u{2013}" : Format.weight(set.w)
+        case .cardio: return Format.km(set.w)
+        case .weights: return Format.weight(set.w)
+        }
+    }
 
     var body: some View {
         var typeColor: Color?
