@@ -191,6 +191,7 @@ final class AppModel: ObservableObject {
     @Published var focusSetID: UUID?
     @Published var editField: EditField?
     @Published var restEnd: Date?
+    @Published var lastSetAt: Date?
     @Published var restTotal: Int = 90
     @Published var toast: Toast?
     @Published var noteEdit: NoteEdit?
@@ -369,6 +370,7 @@ final class AppModel: ObservableObject {
         screen = .workout
         focusID = nil
         restEnd = nil
+        lastSetAt = nil
         sheet = nil
         toast = nil
         Notifier.requestAuthorizationIfNeeded()
@@ -393,6 +395,7 @@ final class AppModel: ObservableObject {
         screen = .summary
         sheet = nil
         restEnd = nil
+        lastSetAt = nil
         focusID = nil
         toast = nil
         Notifier.cancelRest()
@@ -573,6 +576,7 @@ final class AppModel: ObservableObject {
         editField = nil
         focusID = result.nextFocus
         toast = nil
+        lastSetAt = Date()
         Haptics.success()
         if let seconds = result.restSeconds {
             restTotal = seconds

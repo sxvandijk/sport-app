@@ -1,18 +1,98 @@
 import SwiftUI
+import UIKit
+
+/// Houdt de scrollstand bij en kan naar het huidige blok scrollen. Leest direct de UIScrollView uit,
+/// zodat de knop "Naar huidige set" altijd weet waar je bent.
+final class ScrollController: ObservableObject {
+    weak var scroll: UIScrollView?
+    var headY: CGFloat = 0
+    var scrollUntil = Date.distantPast
+    var onPill: ((Int) -> Void)?
+    private var obs: NSKeyValueObservation?
+    private var lastPill = 0
+
+    func attach(_ sv: UIScrollView) {
+        guard scroll !== sv else { return }
+        scroll = sv
+        obs = sv.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in self?.update() }
+    }
+
+    /// Gewenste scrollstand: het huidige blok bovenaan (of zo ver als kan).
+    private func desired(_ sv: UIScrollView) -> CGFloat {
+        let maxOff = max(0, sv.contentSize.height - sv.bounds.height + sv.adjustedContentInset.bottom + sv.adjustedContentInset.top)
+        return min(max(0, headY + 18 - 10), maxOff)
+    }
+
+    func update() {
+        guard let sv = scroll else { return }
+        let d = desired(sv)
+        let off = sv.contentOffset.y + sv.adjustedContentInset.top
+        var p = 0
+        if off > d + 70 { p = 1 } else if off < d - 70 { p = -1 }
+        if p != lastPill {
+            lastPill = p
+            DispatchQueue.main.async { [weak self] in self?.onPill?(p) }
+        }
+    }
+
+    func scrollToHead(animated: Bool) {
+        guard let sv = scroll else { return }
+        let y = desired(sv) - sv.adjustedContentInset.top
+        if abs(sv.contentOffset.y - y) > 0.5 { sv.setContentOffset(CGPoint(x: 0, y: y), animated: animated) }
+        update()
+    }
+
+    /// Na een set of een andere oefening: een paar keer proberen, omdat de lijst eerst van vorm verandert.
+    func followHead() {
+        scrollUntil = Date().addingTimeInterval(0.8)
+        for delay in [0.02, 0.15, 0.4, 0.75] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self = self, Date() < self.scrollUntil else { return }
+                self.scrollToHead(animated: false)
+            }
+        }
+    }
+}
+
+private final class BridgeUIView: UIView {
+    var controller: ScrollController?
+    override func didMoveToWindow() { super.didMoveToWindow(); attach() }
+    override func layoutSubviews() { super.layoutSubviews(); attach() }
+    func attach() {
+        var v: UIView? = superview
+        while let cur = v {
+            if let sv = cur as? UIScrollView { controller?.attach(sv); return }
+            v = cur.superview
+        }
+    }
+}
+
+private struct ScrollBridge: UIViewRepresentable {
+    let controller: ScrollController
+    func makeUIView(context: Context) -> UIView {
+        let v = BridgeUIView()
+        v.controller = controller
+        v.isUserInteractionEnabled = false
+        return v
+    }
+    func updateUIView(_ uiView: UIView, context: Context) {
+        (uiView as? BridgeUIView)?.controller = controller
+        (uiView as? BridgeUIView)?.attach()
+    }
+}
+
+/// Waar het blok van de huidige oefening begint (in de lijst zelf, dus onafhankelijk van het scrollen).
+private struct HeadYKey: PreferenceKey {
+    static var defaultValue: CGFloat = -1
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
 
 struct WorkoutScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    @State private var userScrolled = false
-    @State private var viewportY: CGFloat = 0
-    @State private var cardY: CGFloat = 0
-
-    /// Waar de open oefening nu staat ten opzichte van de bovenkant van de lijst.
-    private var openMinY: CGFloat { cardY - viewportY }
-
-    private func updateOffset() {
-        if openMinY > -30 && openMinY < 190 { userScrolled = false }
-    }
+    @StateObject private var scroller = ScrollController()
+    /// 1 = je zit onder je oefening (pijl omhoog), -1 = je zit erboven (pijl omlaag), 0 = op de plek.
+    @State private var pill = 0
 
     var body: some View {
         if let s = model.session {
@@ -20,82 +100,50 @@ struct WorkoutScreen: View {
             VStack(spacing: 0) {
                 WorkoutTopBar(session: s)
                 let openID = model.focusID.flatMap { s.exercise($0)?.id } ?? info.cur?.exID
-                let headID = s.blocks.first(where: { $0.contains { $0.id == openID } })?.first?.id
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        WorkoutList(session: s, cur: info.cur)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 18)
-                            .padding(.bottom, 20)
-                            .animation(nil, value: openID)
-                    }
-                    .coordinateSpace(name: "wscroll")
-                    .background(GeometryReader { g in
-                        Color.clear.preference(key: ViewportKey.self, value: g.frame(in: .global).minY)
-                    })
-                    .onPreferenceChange(ViewportKey.self) { viewportY = $0; updateOffset() }
-                    .onPreferenceChange(OpenCardKey.self) { cardY = $0; updateOffset() }
-                    .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { _ in userScrolled = true })
-                    .overlay(alignment: .bottom) {
-                        if info.cur != nil && (userScrolled || openMinY < -30 || openMinY > 190) {
-                            Button {
-                                userScrolled = false
-                                scrollToHead(proxy, headID, animated: true, repeats: false)
-                            } label: {
-                                HStack(spacing: 6) {
-                                    (openMinY > 190 ? Icon.chevronDown(16) : Icon.chevronUp(16)).foregroundColor(ac.onAccent)
-                                    Text("Naar huidige set").sa(14, .semibold).foregroundColor(ac.onAccent)
-                                }
-                                .padding(.horizontal, 16).frame(height: 40)
-                                .background(Capsule().fill(ac.accentLine))
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.bottom, 10)
-                        }
-                    }
-                    // Na een set of een andere oefening: het blok van de huidige oefening naar boven.
-                    .onChange(of: info.cur?.setID) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
-                    .onChange(of: model.scrollTick) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
-                    .onAppear { scrollToHead(proxy, headID, animated: false) }
+                ScrollView {
+                    WorkoutList(session: s, cur: info.cur)
+                        .background(ScrollBridge(controller: scroller))
+                        .padding(.horizontal, 20)
+                        .padding(.top, 18)
+                        .padding(.bottom, 20)
+                        .animation(nil, value: openID)
                 }
-                // Een andere oefening: de lijst start opnieuw bovenaan en springt dan naar het goede blok.
-                .id(openID)
+                .onPreferenceChange(HeadYKey.self) { y in
+                    guard y >= 0 else { return }
+                    scroller.headY = y
+                    if Date() < scroller.scrollUntil { scroller.scrollToHead(animated: false) } else { scroller.update() }
+                }
+                .overlay(alignment: .bottom) {
+                    if info.cur != nil && pill != 0 {
+                        Button { scroller.scrollToHead(animated: true) } label: {
+                            HStack(spacing: 6) {
+                                (pill < 0 ? Icon.chevronDown(16) : Icon.chevronUp(16)).foregroundColor(ac.onAccent)
+                                Text("Naar huidige set").sa(14, .semibold).foregroundColor(ac.onAccent)
+                            }
+                            .padding(.horizontal, 16).frame(height: 40)
+                            .background(Capsule().fill(ac.accentLine))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.bottom, 10)
+                    }
+                }
+                .onAppear {
+                    scroller.onPill = { pill = $0 }
+                    scroller.followHead()
+                }
+                .onChange(of: info.cur?.setID) { _ in scroller.followHead() }
+                .onChange(of: openID) { _ in scroller.followHead() }
+                .onChange(of: model.scrollTick) { _ in scroller.followHead() }
                 WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
                     .opacity(model.noteEdit == nil ? 1 : 0)
                     .allowsHitTesting(model.noteEdit == nil)
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
-            .overlay { if model.noteEdit != nil { NotePopup() } }
+            .overlay { if model.noteEdit != nil { NotePopup().transition(.opacity) } }
+            .animation(.easeOut(duration: 0.18), value: model.noteEdit != nil)
             .background(Tokens.bg.ignoresSafeArea())
         }
     }
-
-    /// Zet het blok bovenaan. Een paar pogingen, omdat de lijst eerst van vorm verandert.
-    private func scrollToHead(_ proxy: ScrollViewProxy, _ id: UUID?, animated: Bool, repeats: Bool = true) {
-        guard let id = id else { return }
-        for delay in (repeats ? [0.05, 0.3, 0.6] : [0.0]) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                if animated {
-                    withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("blk-\(id.uuidString)", anchor: .top) }
-                } else {
-                    var t = Transaction()
-                    t.disablesAnimations = true
-                    withTransaction(t) { proxy.scrollTo("blk-\(id.uuidString)", anchor: .top) }
-                }
-            }
-        }
-    }
-}
-
-private struct ViewportKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
-/// Waar de open oefening in beeld staat (voor de knop "Naar huidige set").
-private struct OpenCardKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
 // MARK: - Bovenbalk
@@ -184,7 +232,11 @@ private struct WorkoutList: View {
             let blocks = session.blocks
             ForEach(blocks, id: \.first!.id) { members in
                 let bi = blocks.firstIndex(where: { $0.first?.id == members.first?.id }) ?? 0
-                Color.clear.frame(height: 0).id("blk-\(members[0].id.uuidString)")
+                Color.clear.frame(height: 0)
+                    .background(GeometryReader { g in
+                        Color.clear.preference(key: HeadYKey.self,
+                                               value: members.contains(where: { $0.id == openID }) ? g.frame(in: .named("wlist")).minY : -1)
+                    })
                 blockView(members, blockIndex: bi, blocks: blocks, openID: openID)
             }
             if !session.exercises.isEmpty {
@@ -200,9 +252,8 @@ private struct WorkoutList: View {
                 .buttonStyle(.plain)
                 .padding(.top, 14)
             }
-            // Ruimte onderaan, zodat ook het laatste blok bovenaan kan staan.
-            Color.clear.frame(height: 420)
         }
+        .coordinateSpace(name: "wlist")
     }
 
     private var emptyState: some View {
@@ -365,20 +416,16 @@ private struct OpenExerciseCard: View {
                     .sa(11, .semibold, tracking: 0.4).foregroundColor(isNew ? ac.accentText : Tokens.text3)
                 Text(e.text).sa(14).foregroundColor(isNew ? Tokens.text : Tokens.text2)
                     .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
-            Button { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: e.id, text: e.text) } label: {
-                Icon.edit(14).foregroundColor(Tokens.text3).frame(width: 32, height: 36).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Bewerk notitie")
             Button {
                 let name = exercise.name
                 model.confirm = ConfirmRequest(title: "Notitie verwijderen?", message: e.text, confirmTitle: "Verwijder") {
                     model.deleteNote(e.id, for: name)
                 }
             } label: {
-                Icon.close(14).foregroundColor(Tokens.text3).frame(width: 32, height: 36).contentShape(Rectangle())
+                Icon.close(14).foregroundColor(Tokens.text3).frame(width: 36, height: 36).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Verwijder notitie")
@@ -387,33 +434,31 @@ private struct OpenExerciseCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(isNew ? ac.accentSoft.opacity(0.45) : Color.clear))
         .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).stroke(isNew ? Color.clear : Tokens.line, lineWidth: 1))
+        .contentShape(Rectangle())
+        .onTapGesture { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: e.id, text: e.text) }
+        .accessibilityHint("Tik om te bewerken")
     }
 
     private var notesBlock: some View {
         let entries = Array((model.noteLog[exercise.name] ?? []).prefix(4))
         let start = model.session?.startAt ?? Date()
         return VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("NOTITIES").sa(12, .semibold, tracking: 0.48).foregroundColor(Tokens.text3)
-                Spacer(minLength: 0)
-                Button { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: nil, text: "") } label: {
-                    HStack(spacing: 4) {
-                        Icon.plus(12, 2.6)
-                        Text("Notitie").sa(13, .semibold)
-                    }
-                    .foregroundColor(ac.accentText)
-                    .padding(.horizontal, 10).frame(height: 28)
-                    .background(Capsule().fill(Tokens.raised))
-                    .frame(minHeight: 36)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Notitie toevoegen")
-            }
-            .padding(.leading, 4)
             ForEach(entries) { e in
                 noteRow(e, isNew: e.date >= start)
             }
+            Button { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: nil, text: "") } label: {
+                HStack(spacing: 4) {
+                    Icon.plus(12, 2.6)
+                    Text("Notitie").sa(13, .semibold)
+                }
+                .foregroundColor(ac.accentText)
+                .padding(.horizontal, 12).frame(height: 30)
+                .background(Capsule().fill(Tokens.raised))
+                .frame(minHeight: 40)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Notitie toevoegen")
         }
     }
 
@@ -491,9 +536,6 @@ private struct OpenExerciseCard: View {
         }
         .padding(.top, 16).padding(.bottom, 10)
         .card(Tokens.surface, radius: Radius.card)
-        .background(GeometryReader { g in
-            Color.clear.preference(key: OpenCardKey.self, value: g.frame(in: .global).minY)
-        })
         .padding(.horizontal, -8)
         .padding(.top, 4).padding(.bottom, 10)
     }
@@ -656,40 +698,55 @@ private struct WorkoutBottom: View {
     }
 }
 
-/// Kleine rust-timer, in het invoervak onder de oefennaam.
+/// Kleine timer in het invoervak: rust aftellen, daarna hoe lang je al wacht. Blijft zichtbaar tot de volgende set.
 private struct RestInline: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    let end: Date
-    let total: Int
+    let since: Date
 
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 0.25)) { context in
-            let left = end.timeIntervalSince(context.date)
-            let over = left <= 0
-            let pct = over ? 0 : max(0, min(1, left / Double(max(1, total))))
-            Button { model.skipRest() } label: {
+            let now = context.date
+            let end = model.restEnd
+            let left = end.map { $0.timeIntervalSince(now) } ?? 0
+            let resting = end != nil && left > 0
+            let pct = resting ? max(0, min(1, left / Double(max(1, model.restTotal)))) : 0
+            HStack(spacing: 0) {
                 ZStack(alignment: .leading) {
                     GeometryReader { geo in
                         Rectangle().fill(ac.accentSoft).frame(width: geo.size.width * CGFloat(pct))
                     }
                     HStack(spacing: 8) {
-                        Icon.timer(15).foregroundColor(over ? ac.accentText : Tokens.text)
-                        Text(over ? "Rust voorbij" : "Rust").sa(13, .medium).foregroundColor(Tokens.text2)
-                        Text(over ? "+" + Format.clock(seconds: Int(-left)) : Format.clock(seconds: Int(left + 0.999)))
-                            .sa(15, .semibold, mono: true).foregroundColor(over ? ac.accentText : Tokens.text)
+                        Icon.timer(15).foregroundColor(resting ? Tokens.text : ac.accentText)
+                        if resting {
+                            Text("Rust").sa(13, .medium).foregroundColor(Tokens.text2)
+                            Text(Format.clock(seconds: Int(left + 0.999))).sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
+                        } else if end != nil {
+                            Text("Rust voorbij").sa(13, .medium).foregroundColor(Tokens.text2)
+                            Text("+" + Format.clock(seconds: Int(-left))).sa(15, .semibold, mono: true).foregroundColor(ac.accentText)
+                        } else {
+                            Text("Sinds laatste set").sa(13, .medium).foregroundColor(Tokens.text2)
+                            Text(Format.clock(seconds: max(0, Int(now.timeIntervalSince(since))))).sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
+                        }
                         Spacer(minLength: 0)
-                        Text(over ? "Sluit" : "Sla over").sa(13, .semibold).foregroundColor(Tokens.text2)
                     }
                     .padding(.horizontal, 12)
                 }
-                .frame(height: 32)
-                .background(Tokens.raised)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
-                .contentShape(Rectangle())
+                .frame(maxWidth: .infinity).frame(height: 36)
+                if end != nil {
+                    Button { model.skipRest() } label: {
+                        Text(resting ? "Sla over" : "Stop").sa(13, .bold).foregroundColor(ac.onAccent)
+                            .padding(.horizontal, 14).frame(height: 28)
+                            .background(Capsule().fill(ac.accentLine))
+                            .frame(minWidth: 44, minHeight: 36)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, 4)
+                }
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(over ? "Rust voorbij, sluit" : "Rust, sla over")
+            .background(Tokens.raised)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
         }
     }
 }
@@ -757,8 +814,8 @@ private struct Dock: View {
             Text(prevText).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
                 .padding(.horizontal, 4).padding(.top, 1)
 
-            if let end = model.restEnd {
-                RestInline(end: end, total: model.restTotal).padding(.top, 8)
+            if let since = model.lastSetAt {
+                RestInline(since: since).padding(.top, 8)
             }
 
             HStack(spacing: 10) {
@@ -927,6 +984,10 @@ private struct NotePopup: View {
     @Environment(\.accentColors) private var ac
     @FocusState private var focused: Bool
 
+    static func closeKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+
     private var textBinding: Binding<String> {
         Binding(get: { model.noteEdit?.text ?? "" }, set: { model.noteEdit?.text = $0 })
     }
@@ -937,7 +998,7 @@ private struct NotePopup: View {
         let empty = (edit?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         return ZStack(alignment: .top) {
             Color.black.opacity(0.55).ignoresSafeArea()
-                .onTapGesture { model.noteEdit = nil }
+                .onTapGesture { NotePopup.closeKeyboard(); model.noteEdit = nil }
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(isNew ? "Nieuwe notitie" : "Notitie bewerken").sa(18, .bold).foregroundColor(Tokens.text)
@@ -951,13 +1012,13 @@ private struct NotePopup: View {
                     .frame(minHeight: 52, alignment: .topLeading)
                     .card(Tokens.raised, radius: Radius.field)
                 HStack(spacing: 10) {
-                    Button { model.noteEdit = nil } label: {
+                    Button { NotePopup.closeKeyboard(); model.noteEdit = nil } label: {
                         Text("Annuleer").sa(16, .semibold).foregroundColor(Tokens.text)
                             .frame(maxWidth: .infinity).frame(height: 48)
                             .card(Tokens.raised, radius: Radius.button)
                     }
                     .buttonStyle(.plain)
-                    Button { model.saveNoteEdit() } label: {
+                    Button { NotePopup.closeKeyboard(); model.saveNoteEdit() } label: {
                         Text("Bewaar").sa(16, .bold).foregroundColor(ac.onAccent)
                             .frame(maxWidth: .infinity).frame(height: 48)
                             .card(ac.accent, radius: Radius.button)
