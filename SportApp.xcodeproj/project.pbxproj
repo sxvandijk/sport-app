@@ -28,6 +28,7 @@
 		7F68D3489805DA35EC566C77 /* MuscleGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99F83BA537D9543221D8BEA /* MuscleGroup.swift */; };
 		80172F7B5E89750C275DB642 /* DurationEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0411A3090562095D75203F77 /* DurationEstimator.swift */; };
 		8DB0632372FB61F39C0AD5A6 /* WorkoutLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E843FFB2CFC68666CE2D53 /* WorkoutLogic.swift */; };
+		9CBF1955DF3A5CFCF602FDEA /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D54759F8040E33B2C14343 /* Glass.swift */; };
 		A0110CE2AF7AECE8C2781550 /* WorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0712612F457AE49D40617626 /* WorkoutStore.swift */; };
 		A5B26B79A8591E6D6C268A88 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049E495496112395984D36A2 /* Components.swift */; };
 		B72FC800B7B3DDDD7AB3E241 /* RoundOneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8E9BA237D2E66C7EE664E1 /* RoundOneTests.swift */; };
@@ -63,6 +64,7 @@
 /* Begin PBXFileReference section */
 		0411A3090562095D75203F77 /* DurationEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationEstimator.swift; sourceTree = "<group>"; };
 		049E495496112395984D36A2 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		05D54759F8040E33B2C14343 /* Glass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Glass.swift; sourceTree = "<group>"; };
 		0712612F457AE49D40617626 /* WorkoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutStore.swift; sourceTree = "<group>"; };
 		082ECF064246E5EDBB526B47 /* WeightScale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightScale.swift; sourceTree = "<group>"; };
 		126581F677789CD791AC5137 /* HomeScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreens.swift; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 			isa = PBXGroup;
 			children = (
 				4651FF576DFDEB75B2709056 /* AccentPalette.swift */,
+				05D54759F8040E33B2C14343 /* Glass.swift */,
 				1F6B51DFA1BA2096FC34340D /* Tokens.swift */,
 				C526BDC5C5FD28B77794C222 /* Typography.swift */,
 			);
@@ -333,6 +336,7 @@
 				80172F7B5E89750C275DB642 /* DurationEstimator.swift in Sources */,
 				6C7DEF5548E06FE75B5875C7 /* EquipmentType.swift in Sources */,
 				D833C222F8AF3E38B42AC2F4 /* Exercise.swift in Sources */,
+				9CBF1955DF3A5CFCF602FDEA /* Glass.swift in Sources */,
 				43BC275E5B09154597C09489 /* Gym.swift in Sources */,
 				E5D6AB981BFDC06B902FCB1C /* HomeScreens.swift in Sources */,
 				02F6B3CF4B2C4436653EF4E9 /* LaunchConfig.swift in Sources */,
