@@ -2,8 +2,15 @@ import XCTest
 @testable import SportApp
 
 final class RoundTwoTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        Catalog.gymScales = [:]
+        Catalog.gymLabels = [:]
+    }
+
     override func tearDown() {
         Catalog.gymScales = [:]
+        Catalog.gymLabels = [:]
         super.tearDown()
     }
 
