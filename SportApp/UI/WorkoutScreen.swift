@@ -975,7 +975,6 @@ private struct NotePopup: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @FocusState private var focused: Bool
-    @State private var kb: CGFloat = 0
 
     static func closeKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -984,9 +983,6 @@ private struct NotePopup: View {
     private var textBinding: Binding<String> {
         Binding(get: { model.noteEdit?.text ?? "" }, set: { model.noteEdit?.text = $0 })
     }
-
-    /// Midden van de ruimte boven het toetsenbord.
-    private var shift: CGFloat { -kb / 2 }
 
     var body: some View {
         let edit = model.noteEdit
@@ -1027,12 +1023,6 @@ private struct NotePopup: View {
             .padding(22)
             .card(Tokens.surface, radius: Radius.card)
             .padding(.horizontal, 14)
-            .offset(y: shift)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { n in
-            if let f = (n.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect) {
-                kb = max(0, UIScreen.main.bounds.height - f.minY)
-            }
         }
         .onAppear { focused = true }
     }
