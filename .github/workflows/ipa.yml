@@ -4,13 +4,17 @@ name: IPA
 # Handmatig starten via Actions -> IPA -> Run workflow.
 on:
   workflow_dispatch:
+    inputs:
+      runner:
+        description: "Bouwomgeving: macos-26 (met Liquid Glass) of macos-15 (sneller beschikbaar, zonder glas)"
+        default: "macos-26"
 
 permissions:
   contents: read
 
 jobs:
   ipa:
-    runs-on: macos-26
+    runs-on: ${{ inputs.runner || 'macos-26' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
