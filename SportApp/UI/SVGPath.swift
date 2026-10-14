@@ -288,6 +288,8 @@ extension Icon {
     static func edit(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"], lineWidth: 2, size: size) }
     static func duplicate(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M8 8h11v11H8zM5 16V5h11"], lineWidth: 2, size: size) }
     static func star(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"], lineWidth: 2, size: size) }
+    static func sort(_ size: CGFloat = 18) -> Icon { Icon(paths: ["M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"], lineWidth: 2.2, size: size) }
+    static func skip(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M5 5l9 7-9 7zM18 5v14"], lineWidth: 2, size: size) }
     static func starFilled(_ size: CGFloat = 20) -> Icon {
         Icon(paths: ["M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"], filled: true, lineWidth: 2, size: size)
     }

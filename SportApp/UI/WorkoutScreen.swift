@@ -4,6 +4,7 @@ struct WorkoutScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @State private var openMinY: CGFloat = 0
+    @State private var userScrolled = false
 
     var body: some View {
         if let s = model.session {
@@ -22,10 +23,17 @@ struct WorkoutScreen: View {
                     // Nieuwe huidige set of andere oefening: de lijst begint weer bovenaan (geen scrollTo nodig).
                     .id("\(info.cur?.setID.uuidString ?? "-")|\(openID?.uuidString ?? "-")")
                     .coordinateSpace(name: "wscroll")
-                    .onPreferenceChange(OpenCardKey.self) { value in openMinY = value }
+                    .onPreferenceChange(OpenCardKey.self) { value in
+                        openMinY = value
+                        if value > -20 && value < 60 { userScrolled = false }
+                    }
+                    .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { _ in userScrolled = true })
+                    .onChange(of: info.cur?.setID) { _ in userScrolled = false }
+                    .onChange(of: openID) { _ in userScrolled = false }
                     .overlay(alignment: .bottom) {
-                        if info.cur != nil && (openMinY < -60 || openMinY > 520) {
+                        if info.cur != nil && (userScrolled || openMinY < -60 || openMinY > 520) {
                             Button {
+                                userScrolled = false
                                 withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("listtop", anchor: .top) }
                             } label: {
                                 HStack(spacing: 6) {
@@ -136,14 +144,8 @@ private struct WorkoutList: View {
 
             let blocks = session.blocks
             let order = WorkoutList.order(blocks: blocks, openID: openID)
-            ForEach(0..<order.active.count, id: \.self) { k in
-                blockView(blocks[order.active[k]], blockIndex: order.active[k], blocks: blocks, openID: openID)
-            }
-            if !order.done.isEmpty {
-                SectionLabel(text: "Gedaan").padding(.top, 14).padding(.bottom, 4)
-                ForEach(0..<order.done.count, id: \.self) { k in
-                    blockView(blocks[order.done[k]], blockIndex: order.done[k], blocks: blocks, openID: openID)
-                }
+            ForEach(order, id: \.self) { bi in
+                blockView(blocks[bi], blockIndex: bi, blocks: blocks, openID: openID)
             }
 
             Text(session.name).sa(22, .bold, tracking: -0.3).foregroundColor(Tokens.text).padding(.top, 28)
@@ -153,17 +155,13 @@ private struct WorkoutList: View {
         }
     }
 
-    /// Huidige blok eerst, dan de rest in schemavolgorde; afgeronde blokken onderaan.
-    static func order(blocks: [[LiveExercise]], openID: UUID?) -> (active: [Int], done: [Int]) {
+    /// Huidige blok eerst, de rest in schemavolgorde (gedane oefeningen blijven op hun plek).
+    static func order(blocks: [[LiveExercise]], openID: UUID?) -> [Int] {
         let openIdx = blocks.firstIndex { b in b.contains { $0.id == openID } }
-        var active: [Int] = []
-        var done: [Int] = []
-        if let o = openIdx { active.append(o) }
-        for (i, b) in blocks.enumerated() where i != openIdx {
-            let finished = b.allSatisfy { !$0.sets.isEmpty && $0.sets.allSatisfy { $0.done } }
-            if finished { done.append(i) } else { active.append(i) }
-        }
-        return (active, done)
+        var out: [Int] = []
+        if let o = openIdx { out.append(o) }
+        for i in blocks.indices where i != openIdx { out.append(i) }
+        return out
     }
 
     private var emptyState: some View {
@@ -271,10 +269,10 @@ private struct ChipButton: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 icon
-                Text(title).sa(15, .medium)
+                Text(title).sa(15, .medium).lineLimit(1).minimumScaleFactor(0.85)
             }
             .foregroundColor(Tokens.text)
-            .padding(.horizontal, 14).frame(height: 44)
+            .frame(maxWidth: .infinity).frame(height: 44)
             .background(Capsule().fill(Tokens.raised))
         }
         .buttonStyle(.plain)
@@ -292,6 +290,7 @@ private struct OpenExerciseCard: View {
     @State private var editingNote: UUID?
     @State private var editText = ""
     @State private var deleteTarget: NoteEntry?
+    @FocusState private var noteFocus: Bool
 
     /// "W", "1", "2", "D", "F", ... Een "Tot falen"-set telt als een genummerde set, een dropset niet.
     static func labels(for sets: [LiveSet]) -> [String] {
@@ -337,6 +336,8 @@ private struct OpenExerciseCard: View {
                 if editing {
                     HStack(spacing: 4) {
                         TextField("Notitie", text: $editText)
+                            .focused($noteFocus)
+                            .onAppear { noteFocus = true }
                             .sa(14).foregroundColor(Tokens.text)
                             .submitLabel(.done)
                             .onSubmit { commitEdit(e) }
@@ -433,14 +434,12 @@ private struct OpenExerciseCard: View {
             }
             .padding(.horizontal, 16)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ChipButton(icon: Icon.explain(18), title: "Uitleg") { model.openSheet(.explain, exID: exercise.id) }
-                    ChipButton(icon: Icon.swap(18), title: "Bezet") { model.openSheet(.swap, exID: exercise.id) }
-                    ChipButton(icon: Icon.link(18, 2), title: "Superset") { model.openSheet(.superset, exID: exercise.id) }
-                }
-                .padding(.horizontal, 16)
+            HStack(spacing: 8) {
+                ChipButton(icon: Icon.explain(18), title: "Uitleg") { model.openSheet(.explain, exID: exercise.id) }
+                ChipButton(icon: Icon.swap(18), title: "Bezet") { model.openSheet(.swap, exID: exercise.id) }
+                ChipButton(icon: Icon.link(18, 2), title: "Superset") { model.openSheet(.superset, exID: exercise.id) }
             }
+            .padding(.horizontal, 16)
             .padding(.top, 12).padding(.bottom, 6)
 
             HStack(spacing: 0) {
@@ -518,7 +517,7 @@ private struct SetRow: View {
     }
 
     private var rowFill: Color {
-        if set.done { return ac.accentSoft }
+        if set.done { return ac.accentSoft.opacity(0.55) }
         return isCur ? Tokens.raised : Tokens.surface
     }
 
@@ -531,7 +530,7 @@ private struct SetRow: View {
         case .work: typeColor = nil
         }
         let labelColor = typeColor ?? (isCur ? ac.accentText : Tokens.text2)
-        let valueColor = isCur ? Tokens.text : (set.done ? Tokens.text2 : Tokens.text3)
+        let valueColor = isCur ? Tokens.text : (set.done ? Tokens.text3 : Tokens.text3)
 
         return ZStack(alignment: .trailing) {
             HStack(spacing: 6) {
@@ -580,7 +579,9 @@ private struct SetRow: View {
             .frame(height: Size.setRow)
             .card(rowFill, radius: Radius.field)
             .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
-                .stroke(isCur ? ac.accentLine : Color.clear, lineWidth: 2))
+                .fill(ac.accentLine.opacity(isCur ? 0.22 : 0)))
+            .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
+                .stroke(isCur ? ac.accentLine : Color.clear, lineWidth: 2.5))
             .offset(x: dx)
             .contentShape(Rectangle())
             .onTapGesture { model.selectSet(exID: exercise.id, setID: set.id) }
@@ -758,7 +759,13 @@ private struct Dock: View {
         let kind = Catalog.kind(exercise.name)
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                Button {
+                    if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight }
+                } label: {
+                    Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                        .frame(minHeight: 32, alignment: .leading).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
                 Spacer(minLength: 0)
                 Text(t.text).sa(13, .semibold).foregroundColor(t.color)
                 if model.editField != nil {
@@ -830,11 +837,13 @@ private struct Dock: View {
             if let v = Double(parsed) { model.setCurrentValues(w: v, r: nil) } else if text.isEmpty { model.setCurrentValues(w: 0, r: nil) }
         } else if let v = Int(parsed) {
             model.setCurrentValues(w: nil, r: v)
+        } else if text.isEmpty {
+            model.setCurrentValues(w: nil, r: 0)
         }
     }
 
     private func shown(_ field: EditField, _ normal: String) -> String {
-        if model.editField == field, let b = buffer, !b.isEmpty { return b }
+        if model.editField == field, let b = buffer { return b.isEmpty ? "0" : b }
         return normal
     }
 

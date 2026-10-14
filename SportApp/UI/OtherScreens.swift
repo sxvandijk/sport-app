@@ -187,14 +187,15 @@ struct OverviewScreen: View {
 
     @ViewBuilder
     private func overviewBlocks(_ blockList: [[PlanItem]]) -> some View {
-        ForEach(0..<blockList.count, id: \.self) { bi in
-            let members = blockList[bi]
+        ForEach(blockList, id: \.first!.id) { members in
+            let bi = blockList.firstIndex(where: { $0.first?.id == members.first?.id }) ?? 0
             let before = blockList[0..<bi].reduce(0) { $0 + $1.count }
             if members.count > 1 {
                 let idx = blockList[0..<bi].filter { $0.count > 1 }.count
                 SupersetFrame(index: idx, count: members.count) {
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(0..<members.count, id: \.self) { mi in
+                        ForEach(members) { member in
+                            let mi = members.firstIndex(where: { $0.id == member.id }) ?? 0
                             exerciseRow(members[mi], number: before + mi + 1, hue: SupersetStyle.color(idx), reserve: true)
                         }
                     }
@@ -286,8 +287,10 @@ struct EditorScreen: View {
                         }
 
                         let ssList = supersetIndices(draft)
-                        ForEach(warmCount..<draft.items.count, id: \.self) { i in
-                            itemView(i, draft.items[i], ss: ssList[i], first: warmCount)
+                        ForEach(Array(draft.items[warmCount...])) { item in
+                            if let i = draft.items.firstIndex(where: { $0.id == item.id }) {
+                                itemView(i, item, ss: ssList[i], first: warmCount)
+                            }
                         }
 
                         Button {
@@ -341,8 +344,10 @@ struct EditorScreen: View {
             SectionLabel(text: "Warming-up").padding(.top, 24).padding(.bottom, 4)
             Text("Staat vooraan in deze training. Bijvoorbeeld rotator cuff of fietsen.")
                 .sa(13).foregroundColor(Tokens.text2).padding(.bottom, 8)
-            ForEach(0..<warmCount, id: \.self) { i in
-                warmupCard(i, draft.items[i], isFirst: i == 0)
+            ForEach(Array(draft.items[0..<warmCount])) { item in
+                if let i = draft.items.firstIndex(where: { $0.id == item.id }) {
+                    warmupCard(i, item, isFirst: i == 0)
+                }
             }
             Button {
                 model.openSheet(.add)
@@ -372,7 +377,8 @@ struct EditorScreen: View {
                     Text(info.muscle + " \u{00B7} " + kind.title).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
-                    Button { remove(i) } label: {
+                cardHandle(it)
+                Button { remove(i) } label: {
                     Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -396,7 +402,6 @@ struct EditorScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.button)
         .reorderRow(it.id, coord)
-        .reorderGesture(it.id, coord) { target in model.moveDraftItem(it.id, onto: target) }
         .padding(.bottom, 8)
     }
 
@@ -447,7 +452,6 @@ struct EditorScreen: View {
         .card(Tokens.surface, radius: Radius.button)
         .overlay(itemBorder(hue))
         .reorderRow(it.id, coord)
-        .reorderGesture(it.id, coord) { target in model.moveDraftItem(it.id, onto: target) }
         .padding(.bottom, 8)
     }
 
@@ -479,6 +483,19 @@ struct EditorScreen: View {
         .padding(.top, -4).padding(.bottom, 4)
     }
 
+    /// Drie streepjes: vasthouden en slepen. Alleen hier, zodat je overal anders gewoon kunt scrollen.
+    private func cardHandle(_ it: DraftItem) -> some View {
+        VStack(spacing: 4) {
+            ForEach(0..<3, id: \.self) { _ in
+                Capsule().fill(Tokens.text3).frame(width: 18, height: 2.5)
+            }
+        }
+        .frame(width: 40, height: 44)
+        .contentShape(Rectangle())
+        .reorderGesture(it.id, coord) { target in model.moveDraftItem(it.id, onto: target) }
+        .accessibilityLabel("Sleep om te verplaatsen")
+    }
+
     private func itemHeader(_ i: Int, _ it: DraftItem, hue: Color?, number: Int, canMoveUp: Bool) -> some View {
         let info = Catalog.info(it.name)
         let sub = info.muscle + " \u{00B7} " + info.kind.title
@@ -489,6 +506,7 @@ struct EditorScreen: View {
                 Text(sub).sa(13).foregroundColor(Tokens.text2)
             }
             Spacer(minLength: 0)
+            cardHandle(it)
             Button { remove(i) } label: {
                 Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
             }
