@@ -2,8 +2,12 @@
 
 Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 
-## Nu bezig
-- [ ] Ronde 2a: gym-tab — merk-/machinedatabase (Technogym, Matrix, Life Fitness, Gym80, Hammer Strength, Basic-Fit), eigen sportschool kiezen, machines per sportschool, stapgrootte per machine
+## Klaar (wacht op test)
+- [x] Ronde 2a/2b: gym-tab met machine-database, eigen gyms, stappen per machine, apparaat in oefening, wisselen in schema
+
+## Volgende
+- [ ] Design-ronde: moderner, nog minimalistisch (skills: ui-ux-pro-max, SwiftUI-expert, Apple HIG)
+- [ ] Machine-database controleren met echte gegevens (Basic-Fit, jouw gym); geen openbare bron met stapgroottes gevonden
 
 ## Gym-tab (vervolg)
 - [ ] Gewichtsstapel-visual per machine (pin in de stapel)
