@@ -16,7 +16,7 @@ struct AppTabBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             ForEach(HomeTab.allCases) { tab in
                 let on = model.tab == tab
                 Button {
@@ -26,19 +26,20 @@ struct AppTabBar: View {
                         icon(tab)
                         Text(tab.title).sa(11, .semibold)
                     }
-                    .foregroundColor(on ? ac.accentText : Tokens.text3)
+                    .foregroundColor(on ? ac.accentText : Tokens.text2)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .contentShape(Rectangle())
+                    .frame(height: 54)
+                    .background(Capsule().fill(on ? ac.accentSoft : Color.clear))
+                    .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 2)
-        .padding(.bottom, 4)
-        .background(Tokens.bg.ignoresSafeArea(edges: .bottom))
+        .padding(5)
+        .glassSurface(Capsule(), interactive: true)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 6)
     }
 }
 
@@ -87,11 +88,8 @@ struct MiniBar: View {
             .padding(.leading, 4)
             .padding(.trailing, 12)
             .frame(height: Size.miniBar)
-            .card(Tokens.raised, radius: Radius.card)
-            .padding(.horizontal, 12)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
-            .background(Tokens.bg)
+            .glassSurface(RoundedRectangle(cornerRadius: 30, style: .continuous), tint: ac.accentSoft, fallback: Tokens.raised)
+            .padding(.horizontal, 16)
         }
     }
 }
@@ -102,7 +100,7 @@ struct HomeContainer: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     switch model.tab {
@@ -114,13 +112,15 @@ struct HomeContainer: View {
                 }
                 .padding(.horizontal, Spacing.screenMargin)
                 .padding(.top, 8)
-                .padding(.bottom, 24)
+                .padding(.bottom, model.session == nil ? 110 : 190)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            MiniBar()
-            AppTabBar()
+            VStack(spacing: 8) {
+                MiniBar()
+                AppTabBar()
+            }
         }
-        .background(Tokens.bg.ignoresSafeArea())
+        .background(AppBackground())
     }
 }
 

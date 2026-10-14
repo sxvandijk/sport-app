@@ -408,7 +408,7 @@ struct ConfirmOverlay: View {
                 }
                 .padding(22)
                 .frame(maxWidth: 340)
-                .card(Tokens.surface, radius: Radius.card)
+                .glassSurface(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .padding(.horizontal, 24)
             }
             .transition(.opacity)
@@ -468,7 +468,7 @@ struct NameOverlay: View {
                     }
                 }
                 .padding(22)
-                .card(Tokens.surface, radius: Radius.card)
+                .glassSurface(RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .padding(.horizontal, 14)
             }
             .transition(.opacity)
