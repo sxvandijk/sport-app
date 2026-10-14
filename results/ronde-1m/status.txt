@@ -1,0 +1,4 @@
+branch: ronde-1m
+commit: 8647d2d3de10c10103a1f71b390933a85bd04576
+status: success
+run: https://github.com/sxvandijk/sport-app/actions/runs/38592975817
