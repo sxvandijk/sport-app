@@ -295,7 +295,7 @@ struct LiveSession: Codable, Hashable {
     mutating func setValues(set setID: UUID, exID: UUID, w: Double?, r: Int?) {
         guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
         if let w = w { exercises[e].sets[s].w = max(0, (w * 100).rounded() / 100) }
-        if let r = r { exercises[e].sets[s].r = max(1, r) }
+        if let r = r { exercises[e].sets[s].r = max(0, r) }
     }
 
     /// Haalt het vinkje van een gedane set weg.
@@ -416,18 +416,30 @@ struct LiveSession: Codable, Hashable {
         let doneSets = old.sets.filter { $0.done }
         let openSets = old.sets.filter { !$0.done }
         if openSets.isEmpty { return exID }
+        let original = old.from ?? old.name
         if doneSets.isEmpty {
-            if exercises[e].from == nil { exercises[e].from = old.name }
+            exercises[e].from = (name == original) ? nil : original
             exercises[e].name = name
             exercises[e].sets = refresh(old.sets)
             return exID
         }
         exercises[e].sets = doneSets
         let doneWork = doneSets.filter { $0.type != .warmup }.count
-        let replacement = LiveExercise(name: name, group: old.group, from: old.from ?? old.name,
+        let replacement = LiveExercise(name: name, group: old.group, from: (name == original) ? nil : original,
                                        sets: refresh(openSets), roundOffset: (old.roundOffset ?? 0) + doneWork)
         exercises.insert(replacement, at: e + 1)
         return replacement.id
+    }
+
+    /// Slaat een oefening over voor vandaag: open sets verdwijnen, gedane sets blijven bewaard.
+    mutating func skipExercise(_ exID: UUID) {
+        guard let e = index(of: exID) else { return }
+        let done = exercises[e].sets.filter { $0.done }
+        if done.isEmpty {
+            exercises.remove(at: e)
+        } else {
+            exercises[e].sets = done
+        }
     }
 
     /// Koppelt bestaande oefeningen (`existing`) en nieuwe (`newNames`) aan de basisoefening tot één superset.

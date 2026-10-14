@@ -224,17 +224,30 @@ private struct MenuSheet: View {
 
 private struct ExerciseMenuSheet: View {
     @EnvironmentObject private var model: AppModel
+    @State private var confirmRemove = false
 
-    private func swapRow(_ title: String, _ sub: String, _ scope: SwapScope) -> some View {
+    private func swapRow(_ title: String, _ scope: SwapScope) -> some View {
         SheetRowButton(action: {
             let id = model.sheetEx
             model.openSheet(.change, exID: id)
             model.swapScope = scope
         }) {
             HStack(spacing: 12) {
-                Icon.swap(20).foregroundColor(Tokens.text)
+                Text(title).sa(16, .medium).foregroundColor(Tokens.text)
+                Spacer(minLength: 0)
+                Icon.chevronRight(16).foregroundColor(Tokens.text3)
+            }
+            .padding(.horizontal, 16).frame(minHeight: 50)
+        }
+        .padding(.bottom, 4)
+    }
+
+    private func plainRow(_ icon: Icon, _ tint: Color, _ title: String, _ sub: String, action: @escaping () -> Void) -> some View {
+        SheetRowButton(action: action) {
+            HStack(spacing: 12) {
+                icon.foregroundColor(tint)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).sa(17, .medium).foregroundColor(Tokens.text)
+                    Text(title).sa(17, .medium).foregroundColor(title.hasPrefix("Verwijder") ? Tokens.danger : Tokens.text)
                     Text(sub).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
@@ -245,21 +258,32 @@ private struct ExerciseMenuSheet: View {
     }
 
     var body: some View {
-        swapRow("Wisselen voor deze keer", "Alleen in deze workout. Je schema blijft zoals het is.", .now)
-        swapRow("Wisselen vast in schema", "De oefening wordt ook in je schema vervangen.", .schema)
-        SheetRowButton(action: {
+        HStack(spacing: 8) {
+            Icon.swap(18).foregroundColor(Tokens.text)
+            Text("Oefening wisselen").sa(17, .semibold).foregroundColor(Tokens.text)
+        }
+        .padding(.horizontal, 4).padding(.bottom, 8)
+        swapRow("Voor vandaag", .now)
+        swapRow("Vast in schema", .schema)
+
+        plainRow(Icon.skip(20), Tokens.text, "Vandaag overslaan", "Je schema blijft zoals het is.") {
+            if let id = model.sheetEx { model.skipExercise(id, removeFromSchema: false) }
+        }
+        .padding(.top, 8)
+        plainRow(Icon.trash(20), Tokens.danger, "Verwijderen uit schema", "Weg uit vandaag en uit je schema.") {
+            confirmRemove = true
+        }
+        plainRow(Icon.plus(20), Tokens.warm, "Warming-upset toevoegen", "Ongeveer de helft van je eerste werkset") {
             if let id = model.sheetEx { model.addWarmup(id) }
             model.closeSheet()
-        }) {
-            HStack(spacing: 12) {
-                Icon.plus(20).foregroundColor(Tokens.warm)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Warming-upset toevoegen").sa(17, .medium).foregroundColor(Tokens.text)
-                    Text("Ongeveer de helft van je eerste werkset").sa(13).foregroundColor(Tokens.text2)
-                }
-                Spacer(minLength: 0)
+        }
+        .confirmationDialog("Oefening uit je schema verwijderen?", isPresented: $confirmRemove, titleVisibility: .visible) {
+            Button("Verwijder uit schema", role: .destructive) {
+                if let id = model.sheetEx { model.skipExercise(id, removeFromSchema: true) }
             }
-            .padding(.horizontal, 16).frame(minHeight: 60)
+            Button("Annuleer", role: .cancel) {}
+        } message: {
+            Text("Deze oefening staat daarna niet meer in je training.")
         }
     }
 }
@@ -381,26 +405,16 @@ private struct SwapSheet: View {
     @Environment(\.accentColors) private var ac
     let mode: Mode
 
-    /// Twee knoppen: voor deze keer, of vast in je schema.
-    private var scopeToggle: some View {
-        HStack(spacing: 4) {
-            scopeButton("Voor deze keer", .now)
-            scopeButton("Vast in schema", .schema)
+    /// Laat zien wat je gaat doen.
+    private func scopeLabel(_ name: String) -> some View {
+        let text = model.swapScope == .schema ? "\(name) vast in je schema wisselen" : "\(name) voor deze keer wisselen"
+        return HStack(spacing: 8) {
+            Icon.swap(16).foregroundColor(ac.accentText)
+            Text(text).sa(14, .semibold).foregroundColor(ac.accentText)
+            Spacer(minLength: 0)
         }
-        .padding(4)
-        .card(Tokens.raised, radius: Radius.field)
-    }
-
-    private func scopeButton(_ title: String, _ scope: SwapScope) -> some View {
-        let on = model.swapScope == scope
-        return Button { model.swapScope = scope } label: {
-            Text(title).sa(14, .semibold)
-                .foregroundColor(on ? ac.onAccent : Tokens.text2)
-                .frame(maxWidth: .infinity).frame(height: 38)
-                .background(RoundedRectangle(cornerRadius: Radius.field - 2, style: .continuous).fill(on ? ac.accentLine : Color.clear))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(on ? .isSelected : [])
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(ac.accentSoft))
     }
 
     /// Wat er vervangen wordt, vooral handig midden in een oefening.
@@ -430,7 +444,7 @@ private struct SwapSheet: View {
         let preference = model.prefs[original]
 
         if mode != .pref, let ex = ex {
-            if mode == .change { scopeToggle.padding(.bottom, 8) }
+            if mode == .change { scopeLabel(name).padding(.bottom, 8) }
             Text(replaceInfo(ex)).sa(13).foregroundColor(Tokens.text2).padding(.bottom, 14).padding(.horizontal, 2)
         }
         swapList(original: original, suggestion: suggestion, preference: preference)
@@ -438,9 +452,20 @@ private struct SwapSheet: View {
 
     @ViewBuilder
     private func swapList(original: String, suggestion: String, preference: String?) -> some View {
+        if mode != .pref, model.session?.exercise(model.sheetEx)?.from != nil {
+            SectionLabel(text: "Terug naar het origineel").padding(.top, 4).padding(.bottom, 8)
+            SheetRowButton(action: { model.swapExercise(to: original, manual: false) }) {
+                HStack(spacing: 12) {
+                    TitleSub(title: original, sub: Catalog.meta(original))
+                    Spacer(minLength: 0)
+                    Icon.swap(20).foregroundColor(Tokens.text)
+                }
+                .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 60)
+            }
+        }
         if mode != .pref {
             let same = preference == suggestion
-            SectionLabel(text: same ? "Suggestie en jouw voorkeur" : "Suggestie van de app").padding(.top, 4).padding(.bottom, 8)
+            SectionLabel(text: same ? "Suggestie en jouw voorkeur" : "Suggestie van de app").padding(.top, 20).padding(.bottom, 8)
             SheetRowButton(action: { model.swapExercise(to: suggestion, manual: false) }) {
                 HStack(spacing: 12) {
                     if same { Icon.starFilled(20).foregroundColor(ac.accentText) }
@@ -622,8 +647,7 @@ private struct SearchList: View {
             }
             .padding(.horizontal, 14).frame(height: 48)
             .card(Tokens.raised, radius: Radius.field)
-            muscleChips.padding(.top, 8)
-            sortChips.padding(.top, 6)
+            filterRow.padding(.top, 8)
             Spacer().frame(height: 4)
 
             VStack(alignment: .leading, spacing: 0) {
@@ -684,35 +708,38 @@ private struct SearchList: View {
         }
     }
 
-    private var sortChips: some View {
+    private var filterRow: some View {
         HStack(spacing: 8) {
-            Spacer(minLength: 0)
             Menu {
-                Button { sort = .az } label: { Label("A\u{2013}Z", systemImage: sort == .az ? "checkmark" : "textformat") }
-                Button { sort = .muscle } label: { Label("Spiergroep", systemImage: sort == .muscle ? "checkmark" : "figure.strengthtraining.traditional") }
-                Button { sort = .equipment } label: { Label("Apparaat", systemImage: sort == .equipment ? "checkmark" : "dumbbell") }
-            } label: {
-                HStack(spacing: 6) {
-                    Icon.filter(18)
-                    Text(sort == .az ? "A\u{2013}Z" : (sort == .muscle ? "Spiergroep" : (sort == .equipment ? "Apparaat" : "A\u{2013}Z"))).sa(13, .medium)
+                Button { muscleFilter = nil } label: { Label("Alle spiergroepen", systemImage: muscleFilter == nil ? "checkmark" : "circle") }
+                ForEach(Catalog.muscleGroups, id: \.self) { m in
+                    Button { muscleFilter = m } label: { Label(m, systemImage: muscleFilter == m ? "checkmark" : "circle") }
                 }
-                .foregroundColor(Tokens.text)
-                .padding(.horizontal, 12).frame(height: 36)
-                .background(Capsule().fill(Tokens.raised))
+            } label: {
+                filterLabel(Icon.filter(18), muscleFilter ?? "Alle spiergroepen", active: muscleFilter != nil)
+            }
+            .accessibilityLabel("Filter op spiergroep")
+            Menu {
+                Button { sort = .az } label: { Label("A\u{2013}Z", systemImage: sort == .az ? "checkmark" : "circle") }
+                Button { sort = .muscle } label: { Label("Spiergroep", systemImage: sort == .muscle ? "checkmark" : "circle") }
+                Button { sort = .equipment } label: { Label("Apparaat", systemImage: sort == .equipment ? "checkmark" : "circle") }
+            } label: {
+                filterLabel(Icon.sort(18), sort == .muscle ? "Spiergroep" : (sort == .equipment ? "Apparaat" : "A\u{2013}Z"), active: false)
             }
             .accessibilityLabel("Sorteren")
+            Spacer(minLength: 0)
         }
     }
 
-    private var muscleChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                chip("Alle", on: muscleFilter == nil) { muscleFilter = nil }
-                ForEach(Catalog.muscleGroups, id: \.self) { m in
-                    chip(m, on: muscleFilter == m) { muscleFilter = (muscleFilter == m) ? nil : m }
-                }
-            }
+    private func filterLabel(_ icon: Icon, _ text: String, active: Bool) -> some View {
+        HStack(spacing: 6) {
+            icon
+            Text(text).sa(14, .medium).lineLimit(1)
+            Icon.chevronDown(12, 2.4)
         }
+        .foregroundColor(active ? ac.onAccent : Tokens.text)
+        .padding(.horizontal, 14).frame(height: 40)
+        .background(Capsule().fill(active ? ac.accentLine : Tokens.raised))
     }
 
     private func chip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {

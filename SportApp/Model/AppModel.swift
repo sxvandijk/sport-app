@@ -552,6 +552,26 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    /// Oefening voor vandaag overslaan, of (ook) uit het schema halen.
+    func skipExercise(_ exID: UUID, removeFromSchema: Bool) {
+        guard var s = session, let ex = s.exercise(exID) else { return }
+        let names = [ex.name, ex.from].compactMap { $0 }
+        s.skipExercise(exID)
+        if removeFromSchema, var plans = templates[s.name] {
+            if let i = plans.firstIndex(where: { names.contains($0.name) }) {
+                plans.remove(at: i)
+                templates[s.name] = plans
+            }
+        }
+        session = s
+        focusID = nil
+        focusSetID = nil
+        editField = nil
+        sheet = nil
+        Haptics.light()
+        save()
+    }
+
     func addWarmup(_ exID: UUID) {
         guard var s = session else { return }
         s.addWarmup(to: exID)
@@ -607,7 +627,7 @@ final class AppModel: ObservableObject {
         focusID = newID
         focusSetID = nil
         if (manual && savePref) { prefs[original] = name }
-        if swapScope == .schema, var plans = templates[s.name], let i = plans.firstIndex(where: { $0.name == original }) {
+        if swapScope == .schema, var plans = templates[s.name], let i = plans.firstIndex(where: { $0.name == old }) ?? plans.firstIndex(where: { $0.name == original }) {
             plans[i].name = name
             templates[s.name] = plans
         }
