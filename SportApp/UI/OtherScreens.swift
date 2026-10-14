@@ -227,6 +227,7 @@ struct EditorScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @StateObject private var coord = ReorderCoordinator()
+    @State private var reordering = false
 
     private func edit(_ i: Int, _ change: (inout DraftItem) -> Void) {
         guard var d = model.draft, d.items.indices.contains(i) else { return }
@@ -268,17 +269,29 @@ struct EditorScreen: View {
                             .padding(.horizontal, 16).frame(height: 56)
                             .card(Tokens.surface, radius: Radius.row)
 
-                        warmupSection(draft, warmCount: warmCount)
+                        if !reordering { warmupSection(draft, warmCount: warmCount) }
 
                         HStack(alignment: .firstTextBaseline) {
-                            SectionLabel(text: "Oefeningen")
+                            SectionLabel(text: reordering ? "Volgorde" : "Oefeningen")
                             Spacer()
-                            if !workItems.isEmpty {
+                            if !workItems.isEmpty && !reordering {
                                 Text("\(workItems.count) · \(sets) sets · ~\(minutes) min")
                                     .sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
+                                    .padding(.trailing, 8)
+                            }
+                            if draft.items.count > 1 {
+                                Button { withAnimation(.easeOut(duration: 0.2)) { reordering.toggle() } } label: {
+                                    Text(reordering ? "Klaar" : "Volgorde aanpassen").sa(14, .semibold)
+                                        .foregroundColor(reordering ? ac.onAccent : ac.accentText)
+                                        .padding(.horizontal, 12).frame(height: 32)
+                                        .background(Capsule().fill(reordering ? ac.accentLine : ac.accentSoft))
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
-                        .padding(.top, 24).padding(.bottom, 8)
+                        .padding(.top, reordering ? 24 : 24).padding(.bottom, 8)
+
+                        if reordering { reorderList(draft, ssList: supersetIndices(draft)) }
 
                         if workItems.isEmpty {
                             Text("Nog geen oefeningen. Voeg je eerste oefening toe.").sa(15).foregroundColor(Tokens.text2)
@@ -287,9 +300,11 @@ struct EditorScreen: View {
                         }
 
                         let ssList = supersetIndices(draft)
-                        ForEach(Array(draft.items[warmCount...])) { item in
-                            if let i = draft.items.firstIndex(where: { $0.id == item.id }) {
-                                itemView(i, item, ss: ssList[i], first: warmCount)
+                        if !reordering {
+                            ForEach(Array(draft.items[warmCount...])) { item in
+                                if let i = draft.items.firstIndex(where: { $0.id == item.id }) {
+                                    itemView(i, item, ss: ssList[i], first: warmCount)
+                                }
                             }
                         }
 
@@ -377,8 +392,7 @@ struct EditorScreen: View {
                     Text(info.muscle + " \u{00B7} " + kind.title).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
-                cardHandle(it)
-                Button { remove(i) } label: {
+                    Button { remove(i) } label: {
                     Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -483,6 +497,35 @@ struct EditorScreen: View {
         .padding(.top, -4).padding(.bottom, 4)
     }
 
+    /// Compacte lijst om de volgorde aan te passen, zoals in het overzicht.
+    @ViewBuilder
+    private func reorderList(_ draft: Draft, ssList: [Int?]) -> some View {
+        ForEach(draft.items) { it in
+            let i = draft.items.firstIndex(where: { $0.id == it.id }) ?? 0
+            let hue: Color? = it.isWarmup ? Tokens.warm : ssList[i].map { SupersetStyle.color($0) }
+            HStack(spacing: 12) {
+                if it.isWarmup {
+                    Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
+                } else {
+                    NumberBadge(text: String(i - draft.items.filter { $0.isWarmup }.count + 1), hue: hue, size: 28)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(it.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                    Text((it.isWarmup ? "Warming-up \u{00B7} " : "") + "\(it.sets) \u{00D7} \(it.reps)")
+                        .sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+                cardHandle(it)
+            }
+            .padding(.leading, 14).padding(.trailing, 4).frame(minHeight: 60)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .card(Tokens.surface, radius: Radius.button)
+            .overlay(RoundedRectangle(cornerRadius: Radius.button, style: .continuous).stroke(hue?.opacity(0.7) ?? Color.clear, lineWidth: 1.5))
+            .reorderRow(it.id, coord)
+            .padding(.bottom, 8)
+        }
+    }
+
     /// Drie streepjes: vasthouden en slepen. Alleen hier, zodat je overal anders gewoon kunt scrollen.
     private func cardHandle(_ it: DraftItem) -> some View {
         VStack(spacing: 4) {
@@ -506,7 +549,6 @@ struct EditorScreen: View {
                 Text(sub).sa(13).foregroundColor(Tokens.text2)
             }
             Spacer(minLength: 0)
-            cardHandle(it)
             Button { remove(i) } label: {
                 Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
             }

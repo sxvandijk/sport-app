@@ -297,6 +297,7 @@ final class ReorderCoordinator: ObservableObject {
 }
 
 struct ReorderRow: ViewModifier {
+    @Environment(\.accentColors) private var ac
     let id: UUID
     @ObservedObject var coord: ReorderCoordinator
 
@@ -304,6 +305,10 @@ struct ReorderRow: ViewModifier {
         let lifted = coord.active == id
         return ZStack {
             content
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
+                        .stroke(ac.accentLine, lineWidth: lifted ? 2 : 0)
+                )
                 .offset(y: coord.offset(for: id))
                 .scaleEffect(lifted ? 1.02 : 1)
                 .shadow(color: Color.black.opacity(lifted ? 0.35 : 0), radius: 12, y: 4)
@@ -351,5 +356,51 @@ extension View {
     /// Vasthouden (kort) en dan slepen.
     func reorderGesture(_ id: UUID, _ coord: ReorderCoordinator, move: @escaping (UUID) -> Void) -> some View {
         modifier(ReorderGesture(id: id, coord: coord, move: move))
+    }
+}
+
+
+// MARK: - Eigen bevestigingsvenster
+
+struct ConfirmOverlay: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        if let c = model.confirm {
+            ZStack {
+                Color.black.opacity(0.6).ignoresSafeArea()
+                    .onTapGesture { model.confirm = nil }
+                VStack(spacing: 0) {
+                    Text(c.title).sa(19, .bold).foregroundColor(Tokens.text).multilineTextAlignment(.center)
+                    if !c.message.isEmpty {
+                        Text(c.message).sa(14).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
+                            .lineLimit(4).padding(.top, 8)
+                    }
+                    Button {
+                        let action = c.action
+                        model.confirm = nil
+                        action()
+                    } label: {
+                        Text(c.confirmTitle).sa(17, .bold).foregroundColor(Tokens.onDanger)
+                            .frame(maxWidth: .infinity).frame(height: 52)
+                            .card(Tokens.danger, radius: Radius.button)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 20)
+                    Button { model.confirm = nil } label: {
+                        Text("Annuleer").sa(17, .semibold).foregroundColor(Tokens.text)
+                            .frame(maxWidth: .infinity).frame(height: 52)
+                            .card(Tokens.raised, radius: Radius.button)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 8)
+                }
+                .padding(22)
+                .frame(maxWidth: 340)
+                .card(Tokens.surface, radius: Radius.card)
+                .padding(.horizontal, 24)
+            }
+            .transition(.opacity)
+        }
     }
 }

@@ -224,30 +224,36 @@ private struct MenuSheet: View {
 
 private struct ExerciseMenuSheet: View {
     @EnvironmentObject private var model: AppModel
-    @State private var confirmRemove = false
+    @State private var swapOpen = false
 
-    private func swapRow(_ title: String, _ scope: SwapScope) -> some View {
+    private var exercise: LiveExercise? { model.session?.exercise(model.sheetEx) }
+
+    private func scopeRow(_ title: String, _ sub: String, _ scope: SwapScope) -> some View {
         SheetRowButton(action: {
             let id = model.sheetEx
             model.openSheet(.change, exID: id)
             model.swapScope = scope
         }) {
             HStack(spacing: 12) {
-                Text(title).sa(16, .medium).foregroundColor(Tokens.text)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).sa(16, .medium).foregroundColor(Tokens.text)
+                    Text(sub).sa(13).foregroundColor(Tokens.text2)
+                }
                 Spacer(minLength: 0)
                 Icon.chevronRight(16).foregroundColor(Tokens.text3)
             }
-            .padding(.horizontal, 16).frame(minHeight: 50)
+            .padding(.horizontal, 16).frame(minHeight: 56)
         }
         .padding(.bottom, 4)
+        .padding(.leading, 16)
     }
 
-    private func plainRow(_ icon: Icon, _ tint: Color, _ title: String, _ sub: String, action: @escaping () -> Void) -> some View {
+    private func plainRow(_ icon: Icon, _ tint: Color, _ title: String, _ sub: String, danger: Bool = false, action: @escaping () -> Void) -> some View {
         SheetRowButton(action: action) {
             HStack(spacing: 12) {
                 icon.foregroundColor(tint)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).sa(17, .medium).foregroundColor(title.hasPrefix("Verwijder") ? Tokens.danger : Tokens.text)
+                    Text(title).sa(17, .medium).foregroundColor(danger ? Tokens.danger : Tokens.text)
                     Text(sub).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
@@ -257,33 +263,51 @@ private struct ExerciseMenuSheet: View {
         .padding(.bottom, 6)
     }
 
-    var body: some View {
-        HStack(spacing: 8) {
-            Icon.swap(18).foregroundColor(Tokens.text)
-            Text("Oefening wisselen").sa(17, .semibold).foregroundColor(Tokens.text)
-        }
-        .padding(.horizontal, 4).padding(.bottom, 8)
-        swapRow("Voor vandaag", .now)
-        swapRow("Vast in schema", .schema)
+    private var skipTexts: (title: String, sub: String) {
+        guard let ex = exercise else { return ("Vandaag overslaan", "") }
+        let done = ex.sets.filter { $0.done }.count
+        let open = ex.sets.count - done
+        if done == 0 { return ("Oefening vandaag overslaan", "Je schema blijft zoals het is.") }
+        if open == 0 { return ("Alle sets zijn al gedaan", "") }
+        return (open == 1 ? "Resterende set overslaan" : "Resterende \(open) sets overslaan",
+                "Je \(done == 1 ? "gedane set blijft" : "\(done) gedane sets blijven") bewaard. De oefening telt dan als voltooid.")
+    }
 
-        plainRow(Icon.skip(20), Tokens.text, "Vandaag overslaan", "Je schema blijft zoals het is.") {
-            if let id = model.sheetEx { model.skipExercise(id, removeFromSchema: false) }
-        }
-        .padding(.top, 8)
-        plainRow(Icon.trash(20), Tokens.danger, "Verwijderen uit schema", "Weg uit vandaag en uit je schema.") {
-            confirmRemove = true
-        }
+    var body: some View {
         plainRow(Icon.plus(20), Tokens.warm, "Warming-upset toevoegen", "Ongeveer de helft van je eerste werkset") {
             if let id = model.sheetEx { model.addWarmup(id) }
             model.closeSheet()
         }
-        .confirmationDialog("Oefening uit je schema verwijderen?", isPresented: $confirmRemove, titleVisibility: .visible) {
-            Button("Verwijder uit schema", role: .destructive) {
-                if let id = model.sheetEx { model.skipExercise(id, removeFromSchema: true) }
+
+        SheetRowButton(action: { swapOpen.toggle() }) {
+            HStack(spacing: 12) {
+                Icon.swap(20).foregroundColor(Tokens.text)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Oefening wisselen").sa(17, .medium).foregroundColor(Tokens.text)
+                    Text("Voor vandaag of vast in je schema").sa(13).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+                Icon.chevronRight(16).foregroundColor(Tokens.text3).rotationEffect(.degrees(swapOpen ? 90 : 0))
             }
-            Button("Annuleer", role: .cancel) {}
-        } message: {
-            Text("Deze oefening staat daarna niet meer in je training.")
+            .padding(.horizontal, 16).frame(minHeight: 60)
+        }
+        .padding(.bottom, 6)
+        if swapOpen {
+            scopeRow("Voor vandaag", "Alleen in deze workout. Je schema blijft zoals het is.", .now)
+            scopeRow("Vast in schema", "De oefening wordt ook in je schema vervangen.", .schema)
+        }
+
+        let skip = skipTexts
+        plainRow(Icon.skip(20), Tokens.text, skip.title, skip.sub) {
+            if let id = model.sheetEx { model.skipExercise(id, removeFromSchema: false) }
+        }
+        plainRow(Icon.trash(20), Tokens.danger, "Verwijderen uit schema", "Weg uit vandaag en uit je schema.", danger: true) {
+            guard let id = model.sheetEx else { return }
+            model.confirm = ConfirmRequest(title: "Uit je schema verwijderen?",
+                                           message: "\(exercise?.name ?? "Deze oefening") staat daarna niet meer in je training.",
+                                           confirmTitle: "Verwijder uit schema") {
+                model.skipExercise(id, removeFromSchema: true)
+            }
         }
     }
 }

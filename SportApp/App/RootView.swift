@@ -38,6 +38,7 @@ private struct ThemedRoot: View {
             case .records: RecordsScreen()
             }
             SheetOverlay()
+            ConfirmOverlay()
         }
         .tint(accent.accentText)
         .environment(\.accentColors, accent)
