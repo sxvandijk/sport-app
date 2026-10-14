@@ -47,6 +47,7 @@ struct LaunchConfig {
             model.screen = .workout
             model.restTotal = 90
             model.restEnd = now.addingTimeInterval(64)
+            model.lastSetAt = now.addingTimeInterval(-26)
         case "workout-superset":
             model.screen = .workout
             if let s = model.session, let target = s.exercises.first(where: { $0.name == "Dumbbell Shoulder Press" }) {
