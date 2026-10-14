@@ -299,6 +299,8 @@ struct ProgressTab: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @State private var volumeInfo = false
+    @State private var selectedWeek: Int?
+    @State private var openWorkout: UUID?
 
     var body: some View {
         let stats = ProgressStats.make(history: model.history, now: Date())
@@ -358,10 +360,20 @@ struct ProgressTab: View {
                         Text(volumes[i] > 0 ? Format.weight(volumes[i]) + "k" : "").sa(10, .regular, mono: true)
                             .foregroundColor(Tokens.text2).lineLimit(1).minimumScaleFactor(0.7)
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(i == volumes.count - 1 ? ac.accentLine : ac.accentSoft)
+                            .fill(i == volumes.count - 1 || selectedWeek == i ? ac.accentLine : ac.accentSoft)
+                            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(selectedWeek == i ? Tokens.text : Color.clear, lineWidth: 2))
                             .frame(height: max(4, CGFloat((volumes[i] / top * 100).rounded())))
                     }
                     .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedWeek = selectedWeek == i ? nil : i
+                        openWorkout = nil
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Week \(stats.weekLabels[i]), \(Format.weight(volumes[i])) duizend kg")
+                    .accessibilityAddTraits(.isButton)
                 }
             }
             .frame(height: 124, alignment: .bottom)
@@ -373,12 +385,62 @@ struct ProgressTab: View {
                 }
             }
             .padding(.top, 6)
-            Text(thisWeek > 0 ? "Deze week tot nu toe \(Format.thousands(thisWeek * 1000)) kg" : "Nog geen volume deze week")
-                .sa(13).foregroundColor(Tokens.text2).padding(.top, 10)
+            Text(selectedWeek == nil
+                 ? (thisWeek > 0 ? "Deze week tot nu toe \(Format.thousands(thisWeek * 1000)) kg. Tik op een week voor je trainingen." : "Nog geen volume deze week. Tik op een week voor je trainingen.")
+                 : "")
+                .sa(13).foregroundColor(Tokens.text2).padding(.top, selectedWeek == nil ? 10 : 0)
+            if let w = selectedWeek { weekWorkouts(w, label: stats.weekLabels[w]) }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.card)
+    }
+
+    private func weekWorkouts(_ week: Int, label: String) -> some View {
+        let items = ProgressStats.workouts(inWeek: week, history: model.history, now: Date())
+        return VStack(alignment: .leading, spacing: 0) {
+            SectionLabel(text: "Trainingen in \(label)").padding(.top, 14).padding(.bottom, 4)
+            if items.isEmpty {
+                Text("Geen trainingen in deze week.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 8)
+            }
+            ForEach(items) { h in
+                let open = openWorkout == h.id
+                VStack(alignment: .leading, spacing: 0) {
+                    Button { openWorkout = open ? nil : h.id } label: {
+                        HStack(spacing: 10) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(h.name).sa(16, .semibold).foregroundColor(Tokens.text)
+                                Text(DateText.short(h.date) + " \u{00B7} \(h.minutes) min \u{00B7} " + Format.thousands(ProgressStats.volume(of: h)) + " kg")
+                                    .sa(13).foregroundColor(Tokens.text2)
+                            }
+                            Spacer(minLength: 0)
+                            (open ? Icon.chevronUp(14) : Icon.chevronDown(14)).foregroundColor(Tokens.text3)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    if open {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(h.exercises ?? [], id: \.name) { e in
+                                let sets = e.sets.filter { $0.type != .warmup }
+                                HStack(alignment: .firstTextBaseline) {
+                                    Text(e.name).sa(14, .medium).foregroundColor(Tokens.text).lineLimit(1)
+                                    Spacer(minLength: 8)
+                                    Text(sets.map { Format.weight($0.w) + "\u{00D7}" + String($0.r) }.joined(separator: ", "))
+                                        .sa(12, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
+                                }
+                            }
+                            if (h.exercises ?? []).isEmpty {
+                                Text("Van deze training is geen detail bewaard.").sa(13).foregroundColor(Tokens.text2)
+                            }
+                        }
+                        .padding(.bottom, 10)
+                    }
+                    Divider().background(Tokens.line)
+                }
+            }
+        }
     }
 
     private func muscleCard(_ stats: ProgressStats) -> some View {

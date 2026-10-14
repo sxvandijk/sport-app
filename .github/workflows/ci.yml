@@ -10,6 +10,9 @@ on:
       screens:
         description: "Schermen voor screenshots (spatiegescheiden), of 'alle'"
         default: "workout overview editor sheet-swap sheet-exmenu sheet-program profile training progress"
+      runner:
+        description: "Bouwomgeving: macos-26 of macos-15 (sneller beschikbaar)"
+        default: "macos-26"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -20,7 +23,7 @@ permissions:
 
 jobs:
   build-and-test:
-    runs-on: macos-26
+    runs-on: ${{ inputs.runner || 'macos-26' }}
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
