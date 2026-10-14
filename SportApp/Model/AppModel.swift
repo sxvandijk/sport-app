@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import UserNotifications
+import AudioToolbox
 
 enum Screen: String, Codable { case home, workout, overview, editor, summary, records }
 enum HomeTab: Int, CaseIterable, Identifiable {
@@ -21,6 +22,7 @@ enum SheetKind: String {
 }
 
 enum SwapScope { case now, schema, prefOnly }
+enum EditField { case weight, reps }
 
 struct DraftItem: Identifiable, Hashable {
     var id = UUID()
@@ -91,6 +93,13 @@ struct Draft: Hashable {
     }
 }
 
+/// Een notitie bij een oefening, met de dag waarop je hem schreef.
+struct NoteEntry: Codable, Hashable, Identifiable {
+    var id = UUID()
+    var date: Date
+    var text: String
+}
+
 struct Toast: Equatable {
     var text: String
     var removed: RemovedSetBox
@@ -127,7 +136,8 @@ struct PersistedState: Codable {
     var creaLateTime: Int? = nil
     var creaDone: [String]? = nil     // dagen (yyyy-MM-dd) waarop je hem hebt afgevinkt
     var dataVersion: Int? = nil
-    var notes: [String: String]? = nil
+    var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
+    var noteLog: [String: [NoteEntry]]? = nil
 }
 
 /// De toestand van de hele app. De regels staan in `LiveSession`; dit is de laag die schermen en opslag verbindt.
@@ -161,11 +171,12 @@ final class AppModel: ObservableObject {
     @Published var creaLateOn: Bool
     @Published var creaLateTime: Int
     @Published var creaDone: [String]
-    @Published var notes: [String: String]
+    @Published var noteLog: [String: [NoteEntry]]
 
     // Werkscherm
     @Published var focusID: UUID?
     @Published var focusSetID: UUID?
+    @Published var editField: EditField?
     @Published var restEnd: Date?
     @Published var restTotal: Int = 90
     @Published var toast: Toast?
@@ -194,6 +205,7 @@ final class AppModel: ObservableObject {
 
     private let fileURL: URL?
     private var toastWork: DispatchWorkItem?
+    private var restAlarm: DispatchWorkItem?
 
     init(fileURL: URL?, seed: PersistedState? = nil, now: Date = Date()) {
         self.fileURL = fileURL
@@ -217,7 +229,11 @@ final class AppModel: ObservableObject {
         creaLateOn = state.creaLateOn ?? true
         creaLateTime = state.creaLateTime ?? 18 * 60
         creaDone = state.creaDone ?? []
-        notes = state.notes ?? [:]
+        var log = state.noteLog ?? [:]
+        for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
+            log[name] = [NoteEntry(date: now, text: text)]
+        }
+        noteLog = log
         // Eerdere versies hadden 1:30 als standaard rusttijd; de nieuwe standaard is 3:00.
         if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
@@ -262,7 +278,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, dataVersion: AppModel.dataVersion, notes: notes)
+                       creaDone: creaDone, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -405,6 +421,7 @@ final class AppModel: ObservableObject {
     func focus(_ exID: UUID) {
         focusID = exID
         focusSetID = nil
+        editField = nil
     }
 
     /// Kies zelf een set (ook een al gedane, om aan te passen). Daarna ga je weer verder waar je was.
@@ -415,6 +432,8 @@ final class AppModel: ObservableObject {
         guard isCurrent || isDone else { return }
         focusID = exID
         focusSetID = setID
+        let timed = session?.exercise(exID).map { Catalog.kind($0.name) == .timed } ?? false
+        editField = timed ? .reps : .weight
         Haptics.light()
     }
 
@@ -438,15 +457,44 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    func setNote(_ text: String, for exercise: String) {
+    func addNote(_ text: String, for exercise: String) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        notes[exercise] = t.isEmpty ? nil : text
+        guard !t.isEmpty else { return }
+        noteLog[exercise, default: []].insert(NoteEntry(date: Date(), text: t), at: 0)
+        Haptics.light()
+        save()
+    }
+
+    func deleteNote(_ id: UUID, for exercise: String) {
+        noteLog[exercise]?.removeAll { $0.id == id }
+        if noteLog[exercise]?.isEmpty == true { noteLog[exercise] = nil }
         save()
     }
 
     /// Ster: deze oefening wordt je vaste keuze als de oorspronkelijke bezet is.
     func togglePreference(original: String, choice: String) {
         if prefs[original] == choice { prefs[original] = nil } else { prefs[original] = choice }
+        save()
+    }
+
+    /// Verplaats een blok (een oefening of een superset) in het overzicht van een training.
+    func moveBlock(template name: String, block id: UUID, onto targetID: UUID) {
+        guard var items = templates[name], id != targetID else { return }
+        var blocks: [[PlanItem]] = []
+        for x in items {
+            if let last = blocks.last?.last, last.group == x.group, last.isWarmup == x.isWarmup {
+                blocks[blocks.count - 1].append(x)
+            } else {
+                blocks.append([x])
+            }
+        }
+        guard let from = blocks.firstIndex(where: { $0.first?.id == id }),
+              let to = blocks.firstIndex(where: { $0.first?.id == targetID }),
+              blocks[from].first?.isWarmup == blocks[to].first?.isWarmup else { return }
+        let moving = blocks.remove(at: from)
+        blocks.insert(moving, at: to)
+        items = blocks.flatMap { $0 }
+        templates[name] = items
         save()
     }
 
@@ -466,6 +514,7 @@ final class AppModel: ObservableObject {
         guard var s = session else { return }
         if let c = current().cur, let set = s.findSet(c.setID), set.done {
             focusSetID = nil
+            editField = nil
             focusID = nil
             save()
             return
@@ -473,12 +522,14 @@ final class AppModel: ObservableObject {
         guard let result = s.complete(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst, restDefault: restDefault) else { return }
         session = s
         focusSetID = nil
+        editField = nil
         focusID = result.nextFocus
         toast = nil
         Haptics.success()
         if let seconds = result.restSeconds {
             restTotal = seconds
             restEnd = Date().addingTimeInterval(TimeInterval(seconds))
+            armRestAlarm(seconds: seconds)
         } else {
             restEnd = nil
             Notifier.cancelRest()
@@ -544,8 +595,10 @@ final class AppModel: ObservableObject {
             save()
             return
         }
-        s.swap(exID: ex, to: name, history: history)
+        let newID = s.swap(exID: ex, to: name, history: history)
         session = s
+        focusID = newID
+        focusSetID = nil
         if (manual && savePref) { prefs[original] = name }
         if swapScope == .schema, var plans = templates[s.name], let i = plans.firstIndex(where: { $0.name == original }) {
             plans[i].name = name
@@ -611,13 +664,28 @@ final class AppModel: ObservableObject {
         guard let end = restEnd else { return }
         if delta < 0 {
             restEnd = max(Date().addingTimeInterval(1), end.addingTimeInterval(TimeInterval(delta)))
+            if let e = restEnd { armRestAlarm(seconds: Int(e.timeIntervalSinceNow.rounded(.up))) }
         } else {
             restEnd = end.addingTimeInterval(TimeInterval(delta))
             restTotal += delta
+            if let e = restEnd { armRestAlarm(seconds: Int(e.timeIntervalSinceNow.rounded(.up))) }
         }
     }
 
+    /// Als de rust voorbij is: een korte trilling en, als het geluid aan staat, een geluidje. Alleen als de app open is.
+    private func armRestAlarm(seconds: Int) {
+        restAlarm?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self, let end = self.restEnd, end <= Date().addingTimeInterval(0.5) else { return }
+            Haptics.success()
+            AudioServicesPlaySystemSound(1007)
+        }
+        restAlarm = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(max(1, seconds) * 1000), execute: work)
+    }
+
     func skipRest() {
+        restAlarm?.cancel()
         restEnd = nil
         Notifier.cancelRest()
     }

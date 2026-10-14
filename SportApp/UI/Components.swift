@@ -227,3 +227,95 @@ struct NumberBadge: View {
             .background(Circle().fill(hue ?? Tokens.raised))
     }
 }
+
+
+// MARK: - Verslepen (vasthouden en slepen)
+
+struct ReorderFramesKey: PreferenceKey {
+    static var defaultValue: [UUID: CGRect] = [:]
+    static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
+/// Houdt bij welke rij wordt versleept en waar alle rijen staan.
+final class ReorderCoordinator: ObservableObject {
+    @Published var active: UUID?
+    @Published var translation: CGFloat = 0
+    var frames: [UUID: CGRect] = [:]
+    private var startMid: CGFloat = 0
+
+    func setFrames(_ new: [UUID: CGRect]) {
+        frames = new
+        if active != nil { objectWillChange.send() }
+    }
+
+    func begin(_ id: UUID) {
+        active = id
+        startMid = frames[id]?.midY ?? 0
+        translation = 0
+        Haptics.light()
+    }
+
+    func update(_ t: CGFloat, move: (UUID) -> Void) {
+        guard let id = active else { return }
+        translation = t
+        let visual = startMid + t
+        if let target = frames.first(where: { $0.key != id && $0.value.minY <= visual && visual <= $0.value.maxY })?.key {
+            move(target)
+        }
+    }
+
+    func end() {
+        active = nil
+        translation = 0
+    }
+
+    /// Hoeveel de versleepte rij moet meeschuiven om onder je vinger te blijven.
+    func offset(for id: UUID) -> CGFloat {
+        guard active == id, let f = frames[id] else { return 0 }
+        return startMid + translation - f.midY
+    }
+}
+
+struct ReorderRow: ViewModifier {
+    let id: UUID
+    @ObservedObject var coord: ReorderCoordinator
+
+    func body(content: Content) -> some View {
+        let lifted = coord.active == id
+        return content
+            .background(GeometryReader { g in
+                Color.clear.preference(key: ReorderFramesKey.self, value: [id: g.frame(in: .named("reorder"))])
+            })
+            .offset(y: coord.offset(for: id))
+            .scaleEffect(lifted ? 1.02 : 1)
+            .shadow(color: Color.black.opacity(lifted ? 0.35 : 0), radius: 12, y: 4)
+            .zIndex(lifted ? 1 : 0)
+    }
+}
+
+extension View {
+    /// Meet de rij en laat hem meebewegen tijdens het slepen.
+    func reorderRow(_ id: UUID, _ coord: ReorderCoordinator) -> some View {
+        modifier(ReorderRow(id: id, coord: coord))
+    }
+
+    /// Vasthouden (kort) en dan slepen.
+    func reorderGesture(_ id: UUID, _ coord: ReorderCoordinator, move: @escaping (UUID) -> Void) -> some View {
+        gesture(
+            LongPressGesture(minimumDuration: 0.3)
+                .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("reorder")))
+                .onChanged { value in
+                    switch value {
+                    case .second(true, let drag):
+                        if coord.active == nil { coord.begin(id) }
+                        if let d = drag { coord.update(d.translation.height, move: move) }
+                    default:
+                        break
+                    }
+                }
+                .onEnded { _ in coord.end() }
+        )
+    }
+}

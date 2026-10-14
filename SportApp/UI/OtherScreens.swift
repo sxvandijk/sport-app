@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 // MARK: - Training-overzicht
 
@@ -7,6 +6,7 @@ struct OverviewScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @State private var expanded: Set<UUID> = []
+    @StateObject private var coord = ReorderCoordinator()
 
     /// "3 × 8–12 · 22,5 kg · Borst", "3 × 15 · Core" of "2,37 km · 3 min · Cardio".
     static func planLine(_ x: PlanItem) -> String {
@@ -30,7 +30,7 @@ struct OverviewScreen: View {
         return out
     }
 
-    private func exerciseRow(_ x: PlanItem, number: Int, hue: Color?) -> some View {
+    private func exerciseRow(_ x: PlanItem, number: Int, hue: Color?, handle: Bool = false) -> some View {
         let open = expanded.contains(x.id)
         return VStack(alignment: .leading, spacing: 0) {
             Button {
@@ -45,6 +45,7 @@ struct OverviewScreen: View {
                     }
                     Spacer(minLength: 0)
                     Icon.chevronRight(16).foregroundColor(Tokens.text3).rotationEffect(.degrees(open ? 90 : 0))
+                    if handle { Color.clear.frame(width: 36, height: 44) }
                 }
                 .padding(.vertical, 8)
                 .frame(minHeight: 60)
@@ -53,6 +54,22 @@ struct OverviewScreen: View {
             .buttonStyle(.plain)
             if open { setLines(x) }
         }
+        .overlay(alignment: .topTrailing) {
+            if handle { dragHandle(x.id).padding(.top, 8) }
+        }
+    }
+
+    /// Drie streepjes: vasthouden en slepen om dit blok te verplaatsen.
+    private func dragHandle(_ id: UUID) -> some View {
+        VStack(spacing: 4) {
+            ForEach(0..<3, id: \.self) { _ in
+                Capsule().fill(Tokens.text3).frame(width: 18, height: 2.5)
+            }
+        }
+        .frame(width: 40, height: 44)
+        .contentShape(Rectangle())
+        .reorderGesture(id, coord) { target in model.moveBlock(template: model.ovName ?? "", block: id, onto: target) }
+        .accessibilityLabel("Sleep om te verplaatsen")
     }
 
     private func setLines(_ x: PlanItem) -> some View {
@@ -152,6 +169,8 @@ struct OverviewScreen: View {
                         SectionLabel(text: "Oefeningen").padding(.top, 22).padding(.bottom, 4)
                         overviewBlocks(blockList)
                     }
+                    .coordinateSpace(name: "reorder")
+                    .onPreferenceChange(ReorderFramesKey.self) { coord.setFrames($0) }
                     .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 24)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -181,8 +200,11 @@ struct OverviewScreen: View {
                     }
                     .padding(.horizontal, 12)
                 }
+                .overlay(alignment: .topTrailing) { dragHandle(members[0].id).padding(.trailing, 4) }
+                .reorderRow(members[0].id, coord)
             } else {
-                exerciseRow(members[0], number: before + 1, hue: nil)
+                exerciseRow(members[0], number: before + 1, hue: nil, handle: true)
+                    .reorderRow(members[0].id, coord)
             }
         }
     }
@@ -203,7 +225,7 @@ struct OverviewScreen: View {
 struct EditorScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    @State private var dragging: UUID?
+    @StateObject private var coord = ReorderCoordinator()
 
     private func edit(_ i: Int, _ change: (inout DraftItem) -> Void) {
         guard var d = model.draft, d.items.indices.contains(i) else { return }
@@ -296,6 +318,8 @@ struct EditorScreen: View {
                             .padding(.top, 24)
                         }
                     }
+                    .coordinateSpace(name: "reorder")
+                    .onPreferenceChange(ReorderFramesKey.self) { coord.setFrames($0) }
                     .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 40)
                 }
             }
@@ -348,8 +372,7 @@ struct EditorScreen: View {
                     Text(info.muscle + " \u{00B7} " + kind.title).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
-                dragHandle(it)
-                Button { remove(i) } label: {
+                    Button { remove(i) } label: {
                     Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -372,7 +395,8 @@ struct EditorScreen: View {
         .padding(.leading, 16).padding(.trailing, 8).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.button)
-        .onDrop(of: [UTType.text], delegate: ReorderDelegate(target: it.id, model: model, dragging: $dragging))
+        .reorderRow(it.id, coord)
+        .reorderGesture(it.id, coord) { target in model.moveDraftItem(it.id, onto: target) }
         .padding(.bottom, 8)
     }
 
@@ -422,7 +446,8 @@ struct EditorScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.button)
         .overlay(itemBorder(hue))
-        .onDrop(of: [UTType.text], delegate: ReorderDelegate(target: it.id, model: model, dragging: $dragging))
+        .reorderRow(it.id, coord)
+        .reorderGesture(it.id, coord) { target in model.moveDraftItem(it.id, onto: target) }
         .padding(.bottom, 8)
     }
 
@@ -464,29 +489,12 @@ struct EditorScreen: View {
                 Text(sub).sa(13).foregroundColor(Tokens.text2)
             }
             Spacer(minLength: 0)
-            dragHandle(it)
             Button { remove(i) } label: {
                 Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Verwijder oefening")
         }
-    }
-
-    /// Drie streepjes: houd ingedrukt en sleep om de volgorde te wijzigen.
-    private func dragHandle(_ it: DraftItem) -> some View {
-        VStack(spacing: 4) {
-            ForEach(0..<3, id: \.self) { _ in
-                Capsule().fill(Tokens.text3).frame(width: 18, height: 2.5)
-            }
-        }
-        .frame(width: 40, height: 44)
-        .contentShape(Rectangle())
-        .onDrag {
-            dragging = it.id
-            return NSItemProvider(object: it.id.uuidString as NSString)
-        }
-        .accessibilityLabel("Sleep om te verplaatsen")
     }
 
     private func cardioCounters(_ i: Int, _ it: DraftItem) -> some View {
@@ -697,25 +705,5 @@ struct SummaryScreen: View {
             Text(label).sa(13).foregroundColor(Tokens.text2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-
-/// Sleept een oefening in de editor naar een andere plek.
-struct ReorderDelegate: DropDelegate {
-    let target: UUID
-    let model: AppModel
-    @Binding var dragging: UUID?
-
-    func dropEntered(info: DropInfo) {
-        guard let d = dragging else { return }
-        withAnimation(.easeInOut(duration: 0.2)) { model.moveDraftItem(d, onto: target) }
-    }
-
-    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
-
-    func performDrop(info: DropInfo) -> Bool {
-        dragging = nil
-        return true
     }
 }

@@ -56,6 +56,8 @@ struct LiveExercise: Identifiable, Codable, Hashable {
     /// Naam van de oefening die hiermee is vervangen ("Machine bezet").
     var from: String?
     var sets: [LiveSet]
+    /// Na een wissel: het aantal rondes dat de vorige oefening al had gedaan, zodat de rondes in een superset kloppen.
+    var roundOffset: Int? = nil
 
     var workSets: [LiveSet] { sets.filter { $0.type != .warmup } }
 }
@@ -203,7 +205,7 @@ struct LiveSession: Codable, Hashable {
             for e in members {
                 let warm = e.sets.filter { $0.type == .warmup }
                 let work = e.sets.filter { $0.type != .warmup }
-                var slots: [[LiveSet]] = []
+                var slots: [[LiveSet]] = Array(repeating: [], count: e.roundOffset ?? 0)
                 if merge && !work.isEmpty {
                     slots.append(warm + [work[0]])
                     for s in work.dropFirst() { slots.append([s]) }
@@ -392,20 +394,40 @@ struct LiveSession: Codable, Hashable {
     }
 
     /// "Machine bezet": de open sets gaan naar de nieuwe oefening, gedane sets blijven staan.
-    mutating func swap(exID: UUID, to name: String, history: [HistoryEntry] = []) {
-        guard let e = index(of: exID) else { return }
-        let old = exercises[e].name
-        if exercises[e].from == nil { exercises[e].from = old }
-        exercises[e].name = name
+    /// Wisselt een oefening. Gedane sets blijven bij de oude oefening; de open sets gaan naar de nieuwe.
+    /// Geeft het id van de oefening terug waar je nu mee verder gaat.
+    @discardableResult
+    mutating func swap(exID: UUID, to name: String, history: [HistoryEntry] = []) -> UUID? {
+        guard let e = index(of: exID) else { return nil }
+        let old = exercises[e]
         let d = Catalog.info(name).defaultWeight
         let lastWork = (LiveSession.lastLogged(name, in: history)?.sets ?? []).filter { $0.type != .warmup }
-        for i in exercises[e].sets.indices where !exercises[e].sets[i].done {
-            let prev: LoggedSet? = lastWork.isEmpty ? nil : lastWork[min(i, lastWork.count - 1)]
-            exercises[e].sets[i].w = prev?.w ?? d
-            exercises[e].sets[i].pw = prev?.w
-            exercises[e].sets[i].pr = prev?.r
-            exercises[e].sets[i].rmax = nil
+        func refresh(_ sets: [LiveSet]) -> [LiveSet] {
+            var out = sets
+            for i in out.indices where !out[i].done {
+                let prev: LoggedSet? = lastWork.isEmpty ? nil : lastWork[min(i, lastWork.count - 1)]
+                out[i].w = prev?.w ?? d
+                out[i].pw = prev?.w
+                out[i].pr = prev?.r
+                out[i].rmax = nil
+            }
+            return out
         }
+        let doneSets = old.sets.filter { $0.done }
+        let openSets = old.sets.filter { !$0.done }
+        if openSets.isEmpty { return exID }
+        if doneSets.isEmpty {
+            if exercises[e].from == nil { exercises[e].from = old.name }
+            exercises[e].name = name
+            exercises[e].sets = refresh(old.sets)
+            return exID
+        }
+        exercises[e].sets = doneSets
+        let doneWork = doneSets.filter { $0.type != .warmup }.count
+        let replacement = LiveExercise(name: name, group: old.group, from: old.from ?? old.name,
+                                       sets: refresh(openSets), roundOffset: (old.roundOffset ?? 0) + doneWork)
+        exercises.insert(replacement, at: e + 1)
+        return replacement.id
     }
 
     /// Koppelt bestaande oefeningen (`existing`) en nieuwe (`newNames`) aan de basisoefening tot één superset.
