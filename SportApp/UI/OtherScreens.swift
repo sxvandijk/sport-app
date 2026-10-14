@@ -1,10 +1,12 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Training-overzicht
 
 struct OverviewScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @State private var expanded: Set<UUID> = []
 
     /// "3 × 8–12 · 22,5 kg · Borst", "3 × 15 · Core" of "2,37 km · 3 min · Cardio".
     static func planLine(_ x: PlanItem) -> String {
@@ -29,17 +31,48 @@ struct OverviewScreen: View {
     }
 
     private func exerciseRow(_ x: PlanItem, number: Int, hue: Color?) -> some View {
-        HStack(spacing: 12) {
-            NumberBadge(text: String(number), hue: hue)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(x.name).sa(17, .medium).foregroundColor(Tokens.text)
-                Text((x.warm != nil ? "\(x.warmCount ?? 1)W + " : "") + OverviewScreen.planLine(x)).sa(13, .regular, mono: true)
-                    .foregroundColor(Tokens.text2)
+        let open = expanded.contains(x.id)
+        return VStack(alignment: .leading, spacing: 0) {
+            Button {
+                if open { expanded.remove(x.id) } else { expanded.insert(x.id) }
+            } label: {
+                HStack(spacing: 12) {
+                    NumberBadge(text: String(number), hue: hue)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(x.name).sa(17, .medium).foregroundColor(Tokens.text)
+                        Text((x.warm != nil ? "\(x.warmCount ?? 1)W + " : "") + OverviewScreen.planLine(x)).sa(13, .regular, mono: true)
+                            .foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    Icon.chevronRight(16).foregroundColor(Tokens.text3).rotationEffect(.degrees(open ? 90 : 0))
+                }
+                .padding(.vertical, 8)
+                .frame(minHeight: 60)
+                .contentShape(Rectangle())
             }
-            Spacer(minLength: 0)
+            .buttonStyle(.plain)
+            if open { setLines(x) }
         }
-        .padding(.vertical, 8)
-        .frame(minHeight: 60)
+    }
+
+    private func setLines(_ x: PlanItem) -> some View {
+        let kind = Catalog.kind(x.name)
+        return VStack(alignment: .leading, spacing: 6) {
+            if x.warm != nil {
+                Text("\(x.warmCount ?? 1) warming-up \(x.warmCount == 1 || x.warmCount == nil ? "set" : "sets")")
+                    .sa(14, .regular, mono: true).foregroundColor(Tokens.warm)
+            }
+            ForEach(0..<x.sets.count, id: \.self) { i in
+                let s = x.sets[i]
+                let value: String = kind == .cardio ? Format.setText(.cardio, s.w, s.r) : (kind == .timed ? "\(s.r) min" : Format.reps(s.r, s.rmax) + " reps")
+                Text("Set \(i + 1)  \u{00B7}  " + value).sa(14, .regular, mono: true).foregroundColor(Tokens.text2)
+            }
+            Button { model.editTemplate(model.ovName ?? "") } label: {
+                Text("Aanpassen").sa(14, .semibold).foregroundColor(ac.accentText).frame(height: 36, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 44).padding(.bottom, 10)
     }
 
     private func warmupRow(_ x: PlanItem) -> some View {
@@ -170,6 +203,7 @@ struct OverviewScreen: View {
 struct EditorScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @State private var dragging: UUID?
 
     private func edit(_ i: Int, _ change: (inout DraftItem) -> Void) {
         guard var d = model.draft, d.items.indices.contains(i) else { return }
@@ -314,6 +348,7 @@ struct EditorScreen: View {
                     Text(info.muscle + " \u{00B7} " + kind.title).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
+                dragHandle(it)
                 Button { remove(i) } label: {
                     Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
                 }
@@ -337,6 +372,7 @@ struct EditorScreen: View {
         .padding(.leading, 16).padding(.trailing, 8).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.button)
+        .onDrop(of: [UTType.text], delegate: ReorderDelegate(target: it.id, model: model, dragging: $dragging))
         .padding(.bottom, 8)
     }
 
@@ -386,6 +422,7 @@ struct EditorScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.button)
         .overlay(itemBorder(hue))
+        .onDrop(of: [UTType.text], delegate: ReorderDelegate(target: it.id, model: model, dragging: $dragging))
         .padding(.bottom, 8)
     }
 
@@ -427,18 +464,29 @@ struct EditorScreen: View {
                 Text(sub).sa(13).foregroundColor(Tokens.text2)
             }
             Spacer(minLength: 0)
-            Button { moveUp(i) } label: {
-                Icon.chevronUp(18).foregroundColor(Tokens.text2).frame(width: 36, height: 44)
-                    .opacity(canMoveUp ? 1 : 0.3).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Omhoog")
+            dragHandle(it)
             Button { remove(i) } label: {
                 Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Verwijder oefening")
         }
+    }
+
+    /// Drie streepjes: houd ingedrukt en sleep om de volgorde te wijzigen.
+    private func dragHandle(_ it: DraftItem) -> some View {
+        VStack(spacing: 4) {
+            ForEach(0..<3, id: \.self) { _ in
+                Capsule().fill(Tokens.text3).frame(width: 18, height: 2.5)
+            }
+        }
+        .frame(width: 40, height: 44)
+        .contentShape(Rectangle())
+        .onDrag {
+            dragging = it.id
+            return NSItemProvider(object: it.id.uuidString as NSString)
+        }
+        .accessibilityLabel("Sleep om te verplaatsen")
     }
 
     private func cardioCounters(_ i: Int, _ it: DraftItem) -> some View {
@@ -649,5 +697,25 @@ struct SummaryScreen: View {
             Text(label).sa(13).foregroundColor(Tokens.text2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+
+/// Sleept een oefening in de editor naar een andere plek.
+struct ReorderDelegate: DropDelegate {
+    let target: UUID
+    let model: AppModel
+    @Binding var dragging: UUID?
+
+    func dropEntered(info: DropInfo) {
+        guard let d = dragging else { return }
+        withAnimation(.easeInOut(duration: 0.2)) { model.moveDraftItem(d, onto: target) }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+
+    func performDrop(info: DropInfo) -> Bool {
+        dragging = nil
+        return true
     }
 }

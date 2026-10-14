@@ -3,6 +3,7 @@ import SwiftUI
 struct WorkoutScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @State private var openMinY: CGFloat = 0
 
     var body: some View {
         if let s = model.session {
@@ -16,6 +17,23 @@ struct WorkoutScreen: View {
                             .padding(.horizontal, 20)
                             .padding(.top, 18)
                             .padding(.bottom, 20)
+                            .animation(nil, value: openID)
+                    }
+                    .coordinateSpace(name: "wscroll")
+                    .onPreferenceChange(OpenCardKey.self) { openMinY = $0 }
+                    .overlay(alignment: .bottom) {
+                        if info.cur != nil && (openMinY < -60 || openMinY > 520) {
+                            Button { scrollTop(proxy, openID) } label: {
+                                HStack(spacing: 6) {
+                                    Icon.chevronUp(16).foregroundColor(ac.onAccent)
+                                    Text("Naar huidige set").sa(14, .semibold).foregroundColor(ac.onAccent)
+                                }
+                                .padding(.horizontal, 16).frame(height: 40)
+                                .background(Capsule().fill(ac.accentLine))
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.bottom, 10)
+                        }
                     }
                     // De huidige oefening staat altijd bovenaan, ook na het wegscrollen en weer aantikken.
                     .onChange(of: openID) { id in scrollTop(proxy, id) }
@@ -34,10 +52,16 @@ struct WorkoutScreen: View {
     /// Zet de open oefening bovenaan; met een korte vertraging, zodat de lijst eerst opnieuw is opgebouwd.
     private func scrollTop(_ proxy: ScrollViewProxy, _ id: UUID?) {
         guard let id = id else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(id, anchor: .top) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            proxy.scrollTo(id, anchor: .top)
         }
     }
+}
+
+/// Waar de open oefening in beeld staat (voor de knop "Naar huidige set").
+private struct OpenCardKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
 // MARK: - Bovenbalk
@@ -284,6 +308,20 @@ private struct OpenExerciseCard: View {
         }
     }
 
+    private var noteField: some View {
+        let binding = Binding<String>(
+            get: { model.notes[exercise.name] ?? "" },
+            set: { model.setNote($0, for: exercise.name) }
+        )
+        return HStack(spacing: 8) {
+            Icon.edit(16).foregroundColor(Tokens.text3)
+            TextField("Notitie, bijv. stoelstand 4", text: binding)
+                .sa(14).foregroundColor(Tokens.text)
+        }
+        .padding(.horizontal, 12).frame(height: 40)
+        .card(Tokens.raised, radius: Radius.field)
+    }
+
     var body: some View {
         let labels = OpenExerciseCard.labels(for: exercise.sets)
         let rows: [(set: LiveSet, label: String)] = Array(zip(exercise.sets, labels)).map { (set: $0.0, label: $0.1) }
@@ -315,6 +353,10 @@ private struct OpenExerciseCard: View {
                 HStack(spacing: 8) {
                     ChipButton(icon: Icon.explain(18), title: "Uitleg") { model.openSheet(.explain, exID: exercise.id) }
                     ChipButton(icon: Icon.swap(18), title: "Bezet") { model.openSheet(.swap, exID: exercise.id) }
+                    ChipButton(icon: Icon.star(18), title: "Voorkeur") {
+                        model.openSheet(.pref, exID: exercise.id)
+                        model.swapScope = .prefOnly
+                    }
                     ChipButton(icon: Icon.link(18, 2), title: "Superset") { model.openSheet(.superset, exID: exercise.id) }
                 }
                 .padding(.horizontal, 16)
@@ -334,6 +376,9 @@ private struct OpenExerciseCard: View {
                 SetRow(exercise: exercise, set: rows[i].set, label: rows[i].label, isCur: cur?.setID == rows[i].set.id)
                     .padding(.horizontal, 8).padding(.bottom, 2)
             }
+
+            noteField
+                .padding(.horizontal, 16).padding(.top, 8)
 
             HStack(spacing: 8) {
                 Button { model.addSet(exercise.id) } label: {
@@ -357,6 +402,9 @@ private struct OpenExerciseCard: View {
         }
         .padding(.top, 16).padding(.bottom, 10)
         .card(Tokens.surface, radius: Radius.card)
+        .background(GeometryReader { g in
+            Color.clear.preference(key: OpenCardKey.self, value: g.frame(in: .named("wscroll")).minY)
+        })
         .padding(.horizontal, -8)
         .padding(.top, 4).padding(.bottom, 10)
     }
@@ -378,6 +426,11 @@ private struct SetRow: View {
         case .cardio: return Format.km(set.w)
         case .weights: return Format.weight(set.w)
         }
+    }
+
+    private var rowFill: Color {
+        if set.done { return ac.accentSoft.opacity(0.45) }
+        return isCur ? Tokens.raised : Tokens.surface
     }
 
     var body: some View {
@@ -420,18 +473,23 @@ private struct SetRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Group {
                     if set.done {
-                        Icon.check(20).foregroundColor(ac.accentText)
+                        Button { model.uncompleteSet(exID: exercise.id, setID: set.id) } label: {
+                            Icon.check(20).foregroundColor(ac.accentText)
+                                .frame(width: 44, height: 44).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Haal vinkje weg")
                     } else if isCur {
                         Text("NU").sa(12, .bold, tracking: 0.48).foregroundColor(ac.accentText)
                     } else {
                         Color.clear
                     }
                 }
-                .frame(width: 40, alignment: .trailing)
+                .frame(width: 44, alignment: .trailing)
             }
-            .padding(.horizontal, 16)
+            .padding(.leading, 16).padding(.trailing, 8)
             .frame(height: Size.setRow)
-            .card(isCur ? Tokens.raised : Tokens.surface, radius: Radius.field)
+            .card(rowFill, radius: Radius.field)
             .offset(x: dx)
             .contentShape(Rectangle())
             .onTapGesture { model.selectSet(exID: exercise.id, setID: set.id) }
@@ -516,7 +574,22 @@ private struct RestBar: View {
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 0.25)) { context in
             let left = end.timeIntervalSince(context.date)
-            if left > 0 {
+            if left <= 0 {
+                HStack(spacing: 8) {
+                    Icon.timer(20).foregroundColor(ac.onAccent)
+                    Text("Rust voorbij").sa(15, .semibold).foregroundColor(ac.onAccent)
+                    Text("+" + Format.clock(seconds: Int(-left))).sa(22, .semibold, mono: true).foregroundColor(ac.onAccent)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button { model.skipRest() } label: {
+                        Text("Sluit").sa(15, .semibold).foregroundColor(ac.onAccent).padding(.horizontal, 14).frame(height: 44)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.leading, 14).padding(.trailing, 6)
+                .frame(height: Size.restBar)
+                .card(ac.accentLine, radius: Radius.button)
+                .padding(.horizontal, 12).padding(.bottom, 8)
+            } else {
                 let pct = max(0, min(1, left / Double(max(1, total))))
                 ZStack(alignment: .leading) {
                     GeometryReader { geo in
@@ -558,6 +631,8 @@ private struct RestBar: View {
 private struct Dock: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @FocusState private var focus: Field?
+    @State private var draft = ""
     let session: LiveSession
     let exercise: LiveExercise
     let set: LiveSet
@@ -596,12 +671,10 @@ private struct Dock: View {
                 .padding(.horizontal, 4).padding(.top, 1)
 
             HStack(spacing: 10) {
-if kind != .timed {
-                    stepper(value: kind == .cardio ? Format.km(set.w) : Format.weight(set.w), unit: kind == .cardio ? " km" : " kg", minus: "Minder gewicht", plus: "Meer gewicht",
-                        onMinus: { model.stepWeight(-1) }, onPlus: { model.stepWeight(1) })
+                if kind != .timed {
+                    weightStepper(kind)
                 }
-                stepper(value: String(set.r), unit: (kind == .cardio || kind == .timed) ? " min" : " reps", minus: "Minder reps", plus: "Meer reps",
-                        onMinus: { model.stepReps(-1) }, onPlus: { model.stepReps(1) })
+                repsStepper(kind)
             }
             .padding(.top, 10)
 
@@ -610,9 +683,49 @@ if kind != .timed {
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)
         .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
+        .onChange(of: focus) { _ in draft = "" }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Klaar") { focus = nil }
+            }
+        }
     }
 
-    private func stepper(value: String, unit: String, minus: String, plus: String,
+    private enum Field { case weight, reps }
+
+    private func weightText(_ kind: ExerciseKind) -> String {
+        kind == .cardio ? Format.km(set.w) : Format.weight(set.w)
+    }
+
+    private func weightStepper(_ kind: ExerciseKind) -> some View {
+        let binding = Binding<String>(
+            get: { focus == .weight ? draft : weightText(kind) },
+            set: { value in
+                draft = value
+                if let v = Double(value.replacingOccurrences(of: ",", with: ".")) { model.setCurrentValues(w: v, r: nil) }
+            }
+        )
+        return stepper(text: binding, placeholder: weightText(kind), unit: kind == .cardio ? " km" : " kg",
+                       field: .weight, keyboard: .decimalPad, minus: "Minder gewicht", plus: "Meer gewicht",
+                       onMinus: { model.stepWeight(-1) }, onPlus: { model.stepWeight(1) })
+    }
+
+    private func repsStepper(_ kind: ExerciseKind) -> some View {
+        let binding = Binding<String>(
+            get: { focus == .reps ? draft : String(set.r) },
+            set: { value in
+                draft = value
+                if let v = Int(value) { model.setCurrentValues(w: nil, r: v) }
+            }
+        )
+        return stepper(text: binding, placeholder: String(set.r), unit: (kind == .cardio || kind == .timed) ? " min" : " reps",
+                       field: .reps, keyboard: .numberPad, minus: "Minder reps", plus: "Meer reps",
+                       onMinus: { model.stepReps(-1) }, onPlus: { model.stepReps(1) })
+    }
+
+    private func stepper(text: Binding<String>, placeholder: String, unit: String, field: Field, keyboard: UIKeyboardType,
+                         minus: String, plus: String,
                          onMinus: @escaping () -> Void, onPlus: @escaping () -> Void) -> some View {
         HStack(spacing: 0) {
             Button(action: onMinus) {
@@ -622,7 +735,12 @@ if kind != .timed {
             .buttonStyle(.plain)
             .accessibilityLabel(minus)
             HStack(spacing: 0) {
-                Text(value).sa(26, .semibold, tracking: -0.5, mono: true).foregroundColor(Tokens.text)
+                TextField(placeholder, text: text)
+                    .sa(26, .semibold, tracking: -0.5, mono: true).foregroundColor(Tokens.text)
+                    .keyboardType(keyboard)
+                    .multilineTextAlignment(.trailing)
+                    .focused($focus, equals: field)
+                    .fixedSize()
                 Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
             }
             .lineLimit(1).minimumScaleFactor(0.7)
