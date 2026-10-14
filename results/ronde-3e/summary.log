@@ -1,0 +1,3 @@
+/Users/runner/work/sport-app/sport-app/SportApp/UI/HomeScreens.swift:363:13: error: cannot find 'muscleCard' in scope
+/Users/runner/work/sport-app/sport-app/SportApp/UI/HomeScreens.swift:363:40: error: cannot infer contextual base in reference to member 'top'
+** TEST FAILED **
