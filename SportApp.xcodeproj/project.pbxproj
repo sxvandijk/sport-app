@@ -31,6 +31,7 @@
 		9CBF1955DF3A5CFCF602FDEA /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D54759F8040E33B2C14343 /* Glass.swift */; };
 		A0110CE2AF7AECE8C2781550 /* WorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0712612F457AE49D40617626 /* WorkoutStore.swift */; };
 		A5B26B79A8591E6D6C268A88 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049E495496112395984D36A2 /* Components.swift */; };
+		B08C035734BCF0A201502325 /* AllWorkoutsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80FC1E36C38C55CD5706997 /* AllWorkoutsScreen.swift */; };
 		B72FC800B7B3DDDD7AB3E241 /* RoundOneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B8E9BA237D2E66C7EE664E1 /* RoundOneTests.swift */; };
 		B7A754460D1B03F0D972704A /* WorkoutSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4634DC22911C6E7B4BA8D90 /* WorkoutSession.swift */; };
 		B866D373CF59709AF6750842 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA58F9A95D6B2749B3E22198 /* AppModel.swift */; };
@@ -96,6 +97,7 @@
 		9ABE8AB790F746242C7E4E57 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9C49433089E38293B56BB4AF /* ProgressStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStats.swift; sourceTree = "<group>"; };
 		A99F83BA537D9543221D8BEA /* MuscleGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleGroup.swift; sourceTree = "<group>"; };
+		B80FC1E36C38C55CD5706997 /* AllWorkoutsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllWorkoutsScreen.swift; sourceTree = "<group>"; };
 		BCEE0ADF3DCD4EB634E0124B /* WorkoutHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistory.swift; sourceTree = "<group>"; };
 		C526BDC5C5FD28B77794C222 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		C532C66CBE78249E8D6CC67D /* SportAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SportAppApp.swift; sourceTree = "<group>"; };
@@ -113,6 +115,7 @@
 		13F545C6FBC721D9E7F2A719 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				B80FC1E36C38C55CD5706997 /* AllWorkoutsScreen.swift */,
 				50EFA5BAF0EECA824746BC5B /* CalendarCard.swift */,
 				049E495496112395984D36A2 /* Components.swift */,
 				126581F677789CD791AC5137 /* HomeScreens.swift */,
@@ -328,6 +331,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C369FB503DBC1D0CC6E74F38 /* AccentPalette.swift in Sources */,
+				B08C035734BCF0A201502325 /* AllWorkoutsScreen.swift in Sources */,
 				FBA29C25C00B5195860C7501 /* AlternativeSuggester.swift in Sources */,
 				B866D373CF59709AF6750842 /* AppModel.swift in Sources */,
 				E077F885BB33D6B9C44118A6 /* CalendarCard.swift in Sources */,
