@@ -624,9 +624,9 @@ private struct SetRow: View {
             .frame(height: Size.setRow)
             .card(rowFill, radius: Radius.field)
             .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
-                .fill(Tokens.text.opacity(isCur ? 0.10 : 0)))
+                .fill(Tokens.text.opacity(isCur ? 0.10 : 0)).allowsHitTesting(false))
             .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
-                .stroke(isCur ? ac.accentLine : Color.clear, lineWidth: 2))
+                .stroke(isCur ? ac.accentLine : Color.clear, lineWidth: 2).allowsHitTesting(false))
             .offset(x: dx)
             .contentShape(Rectangle())
             .onTapGesture { model.selectSet(exID: exercise.id, setID: set.id) }
@@ -785,13 +785,10 @@ private struct Dock: View {
         let kind = Catalog.kind(exercise.name)
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Button {
-                    if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight }
-                } label: {
-                    Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
-                        .frame(minHeight: 32, alignment: .leading).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+                Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                    .frame(minHeight: 32, alignment: .leading).contentShape(Rectangle())
+                    .onTapGesture { if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight } }
+                    .accessibilityAddTraits(.isButton)
                 Spacer(minLength: 0)
                 Text(t.text).sa(13, .semibold).foregroundColor(t.color)
                 if model.editField != nil {
@@ -904,16 +901,15 @@ private struct Dock: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(minus)
-            Button { model.editField = field } label: {
-                HStack(spacing: 0) {
-                    Text(text).sa(26, .semibold, tracking: -0.5, mono: true).foregroundColor(Tokens.text)
-                    Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
-                }
-                .lineLimit(1).minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity).frame(height: Size.stepperBar)
-                .contentShape(Rectangle())
+            HStack(spacing: 0) {
+                Text(text).sa(26, .semibold, tracking: -0.5, mono: true).foregroundColor(Tokens.text)
+                Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
             }
-            .buttonStyle(.plain)
+            .lineLimit(1).minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity).frame(height: Size.stepperBar)
+            .contentShape(Rectangle())
+            .onTapGesture { model.editField = field }
+            .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Vul in met het toetsenblok")
             Button(action: onPlus) {
                 Icon.plus(20, 2.4).foregroundColor(Tokens.text).frame(width: Size.stepperButtonWidth, height: Size.stepperBar)
@@ -979,6 +975,8 @@ private struct NotePopup: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @FocusState private var focused: Bool
+    @State private var kb: CGFloat = 0
+    @State private var cardH: CGFloat = 0
 
     static func closeKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -988,11 +986,19 @@ private struct NotePopup: View {
         Binding(get: { model.noteEdit?.text ?? "" }, set: { model.noteEdit?.text = $0 })
     }
 
+    /// Zo centraal mogelijk; alleen omhoog als het toetsenbord anders over de popup valt.
+    private func shift(in height: CGFloat) -> CGFloat {
+        let bottom = height / 2 + cardH / 2
+        let limit = height - kb - 16
+        return kb > 0 ? min(0, limit - bottom) : 0
+    }
+
     var body: some View {
         let edit = model.noteEdit
         let isNew = edit?.entryID == nil
         let empty = (edit?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        return ZStack(alignment: .center) {
+        return GeometryReader { geo in
+        ZStack(alignment: .center) {
             Color.black.opacity(0.55).ignoresSafeArea()
                 .onTapGesture { NotePopup.closeKeyboard(); model.noteEdit = nil }
             VStack(alignment: .leading, spacing: 12) {
@@ -1027,7 +1033,14 @@ private struct NotePopup: View {
             .padding(22)
             .card(Tokens.surface, radius: Radius.card)
             .padding(.horizontal, 14)
-            .offset(y: -90)
+            .background(GeometryReader { g in Color.clear.onAppear { cardH = g.size.height }.onChange(of: g.size.height) { cardH = $0 } })
+            .offset(y: shift(in: geo.size.height))
+        }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { n in
+            if let f = (n.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect) {
+                kb = max(0, UIScreen.main.bounds.height - f.minY)
+            }
         }
         .onAppear { focused = true }
     }
