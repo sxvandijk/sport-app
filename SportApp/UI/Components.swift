@@ -239,36 +239,54 @@ struct ReorderFramesKey: PreferenceKey {
 }
 
 /// Houdt bij welke rij wordt versleept en waar alle rijen staan.
+/// Frames zijn de LAYOUT-posities (zonder sleep-offset), zodat er geen terugkoppeling ontstaat.
 final class ReorderCoordinator: ObservableObject {
     @Published var active: UUID?
     @Published var translation: CGFloat = 0
     var frames: [UUID: CGRect] = [:]
     private var startMid: CGFloat = 0
+    private var awaiting = false
+    private var awaitFrom: CGFloat = 0
 
     func setFrames(_ new: [UUID: CGRect]) {
         frames = new
-        if active != nil { objectWillChange.send() }
+        guard let id = active else { return }
+        if awaiting, let f = new[id], abs(f.midY - awaitFrom) > 0.5 { awaiting = false }
+        objectWillChange.send()
     }
 
     func begin(_ id: UUID) {
         active = id
         startMid = frames[id]?.midY ?? 0
         translation = 0
+        awaiting = false
         Haptics.light()
     }
 
     func update(_ t: CGFloat, move: (UUID) -> Void) {
         guard let id = active else { return }
         translation = t
+        guard !awaiting, let me = frames[id] else { return }
         let visual = startMid + t
-        if let target = frames.first(where: { $0.key != id && $0.value.minY <= visual && visual <= $0.value.maxY })?.key {
-            move(target)
+        var best: (UUID, CGFloat)?
+        for (key, f) in frames where key != id {
+            let crossed = (f.midY < me.midY && visual < f.midY) || (f.midY > me.midY && visual > f.midY)
+            guard crossed else { continue }
+            let dist = abs(f.midY - me.midY)
+            if best == nil || dist < best!.1 { best = (key, dist) }
         }
+        guard let target = best?.0 else { return }
+        awaiting = true
+        awaitFrom = me.midY
+        move(target)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.awaiting = false }
     }
 
     func end() {
+        guard active != nil else { return }
         active = nil
         translation = 0
+        awaiting = false
     }
 
     /// Hoeveel de versleepte rij moet meeschuiven om onder je vinger te blijven.
@@ -284,14 +302,43 @@ struct ReorderRow: ViewModifier {
 
     func body(content: Content) -> some View {
         let lifted = coord.active == id
-        return content
-            .background(GeometryReader { g in
-                Color.clear.preference(key: ReorderFramesKey.self, value: [id: g.frame(in: .named("reorder"))])
-            })
-            .offset(y: coord.offset(for: id))
-            .scaleEffect(lifted ? 1.02 : 1)
-            .shadow(color: Color.black.opacity(lifted ? 0.35 : 0), radius: 12, y: 4)
-            .zIndex(lifted ? 1 : 0)
+        return ZStack {
+            content
+                .offset(y: coord.offset(for: id))
+                .scaleEffect(lifted ? 1.02 : 1)
+                .shadow(color: Color.black.opacity(lifted ? 0.35 : 0), radius: 12, y: 4)
+        }
+        .background(GeometryReader { g in
+            Color.clear.preference(key: ReorderFramesKey.self, value: [id: g.frame(in: .named("reorder"))])
+        })
+        .zIndex(lifted ? 1 : 0)
+    }
+}
+
+struct ReorderGesture: ViewModifier {
+    let id: UUID
+    @ObservedObject var coord: ReorderCoordinator
+    let move: (UUID) -> Void
+    @GestureState private var live = false
+
+    func body(content: Content) -> some View {
+        content
+            .gesture(
+                LongPressGesture(minimumDuration: 0.3)
+                    .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("reorder")))
+                    .updating($live) { value, state, _ in
+                        if case .second(true, _) = value { state = true }
+                    }
+                    .onChanged { value in
+                        if case .second(true, let drag) = value {
+                            if coord.active == nil { coord.begin(id) }
+                            if let d = drag { coord.update(d.translation.height, move: move) }
+                        }
+                    }
+            )
+            .onChange(of: live) { isLive in
+                if !isLive { coord.end() }
+            }
     }
 }
 
@@ -303,19 +350,6 @@ extension View {
 
     /// Vasthouden (kort) en dan slepen.
     func reorderGesture(_ id: UUID, _ coord: ReorderCoordinator, move: @escaping (UUID) -> Void) -> some View {
-        gesture(
-            LongPressGesture(minimumDuration: 0.3)
-                .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("reorder")))
-                .onChanged { value in
-                    switch value {
-                    case .second(true, let drag):
-                        if coord.active == nil { coord.begin(id) }
-                        if let d = drag { coord.update(d.translation.height, move: move) }
-                    default:
-                        break
-                    }
-                }
-                .onEnded { _ in coord.end() }
-        )
+        modifier(ReorderGesture(id: id, coord: coord, move: move))
     }
 }

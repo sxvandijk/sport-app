@@ -30,9 +30,10 @@ struct OverviewScreen: View {
         return out
     }
 
-    private func exerciseRow(_ x: PlanItem, number: Int, hue: Color?, handle: Bool = false) -> some View {
+    private func exerciseRow(_ x: PlanItem, number: Int, hue: Color?, handle: Bool = false, reserve: Bool = false) -> some View {
         let open = expanded.contains(x.id)
         return VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 0) {
             Button {
                 if open { expanded.remove(x.id) } else { expanded.insert(x.id) }
             } label: {
@@ -45,17 +46,16 @@ struct OverviewScreen: View {
                     }
                     Spacer(minLength: 0)
                     Icon.chevronRight(16).foregroundColor(Tokens.text3).rotationEffect(.degrees(open ? 90 : 0))
-                    if handle { Color.clear.frame(width: 36, height: 44) }
                 }
                 .padding(.vertical, 8)
                 .frame(minHeight: 60)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            if handle { dragHandle(x.id) }
+            else if reserve { Color.clear.frame(width: 40, height: 44) }
+            }
             if open { setLines(x) }
-        }
-        .overlay(alignment: .topTrailing) {
-            if handle { dragHandle(x.id).padding(.top, 8) }
         }
     }
 
@@ -195,12 +195,12 @@ struct OverviewScreen: View {
                 SupersetFrame(index: idx, count: members.count) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(0..<members.count, id: \.self) { mi in
-                            exerciseRow(members[mi], number: before + mi + 1, hue: SupersetStyle.color(idx))
+                            exerciseRow(members[mi], number: before + mi + 1, hue: SupersetStyle.color(idx), reserve: true)
                         }
                     }
                     .padding(.horizontal, 12)
                 }
-                .overlay(alignment: .topTrailing) { dragHandle(members[0].id).padding(.trailing, 4) }
+                .overlay(alignment: .trailing) { dragHandle(members[0].id).padding(.trailing, 4) }
                 .reorderRow(members[0].id, coord)
             } else {
                 exerciseRow(members[0], number: before + 1, hue: nil, handle: true)

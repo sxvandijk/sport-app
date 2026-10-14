@@ -4,7 +4,6 @@ struct WorkoutScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @State private var openMinY: CGFloat = 0
-    @State private var userScrolled = false
 
     var body: some View {
         if let s = model.session {
@@ -20,17 +19,17 @@ struct WorkoutScreen: View {
                             .padding(.bottom, 20)
                             .animation(nil, value: openID)
                     }
+                    // Nieuwe huidige set of andere oefening: de lijst begint weer bovenaan (geen scrollTo nodig).
+                    .id("\(info.cur?.setID.uuidString ?? "-")|\(openID?.uuidString ?? "-")")
                     .coordinateSpace(name: "wscroll")
-                    .onPreferenceChange(OpenCardKey.self) { value in
-                        openMinY = value
-                        if abs(value) < 40 { userScrolled = false }
-                    }
-                    .simultaneousGesture(DragGesture(minimumDistance: 25).onEnded { _ in userScrolled = true })
+                    .onPreferenceChange(OpenCardKey.self) { value in openMinY = value }
                     .overlay(alignment: .bottom) {
-                        if info.cur != nil && (userScrolled || openMinY < -60 || openMinY > 520) {
-                            Button { scrollTop(proxy, openID) } label: {
+                        if info.cur != nil && (openMinY < -60 || openMinY > 520) {
+                            Button {
+                                withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("listtop", anchor: .top) }
+                            } label: {
                                 HStack(spacing: 6) {
-                                    Icon.chevronUp(16).foregroundColor(ac.onAccent)
+                                    (openMinY > 520 ? Icon.chevronDown(16) : Icon.chevronUp(16)).foregroundColor(ac.onAccent)
                                     Text("Naar huidige set").sa(14, .semibold).foregroundColor(ac.onAccent)
                                 }
                                 .padding(.horizontal, 16).frame(height: 40)
@@ -40,32 +39,10 @@ struct WorkoutScreen: View {
                             .padding(.bottom, 10)
                         }
                     }
-                    // De huidige oefening staat altijd bovenaan, ook na het wegscrollen en weer aantikken.
-                    .onChange(of: openID) { id in scrollTop(proxy, id) }
-                    .onChange(of: info.cur?.setID) { _ in scrollTop(proxy, openID) }
-                    .onAppear {
-                        guard let id = openID else { return }
-                        DispatchQueue.main.async { proxy.scrollTo("top-\(id.uuidString)", anchor: .top) }
-                    }
                 }
                 WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
             }
             .background(Tokens.bg.ignoresSafeArea())
-        }
-    }
-
-    /// Zet de open oefening bovenaan; met een korte vertraging, zodat de lijst eerst opnieuw is opgebouwd.
-    private func scrollTop(_ proxy: ScrollViewProxy, _ id: UUID?) {
-        guard let id = id else { return }
-        userScrolled = false
-        // Een paar pogingen: de lijst verandert van vorm (een oefening klapt open, een andere dicht),
-        // en pas daarna staat het doel op de goede plek.
-        for delay in [0.0, 0.12, 0.35] {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                var t = Transaction()
-                t.disablesAnimations = true
-                withTransaction(t) { proxy.scrollTo("top-\(id.uuidString)", anchor: .top) }
-            }
         }
     }
 }
@@ -154,35 +131,57 @@ private struct WorkoutList: View {
         let openID = model.focusID.flatMap { session.exercise($0)?.id } ?? cur?.exID
         let count = session.exercises.count
         VStack(alignment: .leading, spacing: 0) {
-            Text(session.name).sa(28, .bold, tracking: -0.4).foregroundColor(Tokens.text)
-            Text("Gestart om \(Format.hhmm(session.startAt)) · \(model.gym.name) · \(count) \(count == 1 ? "oefening" : "oefeningen")")
-                .sa(13).foregroundColor(Tokens.text2).padding(.top, 2).padding(.bottom, 14)
-
-            if session.exercises.isEmpty {
-                VStack(spacing: 0) {
-                    Text("Nog geen oefeningen").sa(17, .semibold).foregroundColor(Tokens.text)
-                    Text("Voeg je eerste oefening toe om te beginnen.").sa(15).foregroundColor(Tokens.text2)
-                        .padding(.top, 6).padding(.bottom, 20)
-                    Button {
-                        model.openSheet(.add)
-                    } label: {
-                        Text("Oefening toevoegen").sa(17, .bold).foregroundColor(ac.onAccent)
-                            .padding(.horizontal, 24).frame(height: 52)
-                            .card(ac.accent, radius: Radius.button)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 48).padding(.horizontal, 12)
-            }
+            Color.clear.frame(height: 0).id("listtop")
+            if session.exercises.isEmpty { emptyState }
 
             let blocks = session.blocks
-            ForEach(0..<blocks.count, id: \.self) { bi in
-                blockView(blocks[bi], blockIndex: bi, blocks: blocks, openID: openID)
+            let order = WorkoutList.order(blocks: blocks, openID: openID)
+            ForEach(0..<order.active.count, id: \.self) { k in
+                blockView(blocks[order.active[k]], blockIndex: order.active[k], blocks: blocks, openID: openID)
             }
-            // Ruimte onderaan, zodat ook de laatste oefening bovenaan het scherm kan staan.
-            Color.clear.frame(height: 360)
+            if !order.done.isEmpty {
+                SectionLabel(text: "Gedaan").padding(.top, 14).padding(.bottom, 4)
+                ForEach(0..<order.done.count, id: \.self) { k in
+                    blockView(blocks[order.done[k]], blockIndex: order.done[k], blocks: blocks, openID: openID)
+                }
+            }
+
+            Text(session.name).sa(22, .bold, tracking: -0.3).foregroundColor(Tokens.text).padding(.top, 28)
+            Text("Gestart om \(Format.hhmm(session.startAt)) · \(model.gym.name) · \(count) \(count == 1 ? "oefening" : "oefeningen")")
+                .sa(13).foregroundColor(Tokens.text2).padding(.top, 2)
+            Color.clear.frame(height: 120)
         }
+    }
+
+    /// Huidige blok eerst, dan de rest in schemavolgorde; afgeronde blokken onderaan.
+    static func order(blocks: [[LiveExercise]], openID: UUID?) -> (active: [Int], done: [Int]) {
+        let openIdx = blocks.firstIndex { b in b.contains { $0.id == openID } }
+        var active: [Int] = []
+        var done: [Int] = []
+        if let o = openIdx { active.append(o) }
+        for (i, b) in blocks.enumerated() where i != openIdx {
+            let finished = b.allSatisfy { !$0.sets.isEmpty && $0.sets.allSatisfy { $0.done } }
+            if finished { done.append(i) } else { active.append(i) }
+        }
+        return (active, done)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 0) {
+            Text("Nog geen oefeningen").sa(17, .semibold).foregroundColor(Tokens.text)
+            Text("Voeg je eerste oefening toe om te beginnen.").sa(15).foregroundColor(Tokens.text2)
+                .padding(.top, 6).padding(.bottom, 20)
+            Button {
+                model.openSheet(.add)
+            } label: {
+                Text("Oefening toevoegen").sa(17, .bold).foregroundColor(ac.onAccent)
+                    .padding(.horizontal, 24).frame(height: 52)
+                    .card(ac.accent, radius: Radius.button)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48).padding(.horizontal, 12)
     }
 
     /// Hoeveelste superset dit blok is (0 = eerste), voor de kleur.
@@ -213,7 +212,6 @@ private struct WorkoutList: View {
         ForEach(0..<members.count, id: \.self) { mi in
             let e = members[mi]
             let badge = hue != nil ? String(mi + 1) : ""
-            Color.clear.frame(height: 0).id("top-\(e.id.uuidString)")
             if e.id == openID {
                 OpenExerciseCard(exercise: e, badge: badge, hue: hue, cur: cur).id(e.id)
             } else {
@@ -291,6 +289,9 @@ private struct OpenExerciseCard: View {
     var hue: Color?
     let cur: QueueItem?
     @State private var noteDraft = ""
+    @State private var editingNote: UUID?
+    @State private var editText = ""
+    @State private var deleteTarget: NoteEntry?
 
     /// "W", "1", "2", "D", "F", ... Een "Tot falen"-set telt als een genummerde set, een dropset niet.
     static func labels(for sets: [LiveSet]) -> [String] {
@@ -328,24 +329,56 @@ private struct OpenExerciseCard: View {
     }
 
     private func noteRow(_ e: NoteEntry, isNew: Bool) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        let editing = editingNote == e.id
+        return HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(isNew ? "Nieuw \u{00B7} vandaag" : "Eerder \u{00B7} " + DateText.short(e.date))
                     .sa(11, .semibold, tracking: 0.4).foregroundColor(isNew ? ac.accentText : Tokens.text3)
-                Text(e.text).sa(14).foregroundColor(isNew ? Tokens.text : Tokens.text2)
-                    .fixedSize(horizontal: false, vertical: true)
+                if editing {
+                    HStack(spacing: 4) {
+                        TextField("Notitie", text: $editText)
+                            .sa(14).foregroundColor(Tokens.text)
+                            .submitLabel(.done)
+                            .onSubmit { commitEdit(e) }
+                        Button { commitEdit(e) } label: {
+                            Text("Bewaar").sa(14, .semibold).foregroundColor(ac.accentText).padding(.horizontal, 6).frame(height: 32)
+                        }
+                        .buttonStyle(.plain)
+                        Button { editingNote = nil } label: {
+                            Text("Annuleer").sa(14).foregroundColor(Tokens.text2).padding(.horizontal, 4).frame(height: 32)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } else {
+                    Text(e.text).sa(14).foregroundColor(isNew ? Tokens.text : Tokens.text2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .contentShape(Rectangle())
+                        .onTapGesture { editText = e.text; editingNote = e.id }
+                }
             }
             Spacer(minLength: 0)
-            Button { model.deleteNote(e.id, for: exercise.name) } label: {
-                Icon.close(14).foregroundColor(Tokens.text3).frame(width: 36, height: 36).contentShape(Rectangle())
+            if !editing {
+                Button { editText = e.text; editingNote = e.id } label: {
+                    Icon.edit(14).foregroundColor(Tokens.text3).frame(width: 32, height: 36).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Bewerk notitie")
+                Button { deleteTarget = e } label: {
+                    Icon.close(14).foregroundColor(Tokens.text3).frame(width: 32, height: 36).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Verwijder notitie")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Verwijder notitie")
         }
         .padding(.leading, 12).padding(.trailing, 2).padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(isNew ? ac.accentSoft.opacity(0.45) : Color.clear))
         .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).stroke(isNew ? Color.clear : Tokens.line, lineWidth: 1))
+    }
+
+    private func commitEdit(_ e: NoteEntry) {
+        model.updateNote(e.id, text: editText, for: exercise.name)
+        editingNote = nil
     }
 
     private var notesBlock: some View {
@@ -440,6 +473,15 @@ private struct OpenExerciseCard: View {
 
             notesBlock
                 .padding(.horizontal, 16).padding(.top, 10)
+                .confirmationDialog("Notitie verwijderen?", isPresented: Binding(get: { deleteTarget != nil }, set: { if !$0 { deleteTarget = nil } }), titleVisibility: .visible) {
+                    Button("Verwijder", role: .destructive) {
+                        if let t = deleteTarget { model.deleteNote(t.id, for: exercise.name) }
+                        deleteTarget = nil
+                    }
+                    Button("Annuleer", role: .cancel) { deleteTarget = nil }
+                } message: {
+                    Text(deleteTarget?.text ?? "")
+                }
 
             Text("Tik op een set om hem te kiezen of aan te passen · tik op het nummer voor het type · veeg naar links om te verwijderen")
                 .sa(12).foregroundColor(Tokens.text3)
@@ -476,7 +518,7 @@ private struct SetRow: View {
     }
 
     private var rowFill: Color {
-        if set.done { return ac.accentSoft.opacity(0.45) }
+        if set.done { return ac.accentSoft }
         return isCur ? Tokens.raised : Tokens.surface
     }
 
@@ -489,7 +531,7 @@ private struct SetRow: View {
         case .work: typeColor = nil
         }
         let labelColor = typeColor ?? (isCur ? ac.accentText : Tokens.text2)
-        let valueColor = (set.done || isCur) ? Tokens.text : Tokens.text3
+        let valueColor = isCur ? Tokens.text : (set.done ? Tokens.text2 : Tokens.text3)
 
         return ZStack(alignment: .trailing) {
             HStack(spacing: 6) {
@@ -537,6 +579,8 @@ private struct SetRow: View {
             .padding(.leading, 16).padding(.trailing, 8)
             .frame(height: Size.setRow)
             .card(rowFill, radius: Radius.field)
+            .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
+                .stroke(isCur ? ac.accentLine : Color.clear, lineWidth: 2))
             .offset(x: dx)
             .contentShape(Rectangle())
             .onTapGesture { model.selectSet(exID: exercise.id, setID: set.id) }
@@ -717,6 +761,17 @@ private struct Dock: View {
                 Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
                 Spacer(minLength: 0)
                 Text(t.text).sa(13, .semibold).foregroundColor(t.color)
+                if model.editField != nil {
+                    Button { model.editField = nil } label: {
+                        Icon.close(16).foregroundColor(Tokens.text2)
+                            .frame(width: 44, height: 36)
+                            .background(Circle().fill(Tokens.raised).frame(width: 32, height: 32))
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, -8)
+                    .accessibilityLabel("Sluit invoer")
+                }
             }
             .padding(.horizontal, 4)
             Text(prevText).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)

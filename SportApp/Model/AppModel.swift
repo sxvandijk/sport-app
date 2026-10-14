@@ -465,6 +465,13 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    func updateNote(_ id: UUID, text: String, for exercise: String) {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty, let i = noteLog[exercise]?.firstIndex(where: { $0.id == id }) else { return }
+        noteLog[exercise]?[i].text = t
+        save()
+    }
+
     func deleteNote(_ id: UUID, for exercise: String) {
         noteLog[exercise]?.removeAll { $0.id == id }
         if noteLog[exercise]?.isEmpty == true { noteLog[exercise] = nil }
