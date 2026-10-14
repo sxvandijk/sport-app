@@ -268,9 +268,11 @@ final class ReorderCoordinator: ObservableObject {
         translation = t
         guard !awaiting, let me = frames[id] else { return }
         let visual = startMid + t
+        // Een hoog blok (superset) schakelt eerder: we kijken naar een punt dichter bij zijn voorrand.
+        let lead = max(0, me.height / 2 - 45)
         var best: (UUID, CGFloat)?
         for (key, f) in frames where key != id {
-            let crossed = (f.midY < me.midY && visual < f.midY) || (f.midY > me.midY && visual > f.midY)
+            let crossed = (f.midY < me.midY && visual - lead < f.midY) || (f.midY > me.midY && visual + lead > f.midY)
             guard crossed else { continue }
             let dist = abs(f.midY - me.midY)
             if best == nil || dist < best!.1 { best = (key, dist) }
@@ -278,6 +280,7 @@ final class ReorderCoordinator: ObservableObject {
         guard let target = best?.0 else { return }
         awaiting = true
         awaitFrom = me.midY
+        Haptics.light()
         move(target)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.awaiting = false }
     }
