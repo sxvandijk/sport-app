@@ -54,6 +54,7 @@ struct AppTabBar: View {
             // Tik of houd je vinger op de balk en schuif: het glas volgt je vinger.
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { v in
+                    model.barDragging = true
                     dragX = v.location.x
                     let i = Int(((v.location.x - 5) / slot).rounded(.down))
                     let clamped = min(max(i, 0), HomeTab.allCases.count - 1)
@@ -62,7 +63,10 @@ struct AppTabBar: View {
                         model.tab = t
                     }
                 }
-                .onEnded { _ in dragX = nil })
+                .onEnded { _ in
+                    dragX = nil
+                    DispatchQueue.main.async { model.barDragging = false }
+                })
         }
         .frame(height: 64)
         .glassSurface(Capsule())
@@ -151,7 +155,7 @@ struct HomeContainer: View {
         .background(AppBackground())
         .simultaneousGesture(DragGesture(minimumDistance: 40)
             .onEnded { v in
-                guard abs(v.translation.width) > abs(v.translation.height) * 1.8, abs(v.translation.width) > 70 else { return }
+                guard !model.barDragging, abs(v.translation.width) > abs(v.translation.height) * 1.8, abs(v.translation.width) > 70 else { return }
                 let next = model.tab.rawValue + (v.translation.width < 0 ? 1 : -1)
                 if let t = HomeTab(rawValue: next) {
                     Haptics.light()
@@ -256,7 +260,7 @@ struct TrainingTab: View {
                     }
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-                    .card(Tokens.surface, radius: Radius.button)
+                    .glassCard(radius: Radius.button)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 16)
@@ -325,7 +329,7 @@ struct TrainingTab: View {
             .padding(.trailing, 4)
             .accessibilityLabel("Opties voor \(name)")
         }
-        .card(Tokens.surface, radius: Radius.button)
+        .glassCard(radius: Radius.button)
         .padding(.bottom, 8)
     }
 }
@@ -338,9 +342,6 @@ struct ProgressTab: View {
     @State private var volumeInfo = false
     @State private var selectedWeek: Int?
     @State private var openWorkout: UUID?
-    @State private var workoutFilter: String?
-    @State private var workoutLimit = 10
-    @State private var allOpen = false
 
     var body: some View {
         let stats = ProgressStats.make(history: model.history, now: Date())
@@ -360,7 +361,7 @@ struct ProgressTab: View {
             CalendarCard(expandable: true, openKey: \.calOpenProgress).padding(.top, 20)
             volumeCard(stats).padding(.top, 12)
             muscleCard(stats).padding(.top, 12)
-            allWorkoutsCard().padding(.top, 12)
+            allWorkoutsLink().padding(.top, 12)
             recordsSection(stats).padding(.top, 12)
         }
     }
@@ -434,7 +435,7 @@ struct ProgressTab: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.surface, radius: Radius.card)
+        .glassCard(radius: Radius.card)
     }
 
     private func weekWorkouts(_ week: Int, label: String) -> some View {
@@ -486,61 +487,27 @@ struct ProgressTab: View {
         }
     }
 
-    private func allWorkoutsCard() -> some View {
-        let names = Array(Set(model.history.map { $0.name })).sorted()
-        let all = model.history.sorted { $0.date > $1.date }
-        let shown = all.filter { workoutFilter == nil || $0.name == workoutFilter }
-        let visible = Array(shown.prefix(workoutLimit))
-        return VStack(alignment: .leading, spacing: 0) {
-            Button { withAnimation(.easeOut(duration: 0.2)) { allOpen.toggle() } } label: {
-                HStack(spacing: 14) {
-                    Icon.tabTraining.foregroundColor(ac.accentText)
-                        .frame(width: 48, height: 48).background(Circle().fill(ac.accentSoft))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Alle trainingen").sa(17, .semibold).foregroundColor(Tokens.text)
-                        Text("\(all.count) \(all.count == 1 ? "training" : "trainingen")").sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    (allOpen ? Icon.chevronUp(18) : Icon.chevronDown(18)).foregroundColor(Tokens.text2)
+    private func allWorkoutsLink() -> some View {
+        let n = model.history.count
+        return Button {
+            model.screen = .allWorkouts
+        } label: {
+            HStack(spacing: 14) {
+                Icon.tabTraining.foregroundColor(ac.accentText)
+                    .frame(width: 48, height: 48).background(Circle().fill(ac.accentSoft))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Alle trainingen").sa(17, .semibold).foregroundColor(Tokens.text)
+                    Text(n == 0 ? "Nog geen trainingen" : "\(n) \(n == 1 ? "training" : "trainingen") \u{00B7} filter per training").sa(13).foregroundColor(Tokens.text2).lineLimit(1)
                 }
-                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                .contentShape(Rectangle())
+                Spacer(minLength: 0)
+                Icon.chevronRight(18).foregroundColor(Tokens.text2)
             }
-            .buttonStyle(.plain)
-            if allOpen {
-            Menu {
-                Button { workoutFilter = nil; workoutLimit = 10 } label: { Label("Alle trainingen", systemImage: workoutFilter == nil ? "checkmark" : "circle") }
-                ForEach(names, id: \.self) { n in
-                    Button { workoutFilter = n; workoutLimit = 10 } label: { Label(n, systemImage: workoutFilter == n ? "checkmark" : "circle") }
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Icon.filter(18)
-                    Text(workoutFilter ?? "Alle trainingen").sa(14, .medium).lineLimit(1)
-                    Icon.chevronDown(12, 2.4)
-                }
-                .foregroundColor(workoutFilter != nil ? ac.onAccent : Tokens.text)
-                .padding(.horizontal, 14).frame(height: 40)
-                .background(Capsule().fill(workoutFilter != nil ? ac.accentLine : Tokens.raised))
-            }
-            .padding(.top, 10).padding(.bottom, 4)
-            .accessibilityLabel("Filter op training")
-            if visible.isEmpty {
-                Text("Nog geen trainingen.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 10)
-            }
-            ForEach(visible) { h in workoutRow(h) }
-            if shown.count > visible.count {
-                Button { workoutLimit += 10 } label: {
-                    Text("Toon meer").sa(15, .semibold).foregroundColor(ac.accentText)
-                        .frame(maxWidth: .infinity).frame(height: 48).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-            }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .glassCard(radius: Radius.card)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.surface, radius: Radius.card)
+        .buttonStyle(.plain)
     }
 
     private func muscleCard(_ stats: ProgressStats) -> some View {
@@ -575,7 +542,7 @@ struct ProgressTab: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.surface, radius: Radius.card)
+        .glassCard(radius: Radius.card)
     }
 
     // MARK: Persoonlijke records (eigen pagina)
@@ -598,7 +565,7 @@ struct ProgressTab: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
             .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-            .card(Tokens.surface, radius: Radius.card)
+            .glassCard(radius: Radius.card)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -641,7 +608,7 @@ struct GymTab: View {
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
                 .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-                .card(Tokens.surface, radius: Radius.button)
+                .glassCard(radius: Radius.button)
             }
             .buttonStyle(.plain)
             .padding(.top, 16)
@@ -691,7 +658,7 @@ struct GymTab: View {
                         if q.id != rows.last?.id { Divider().background(Tokens.line).padding(.leading, 64) }
                     }
                 }
-                .card(Tokens.surface, radius: Radius.button)
+                .glassCard(radius: Radius.button)
             }
 
             Text("Tik op een apparaat om de stappen aan te passen. De waarden uit de lijst zijn standaarden; controleer ze bij jouw machines.")
@@ -730,7 +697,7 @@ struct ProfileTab: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card(Tokens.surface, radius: Radius.button)
+            .glassCard(radius: Radius.button)
             .padding(.top, 16)
 
             SectionLabel(text: "Weergave").padding(.top, 24).padding(.bottom, 10)
@@ -746,7 +713,7 @@ struct ProfileTab: View {
             }
             .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card(Tokens.surface, radius: Radius.button)
+            .glassCard(radius: Radius.button)
 
             SectionLabel(text: "Training").padding(.top, 24).padding(.bottom, 10)
             VStack(spacing: 0) {
@@ -788,7 +755,7 @@ struct ProfileTab: View {
                 .frame(minHeight: 64)
             }
             .padding(.horizontal, 16).padding(.vertical, 4)
-            .card(Tokens.surface, radius: Radius.button)
+            .glassCard(radius: Radius.button)
 
             SectionLabel(text: "Herinneringen").padding(.top, 24).padding(.bottom, 10)
             CreatineSettings()
@@ -979,6 +946,6 @@ private struct CreatineSettings: View {
             }
         }
         .padding(.horizontal, 16).padding(.vertical, 4)
-        .card(Tokens.surface, radius: Radius.button)
+        .glassCard(radius: Radius.button)
     }
 }

@@ -71,6 +71,22 @@ private struct SheetBody: View {
         }
     }
 
+    @State private var dragY: CGFloat = 0
+
+    /// Veeg het blad aan de bovenkant omlaag om het te sluiten.
+    private var closeDrag: some Gesture {
+        DragGesture(minimumDistance: 6)
+            .onChanged { dragY = max(0, $0.translation.height) }
+            .onEnded { v in
+                if v.translation.height > 90 || v.predictedEndTranslation.height > 220 {
+                    model.closeSheet()
+                    dragY = 0
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { dragY = 0 }
+                }
+            }
+    }
+
     var body: some View {
         GeometryReader { geo in
             let inset = geo.safeAreaInsets.bottom
@@ -87,6 +103,7 @@ private struct SheetBody: View {
                 }
             }
             .frame(maxHeight: maxHeight)
+            .offset(y: dragY)
             .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
         }
         .ignoresSafeArea(edges: .bottom)
@@ -96,6 +113,8 @@ private struct SheetBody: View {
         let h = heading
         return VStack(spacing: 0) {
             Capsule().fill(Tokens.line).frame(width: 36, height: 5).padding(.top, 8)
+                .frame(maxWidth: .infinity).frame(height: 24, alignment: .top).contentShape(Rectangle())
+                .gesture(closeDrag)
             HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(h.title).sa(20, .bold, tracking: -0.2).foregroundColor(Tokens.text)
@@ -118,7 +137,9 @@ private struct SheetBody: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(kind == .machineadd || kind == .machineedit ? "Klaar" : "Sluiten")
             }
-            .padding(.top, 10).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
+            .padding(.top, 0).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
+            .contentShape(Rectangle())
+            .gesture(closeDrag)
 
             if scrolls {
                 ScrollView { padded }
@@ -1247,7 +1268,7 @@ private struct ProgramSheet: View {
                 TextField("Naam van het schema", text: $newName)
                     .sa(16).foregroundColor(Tokens.text)
                     .padding(.horizontal, 12).frame(height: 44)
-                    .card(Tokens.surface, radius: Radius.field)
+                    .glassCard(radius: Radius.field)
                 Button {
                     model.renameProgram(p.id, to: newName)
                     menuFor = nil
@@ -1262,7 +1283,7 @@ private struct ProgramSheet: View {
                 HStack(spacing: 8) {
                     Button { confirm = false } label: {
                         Text("Annuleer").sa(16, .semibold).foregroundColor(Tokens.text)
-                            .frame(maxWidth: .infinity).frame(height: 46).card(Tokens.surface, radius: Radius.field)
+                            .frame(maxWidth: .infinity).frame(height: 46).glassCard(radius: Radius.field)
                     }
                     .buttonStyle(.plain)
                     Button {

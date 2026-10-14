@@ -5,11 +5,14 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Klaar (wacht op test)
 - [x] Ronde 2a/2b: gym-tab met machine-database, eigen gyms, stappen per machine, apparaat in oefening, wisselen in schema
 
+- [x] Ronde 3e: Alle trainingen eigen scherm, sheet omlaag vegen, Liquid Glass door de hele app, tabbalk-slepen gefixt
 - [x] Ronde 3c: "Alle trainingen" met filter in Progressie, tabbalk lager + glijdende markering + swipen tussen schermen, lichte achtergrond in light mode
 
 ## Volgende
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
 - [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
+- [ ] Leuker statistiekenscherm
+- [ ] Opzetstukken per oefening (touw, rechte stang, V-stang...): kiezen welke je gebruikt, gewicht/stap per opzetstuk apart; toevoegen via Gym > accessoires
 - [ ] Nieuw startscherm (bij openen): meer gecentreerd, snel de volgende training starten, "Ready Set Go"-splash
 - [ ] Design-ronde: moderner, nog minimalistisch (skills: ui-ux-pro-max, SwiftUI-expert, Apple HIG)
 - [ ] Machine-database controleren met echte gegevens (Basic-Fit, jouw gym); geen openbare bron met stapgroottes gevonden

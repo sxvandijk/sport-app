@@ -96,7 +96,7 @@ struct PrimaryButton: View {
             .foregroundColor(ac.onAccent)
             .frame(maxWidth: .infinity)
             .frame(height: height)
-            .card(ac.accent, radius: Radius.button)
+            .glassSurface(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), tint: ac.accent, interactive: true, fallback: ac.accent)
             .opacity(enabled ? 1 : 0.45)
         }
         .buttonStyle(.plain)

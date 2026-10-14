@@ -3,7 +3,7 @@ import SwiftUI
 import UserNotifications
 import AudioToolbox
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts }
 enum HomeTab: Int, CaseIterable, Identifiable {
     case training, progress, gym, profile
     var id: Int { rawValue }
@@ -808,6 +808,8 @@ final class AppModel: ObservableObject {
         swapScope = .now
         if kind == .explain { linkDraft = "" }
     }
+
+    var barDragging = false
 
     func closeSheet() { sheet = nil }
 

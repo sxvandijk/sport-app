@@ -52,7 +52,7 @@ struct RecordsScreen: View {
                         Text("Rond een training af, dan verschijnen hier je zwaarste sets. Je records worden berekend uit wat je echt hebt gedaan.")
                             .sa(15).foregroundColor(Tokens.text2).lineSpacing(3)
                             .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-                            .card(Tokens.surface, radius: Radius.card).padding(.top, 20)
+                            .glassCard(radius: Radius.card).padding(.top, 20)
                     }
                     VStack(spacing: 0) {
                         ForEach(shown) { r in RecordCard(record: r) }
@@ -63,7 +63,7 @@ struct RecordsScreen: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .background(Tokens.bg.ignoresSafeArea())
+        .background(AppBackground())
     }
 
     private func chip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
@@ -127,7 +127,7 @@ struct RecordCard: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.surface, radius: Radius.button)
+        .glassCard(radius: Radius.button)
         .padding(.bottom, 8)
     }
 }
