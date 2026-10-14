@@ -28,6 +28,13 @@ private struct SheetBody: View {
 
     private var exercise: LiveExercise? { model.session?.exercise(model.sheetEx) }
 
+    private var keepsKeyboard: Bool {
+        switch kind {
+        case .add, .swap, .change, .pref, .superset: return true
+        default: return false
+        }
+    }
+
     private var heading: (title: String, sub: String) {
         let s = model.session
         let name = exercise?.name ?? ""
@@ -65,9 +72,16 @@ private struct SheetBody: View {
         GeometryReader { geo in
             let inset = geo.safeAreaInsets.bottom
             let maxHeight = min(740, geo.size.height - 40)
-            ViewThatFits(in: .vertical) {
-                sheet(scrolls: false, inset: inset).frame(maxHeight: .infinity, alignment: .bottom)
-                sheet(scrolls: true, inset: inset).frame(height: maxHeight)
+            Group {
+                if keepsKeyboard {
+                    // Zoek-schermen: altijd dezelfde opbouw, anders verdwijnt het toetsenbord tijdens het typen.
+                    sheet(scrolls: true, inset: inset).frame(height: maxHeight)
+                } else {
+                    ViewThatFits(in: .vertical) {
+                        sheet(scrolls: false, inset: inset).frame(maxHeight: .infinity, alignment: .bottom)
+                        sheet(scrolls: true, inset: inset).frame(height: maxHeight)
+                    }
+                }
             }
             .frame(maxHeight: maxHeight)
             .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
