@@ -55,6 +55,7 @@ private struct SheetBody: View {
         case .program: return ("Kies je schema", "Je schema bepaalt welke trainingen je op het startscherm ziet.")
         case .tplmenu: return (model.tmName ?? "", "Opties voor deze training")
         case .exmenu: return (name, "Opties voor deze oefening")
+        case .swapscope: return ("Oefening wisselen", name.isEmpty ? "" : "Wanneer wil je \(name) wisselen?")
         case .settype: return ("Soort set", name)
         case .gym: return ("Kies je gym", "Machine bezet en de plus/min-stappen volgen de apparaten van deze gym.")
         }
@@ -132,6 +133,7 @@ private struct SheetBody: View {
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
         case .exmenu: ExerciseMenuSheet()
+        case .swapscope: SwapScopeSheet()
         }
     }
 }
@@ -224,29 +226,8 @@ private struct MenuSheet: View {
 
 private struct ExerciseMenuSheet: View {
     @EnvironmentObject private var model: AppModel
-    @State private var swapOpen = false
 
     private var exercise: LiveExercise? { model.session?.exercise(model.sheetEx) }
-
-    private func scopeRow(_ title: String, _ sub: String, _ scope: SwapScope) -> some View {
-        SheetRowButton(action: {
-            let id = model.sheetEx
-            model.openSheet(.change, exID: id)
-            model.swapScope = scope
-        }) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).sa(16, .medium).foregroundColor(Tokens.text)
-                    Text(sub).sa(13).foregroundColor(Tokens.text2)
-                }
-                Spacer(minLength: 0)
-                Icon.chevronRight(16).foregroundColor(Tokens.text3)
-            }
-            .padding(.horizontal, 16).frame(minHeight: 56)
-        }
-        .padding(.bottom, 4)
-        .padding(.leading, 16)
-    }
 
     private func plainRow(_ icon: Icon, _ tint: Color, _ title: String, _ sub: String, danger: Bool = false, action: @escaping () -> Void) -> some View {
         SheetRowButton(action: action) {
@@ -279,7 +260,10 @@ private struct ExerciseMenuSheet: View {
             model.closeSheet()
         }
 
-        SheetRowButton(action: { swapOpen.toggle() }) {
+        SheetRowButton(action: {
+            let id = model.sheetEx
+            model.openSheet(.swapscope, exID: id)
+        }) {
             HStack(spacing: 12) {
                 Icon.swap(20).foregroundColor(Tokens.text)
                 VStack(alignment: .leading, spacing: 2) {
@@ -287,15 +271,11 @@ private struct ExerciseMenuSheet: View {
                     Text("Voor vandaag of vast in je schema").sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
-                Icon.chevronRight(16).foregroundColor(Tokens.text3).rotationEffect(.degrees(swapOpen ? 90 : 0))
+                Icon.chevronRight(16).foregroundColor(Tokens.text3)
             }
             .padding(.horizontal, 16).frame(minHeight: 60)
         }
         .padding(.bottom, 6)
-        if swapOpen {
-            scopeRow("Voor vandaag", "Alleen in deze workout. Je schema blijft zoals het is.", .now)
-            scopeRow("Vast in schema", "De oefening wordt ook in je schema vervangen.", .schema)
-        }
 
         let skip = skipTexts
         plainRow(Icon.skip(20), Tokens.text, skip.title, skip.sub) {
@@ -309,6 +289,34 @@ private struct ExerciseMenuSheet: View {
                 model.skipExercise(id, removeFromSchema: true)
             }
         }
+    }
+}
+
+private struct SwapScopeSheet: View {
+    @EnvironmentObject private var model: AppModel
+
+    private func row(_ title: String, _ sub: String, _ scope: SwapScope) -> some View {
+        SheetRowButton(action: {
+            let id = model.sheetEx
+            model.openSheet(.change, exID: id)
+            model.swapScope = scope
+        }) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).sa(17, .medium).foregroundColor(Tokens.text)
+                    Text(sub).sa(13).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+                Icon.chevronRight(16).foregroundColor(Tokens.text3)
+            }
+            .padding(.horizontal, 16).frame(minHeight: 64)
+        }
+        .padding(.bottom, 8)
+    }
+
+    var body: some View {
+        row("Voor vandaag", "Alleen in deze workout. Je schema blijft zoals het is.", .now)
+        row("Vast in schema", "De oefening wordt ook in je schema vervangen.", .schema)
     }
 }
 

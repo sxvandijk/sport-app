@@ -18,7 +18,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -194,6 +194,7 @@ final class AppModel: ObservableObject {
     @Published var restTotal: Int = 90
     @Published var toast: Toast?
     @Published var noteEdit: NoteEdit?
+    @Published var scrollTick = 0
     @Published var confirm: ConfirmRequest?
     @Published var summary: SessionSummary?
 
@@ -526,6 +527,20 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    /// Verplaats een blok (oefening of superset) in de editor.
+    func moveDraftBlock(_ headID: UUID, onto targetID: UUID) {
+        guard var d = draft, headID != targetID else { return }
+        var blocks = d.blocks
+        guard let from = blocks.firstIndex(where: { $0.first?.id == headID }),
+              let to = blocks.firstIndex(where: { $0.first?.id == targetID }),
+              blocks[from].first?.isWarmup == blocks[to].first?.isWarmup else { return }
+        let moving = blocks.remove(at: from)
+        blocks.insert(moving, at: to)
+        d.items = blocks.flatMap { $0 }
+        EditorScreen.normalize(&d)
+        draft = d
+    }
+
     /// Verplaats een oefening in de editor naar de plek van een andere (slepen).
     func moveDraftItem(_ id: UUID, onto targetID: UUID) {
         guard var d = draft, id != targetID,
@@ -549,6 +564,7 @@ final class AppModel: ObservableObject {
         }
         guard let result = s.complete(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst, restDefault: restDefault) else { return }
         session = s
+        scrollTick += 1
         focusSetID = nil
         editField = nil
         focusID = result.nextFocus
@@ -1050,5 +1066,21 @@ enum Notifier {
         let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
         let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
         center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+    }
+}
+
+
+extension Draft {
+    /// Opeenvolgende gekoppelde oefeningen (superset) vormen een blok.
+    var blocks: [[DraftItem]] {
+        var out: [[DraftItem]] = []
+        for (i, it) in items.enumerated() {
+            if i > 0, it.link, !it.isWarmup, !items[i - 1].isWarmup, !out.isEmpty {
+                out[out.count - 1].append(it)
+            } else {
+                out.append([it])
+            }
+        }
+        return out
     }
 }
