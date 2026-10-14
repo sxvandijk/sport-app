@@ -94,6 +94,19 @@ struct Draft: Hashable {
 }
 
 /// Een notitie bij een oefening, met de dag waarop je hem schreef.
+struct NoteEdit: Equatable {
+    var exercise: String
+    var entryID: UUID?
+    var text: String
+}
+
+struct ConfirmRequest {
+    var title: String
+    var message: String
+    var confirmTitle: String
+    var action: () -> Void
+}
+
 struct NoteEntry: Codable, Hashable, Identifiable {
     var id = UUID()
     var date: Date
@@ -102,7 +115,7 @@ struct NoteEntry: Codable, Hashable, Identifiable {
 
 struct Toast: Equatable {
     var text: String
-    var removed: RemovedSetBox
+    var removed: RemovedSetBox?
     var until: Date
 }
 
@@ -180,6 +193,8 @@ final class AppModel: ObservableObject {
     @Published var restEnd: Date?
     @Published var restTotal: Int = 90
     @Published var toast: Toast?
+    @Published var noteEdit: NoteEdit?
+    @Published var confirm: ConfirmRequest?
     @Published var summary: SessionSummary?
 
     // Sheets en schermen
@@ -465,6 +480,12 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    func saveNoteEdit() {
+        guard let e = noteEdit else { return }
+        if let id = e.entryID { updateNote(id, text: e.text, for: e.exercise) } else { addNote(e.text, for: e.exercise) }
+        noteEdit = nil
+    }
+
     func updateNote(_ id: UUID, text: String, for exercise: String) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty, let i = noteLog[exercise]?.firstIndex(where: { $0.id == id }) else { return }
@@ -569,6 +590,9 @@ final class AppModel: ObservableObject {
         editField = nil
         sheet = nil
         Haptics.light()
+        if !removeFromSchema, s.exercise(exID) != nil {
+            toast = Toast(text: "Oefening voltooid", removed: nil, until: Date().addingTimeInterval(3))
+        }
         save()
     }
 
@@ -592,8 +616,15 @@ final class AppModel: ObservableObject {
         guard var s = session else { return }
         guard let removed = s.deleteSet(exID: exID, setID: setID) else { return }
         session = s
+        var text = "Set verwijderd"
+        if let ex = s.exercise(exID), !ex.sets.isEmpty, ex.sets.allSatisfy({ $0.done }) {
+            text = "Set verwijderd \u{00B7} oefening voltooid"
+            focusID = nil
+            focusSetID = nil
+            editField = nil
+        }
         let until = Date().addingTimeInterval(5)
-        toast = Toast(text: "Set verwijderd", removed: RemovedSetBox(value: removed), until: until)
+        toast = Toast(text: text, removed: RemovedSetBox(value: removed), until: until)
         toastWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
@@ -605,8 +636,8 @@ final class AppModel: ObservableObject {
     }
 
     func undo() {
-        guard let t = toast, var s = session else { return }
-        s.restore(t.removed.value)
+        guard let t = toast, let r = t.removed, var s = session else { return }
+        s.restore(r.value)
         session = s
         toast = nil
         save()
