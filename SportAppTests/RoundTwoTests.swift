@@ -108,3 +108,20 @@ final class RoundTwoTests: XCTestCase {
         XCTAssertEqual(model.draft?.items[1].name, "Pec deck")
     }
 }
+
+final class WeekWorkoutsTests: XCTestCase {
+    func testWorkoutsInWeekAndVolume() {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2
+        let now = cal.date(from: DateComponents(year: 2026, month: 10, day: 14, hour: 12))!
+        let ex = LoggedExercise(name: "Leg press", sets: [LoggedSet(w: 100, r: 10, type: .work), LoggedSet(w: 50, r: 12, type: .warmup)])
+        let thisWeek = HistoryEntry(date: now, name: "Legs", minutes: 50, exercises: [ex])
+        let lastWeek = HistoryEntry(date: cal.date(byAdding: .day, value: -7, to: now)!, name: "Push", minutes: 40, exercises: [ex])
+        let old = HistoryEntry(date: cal.date(byAdding: .day, value: -90, to: now)!, name: "Old", minutes: 30, exercises: [ex])
+        let h = [thisWeek, lastWeek, old]
+        XCTAssertEqual(ProgressStats.workouts(inWeek: 7, history: h, now: now, calendar: cal).map { $0.name }, ["Legs"])
+        XCTAssertEqual(ProgressStats.workouts(inWeek: 6, history: h, now: now, calendar: cal).map { $0.name }, ["Push"])
+        XCTAssertTrue(ProgressStats.workouts(inWeek: 0, history: h, now: now, calendar: cal).isEmpty)
+        XCTAssertEqual(ProgressStats.volume(of: thisWeek), 1000)
+    }
+}

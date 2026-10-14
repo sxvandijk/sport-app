@@ -75,6 +75,28 @@ struct ProgressStats {
         return out
     }
 
+    /// De afgeronde trainingen in een van de 8 weken (index 0 = oudste, 7 = deze week), nieuwste eerst.
+    static func workouts(inWeek index: Int, history: [HistoryEntry], now: Date, calendar: Calendar = .current) -> [HistoryEntry] {
+        var cal = calendar
+        cal.firstWeekday = 2
+        let today = cal.startOfDay(for: now)
+        let thisWeek = cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
+        guard let start = cal.date(byAdding: .weekOfYear, value: -(7 - index), to: thisWeek),
+              let end = cal.date(byAdding: .day, value: 7, to: start) else { return [] }
+        return history.filter { $0.date >= start && $0.date < end }.sorted { $0.date > $1.date }
+    }
+
+    /// Volume van een training in kg (zonder warming-ups, cardio en tijdsoefeningen).
+    static func volume(of entry: HistoryEntry) -> Double {
+        var total = 0.0
+        for e in entry.exercises ?? [] {
+            let kind = Catalog.kind(e.name)
+            if kind == .cardio || kind == .timed { continue }
+            for s in e.sets where s.type != .warmup { total += s.w * Double(s.r) }
+        }
+        return total
+    }
+
     private static func hadEarlier(_ r: PersonalRecord, history: [HistoryEntry]) -> Bool {
         history.contains { h in
             h.date < r.date && (h.exercises ?? []).contains(where: { $0.name == r.name })
