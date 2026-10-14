@@ -375,33 +375,41 @@ private struct SwapSheet: View {
     @Environment(\.accentColors) private var ac
     let mode: Mode
 
-    private func scopeText(_ scope: SwapScope) -> String {
-        scope == .now ? "Alleen nu" : "Vast in schema"
-    }
+    @State private var scopeChosen = false
 
-    private var scopeHelp: String {
-        model.swapScope == .schema ? "De oefening wordt ook in je schema vervangen." : "Alleen in deze workout. Je schema blijft zoals het was."
-    }
-
-    private var scopePicker: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 0) {
-                ForEach([SwapScope.now, .schema], id: \.self) { scope in
-                    let on = model.swapScope == scope
-                    Button { model.swapScope = scope } label: {
-                        Text(scopeText(scope)).sa(14, .semibold)
-                            .foregroundColor(on ? ac.onAccent : Tokens.text)
-                            .lineLimit(1).minimumScaleFactor(0.8)
-                            .frame(maxWidth: .infinity).frame(height: 40)
-                            .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(on ? ac.accentLine : Color.clear))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(on ? .isSelected : [])
-                }
+    private func choice(_ title: String, _ sub: String, _ scope: SwapScope) -> some View {
+        SheetRowButton(action: {
+            model.swapScope = scope
+            scopeChosen = true
+        }) {
+            HStack(spacing: 12) {
+                TitleSub(title: title, sub: sub)
+                Spacer(minLength: 0)
+                Icon.chevronRight(18).foregroundColor(Tokens.text3)
             }
-            .padding(3)
-            .card(Tokens.raised, radius: Radius.row)
-            Text(scopeHelp).sa(13).foregroundColor(Tokens.text2).padding(.top, 8).padding(.horizontal, 4)
+            .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 64)
+        }
+        .padding(.bottom, 8)
+    }
+
+    private var scopeStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            choice("Voor deze keer", "Alleen in deze workout. Je schema blijft zoals het was.", .now)
+            choice("Vast in schema", "De oefening wordt ook in je schema vervangen.", .schema)
+        }
+    }
+
+    private var scopeBadge: some View {
+        HStack(spacing: 8) {
+            Text(model.swapScope == .schema ? "Vast in schema" : "Voor deze keer")
+                .sa(13, .semibold).foregroundColor(ac.accentText)
+                .padding(.horizontal, 12).frame(height: 30)
+                .background(Capsule().fill(ac.accentSoft))
+            Button { scopeChosen = false } label: {
+                Text("Aanpassen").sa(13, .medium).foregroundColor(Tokens.text2).frame(height: 44)
+            }
+            .buttonStyle(.plain)
+            Spacer(minLength: 0)
         }
     }
 
@@ -413,10 +421,19 @@ private struct SwapSheet: View {
         let suggestion = Catalog.suggestion(for: name, excluding: inWorkout)
         let preference = model.prefs[original]
 
-        if mode == .change { scopePicker }
+        if mode == .change && !scopeChosen {
+            scopeStep
+        } else {
+            swapList(name: name, original: original, suggestion: suggestion, preference: preference)
+        }
+    }
+
+    @ViewBuilder
+    private func swapList(name: String, original: String, suggestion: String, preference: String?) -> some View {
+        if mode == .change { scopeBadge }
 
         if mode != .pref {
-            SectionLabel(text: "Suggestie van de app").padding(.top, mode == .change ? 18 : 4).padding(.bottom, 8)
+            SectionLabel(text: "Suggestie van de app").padding(.top, mode == .change ? 8 : 4).padding(.bottom, 8)
             SheetRowButton(action: { model.swapExercise(to: suggestion, manual: false) }) {
                 HStack(spacing: 12) {
                     TitleSub(title: suggestion, sub: Catalog.meta(suggestion))
@@ -450,7 +467,7 @@ private struct SwapSheet: View {
         }
 
         SectionLabel(text: mode == .pref ? "Oefeningen" : "Zelf kiezen").padding(.top, 20).padding(.bottom, 8)
-        SearchList(mode: mode == .pref ? .preference : .swap, showStar: mode != .change)
+        SearchList(mode: mode == .pref ? .preference : .swap, showStar: true)
     }
 }
 
@@ -530,6 +547,9 @@ private struct SearchList: View {
     @State private var newKind: ExerciseKind = .weights
     @State private var newMuscle = "Overig"
     @State private var muscleFilter: String?
+    @State private var sort = SortMode.standard
+
+    enum SortMode { case standard, az, muscle, equipment }
 
     private static let muscles = ["Borst", "Schouders", "Triceps", "Biceps", "Onderarmen", "Lats", "Bovenrug", "Traps",
                                   "Quadriceps", "Hamstrings", "Billen", "Kuiten", "Core", "Cardio", "Overig"]
@@ -552,7 +572,21 @@ private struct SearchList: View {
             let other = names.filter { $0.info.muscle != muscle }
             names = same + other
         }
+        switch sort {
+        case .standard: break
+        case .az: names.sort { $0.name.lowercased() < $1.name.lowercased() }
+        case .muscle: names.sort { ($0.info.muscle, $0.name.lowercased()) < ($1.info.muscle, $1.name.lowercased()) }
+        case .equipment: names.sort { ($0.info.equipment, $0.name.lowercased()) < ($1.info.equipment, $1.name.lowercased()) }
+        }
         return names
+    }
+
+    private func groupLabel(_ item: (name: String, info: ExerciseInfo)) -> String? {
+        switch sort {
+        case .muscle: return item.info.muscle
+        case .equipment: return item.info.equipment
+        default: return nil
+        }
     }
 
     var body: some View {
@@ -569,10 +603,14 @@ private struct SearchList: View {
             .padding(.horizontal, 14).frame(height: 48)
             .card(Tokens.raised, radius: Radius.field)
             muscleChips.padding(.top, 8)
+            sortChips.padding(.top, 6)
             Spacer().frame(height: 4)
 
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(0..<shown.count, id: \.self) { i in
+                    if let label = groupLabel(shown[i]), i == 0 || groupLabel(shown[i - 1]) != label {
+                        SectionLabel(text: label).padding(.top, i == 0 ? 6 : 14).padding(.bottom, 2)
+                    }
                     row(shown[i])
                 }
                 if shown.isEmpty {
@@ -618,6 +656,17 @@ private struct SearchList: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(isPref ? "Voorkeur, tik om te wissen" : "Maak dit je voorkeur")
             }
+        }
+    }
+
+    private var sortChips: some View {
+        HStack(spacing: 8) {
+            Text("Sorteer").sa(12, .medium).foregroundColor(Tokens.text3)
+            chip("Standaard", on: sort == .standard) { sort = .standard }
+            chip("A\u{2013}Z", on: sort == .az) { sort = .az }
+            chip("Spiergroep", on: sort == .muscle) { sort = .muscle }
+            chip("Apparaat", on: sort == .equipment) { sort = .equipment }
+            Spacer(minLength: 0)
         }
     }
 

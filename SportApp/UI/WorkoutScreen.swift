@@ -4,6 +4,7 @@ struct WorkoutScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @State private var openMinY: CGFloat = 0
+    @State private var userScrolled = false
 
     var body: some View {
         if let s = model.session {
@@ -20,9 +21,13 @@ struct WorkoutScreen: View {
                             .animation(nil, value: openID)
                     }
                     .coordinateSpace(name: "wscroll")
-                    .onPreferenceChange(OpenCardKey.self) { openMinY = $0 }
+                    .onPreferenceChange(OpenCardKey.self) { value in
+                        openMinY = value
+                        if abs(value) < 40 { userScrolled = false }
+                    }
+                    .simultaneousGesture(DragGesture(minimumDistance: 25).onEnded { _ in userScrolled = true })
                     .overlay(alignment: .bottom) {
-                        if info.cur != nil && (openMinY < -60 || openMinY > 520) {
+                        if info.cur != nil && (userScrolled || openMinY < -60 || openMinY > 520) {
                             Button { scrollTop(proxy, openID) } label: {
                                 HStack(spacing: 6) {
                                     Icon.chevronUp(16).foregroundColor(ac.onAccent)
@@ -40,7 +45,7 @@ struct WorkoutScreen: View {
                     .onChange(of: info.cur?.setID) { _ in scrollTop(proxy, openID) }
                     .onAppear {
                         guard let id = openID else { return }
-                        DispatchQueue.main.async { proxy.scrollTo(id, anchor: .top) }
+                        DispatchQueue.main.async { proxy.scrollTo("top-\(id.uuidString)", anchor: .top) }
                     }
                 }
                 WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
@@ -52,8 +57,15 @@ struct WorkoutScreen: View {
     /// Zet de open oefening bovenaan; met een korte vertraging, zodat de lijst eerst opnieuw is opgebouwd.
     private func scrollTop(_ proxy: ScrollViewProxy, _ id: UUID?) {
         guard let id = id else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-            proxy.scrollTo(id, anchor: .top)
+        userScrolled = false
+        // Een paar pogingen: de lijst verandert van vorm (een oefening klapt open, een andere dicht),
+        // en pas daarna staat het doel op de goede plek.
+        for delay in [0.0, 0.12, 0.35] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                var t = Transaction()
+                t.disablesAnimations = true
+                withTransaction(t) { proxy.scrollTo("top-\(id.uuidString)", anchor: .top) }
+            }
         }
     }
 }
@@ -201,6 +213,7 @@ private struct WorkoutList: View {
         ForEach(0..<members.count, id: \.self) { mi in
             let e = members[mi]
             let badge = hue != nil ? String(mi + 1) : ""
+            Color.clear.frame(height: 0).id("top-\(e.id.uuidString)")
             if e.id == openID {
                 OpenExerciseCard(exercise: e, badge: badge, hue: hue, cur: cur).id(e.id)
             } else {
@@ -277,6 +290,7 @@ private struct OpenExerciseCard: View {
     let badge: String
     var hue: Color?
     let cur: QueueItem?
+    @State private var noteDraft = ""
 
     /// "W", "1", "2", "D", "F", ... Een "Tot falen"-set telt als een genummerde set, een dropset niet.
     static func labels(for sets: [LiveSet]) -> [String] {
@@ -308,18 +322,55 @@ private struct OpenExerciseCard: View {
         }
     }
 
-    private var noteField: some View {
-        let binding = Binding<String>(
-            get: { model.notes[exercise.name] ?? "" },
-            set: { model.setNote($0, for: exercise.name) }
-        )
-        return HStack(spacing: 8) {
-            Icon.edit(16).foregroundColor(Tokens.text3)
-            TextField("Notitie, bijv. stoelstand 4", text: binding)
-                .sa(14).foregroundColor(Tokens.text)
+    private func saveNote() {
+        model.addNote(noteDraft, for: exercise.name)
+        noteDraft = ""
+    }
+
+    private func noteRow(_ e: NoteEntry, isNew: Bool) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isNew ? "Nieuw \u{00B7} vandaag" : "Eerder \u{00B7} " + DateText.short(e.date))
+                    .sa(11, .semibold, tracking: 0.4).foregroundColor(isNew ? ac.accentText : Tokens.text3)
+                Text(e.text).sa(14).foregroundColor(isNew ? Tokens.text : Tokens.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            Button { model.deleteNote(e.id, for: exercise.name) } label: {
+                Icon.close(14).foregroundColor(Tokens.text3).frame(width: 36, height: 36).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Verwijder notitie")
         }
-        .padding(.horizontal, 12).frame(height: 40)
-        .card(Tokens.raised, radius: Radius.field)
+        .padding(.leading, 12).padding(.trailing, 2).padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(isNew ? ac.accentSoft.opacity(0.45) : Color.clear))
+        .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).stroke(isNew ? Color.clear : Tokens.line, lineWidth: 1))
+    }
+
+    private var notesBlock: some View {
+        let entries = Array((model.noteLog[exercise.name] ?? []).prefix(4))
+        let start = model.session?.startAt ?? Date()
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Icon.edit(16).foregroundColor(Tokens.text3)
+                TextField("Notitie, bijv. stoelstand 4", text: $noteDraft)
+                    .sa(14).foregroundColor(Tokens.text)
+                    .submitLabel(.done)
+                    .onSubmit { saveNote() }
+                if !noteDraft.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Button { saveNote() } label: {
+                        Text("Bewaar").sa(14, .semibold).foregroundColor(ac.accentText).padding(.horizontal, 6).frame(height: 36)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12).frame(height: 40)
+            .card(Tokens.raised, radius: Radius.field)
+            ForEach(entries) { e in
+                noteRow(e, isNew: e.date >= start)
+            }
+        }
     }
 
     var body: some View {
@@ -353,10 +404,6 @@ private struct OpenExerciseCard: View {
                 HStack(spacing: 8) {
                     ChipButton(icon: Icon.explain(18), title: "Uitleg") { model.openSheet(.explain, exID: exercise.id) }
                     ChipButton(icon: Icon.swap(18), title: "Bezet") { model.openSheet(.swap, exID: exercise.id) }
-                    ChipButton(icon: Icon.star(18), title: "Voorkeur") {
-                        model.openSheet(.pref, exID: exercise.id)
-                        model.swapScope = .prefOnly
-                    }
                     ChipButton(icon: Icon.link(18, 2), title: "Superset") { model.openSheet(.superset, exID: exercise.id) }
                 }
                 .padding(.horizontal, 16)
@@ -377,9 +424,6 @@ private struct OpenExerciseCard: View {
                     .padding(.horizontal, 8).padding(.bottom, 2)
             }
 
-            noteField
-                .padding(.horizontal, 16).padding(.top, 8)
-
             HStack(spacing: 8) {
                 Button { model.addSet(exercise.id) } label: {
                     HStack(spacing: 6) {
@@ -393,6 +437,9 @@ private struct OpenExerciseCard: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 8).padding(.top, 6)
+
+            notesBlock
+                .padding(.horizontal, 16).padding(.top, 10)
 
             Text("Tik op een set om hem te kiezen of aan te passen · tik op het nummer voor het type · veeg naar links om te verwijderen")
                 .sa(12).foregroundColor(Tokens.text3)
@@ -576,19 +623,20 @@ private struct RestBar: View {
             let left = end.timeIntervalSince(context.date)
             if left <= 0 {
                 HStack(spacing: 8) {
-                    Icon.timer(20).foregroundColor(ac.onAccent)
-                    Text("Rust voorbij").sa(15, .semibold).foregroundColor(ac.onAccent)
-                    Text("+" + Format.clock(seconds: Int(-left))).sa(22, .semibold, mono: true).foregroundColor(ac.onAccent)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Icon.timer(16).foregroundColor(ac.accentText)
+                    Text("Rust voorbij").sa(13, .medium).foregroundColor(Tokens.text2)
+                    Text("+" + Format.clock(seconds: Int(-left))).sa(14, .semibold, mono: true).foregroundColor(ac.accentText)
+                    Spacer(minLength: 0)
                     Button { model.skipRest() } label: {
-                        Text("Sluit").sa(15, .semibold).foregroundColor(ac.onAccent).padding(.horizontal, 14).frame(height: 44)
+                        Icon.close(14).foregroundColor(Tokens.text2).frame(width: 44, height: 36).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Sluit")
                 }
-                .padding(.leading, 14).padding(.trailing, 6)
-                .frame(height: Size.restBar)
-                .card(ac.accentLine, radius: Radius.button)
-                .padding(.horizontal, 12).padding(.bottom, 8)
+                .padding(.leading, 14).padding(.trailing, 2)
+                .frame(height: 36)
+                .card(ac.accentSoft, radius: Radius.field)
+                .padding(.horizontal, 12).padding(.bottom, 6)
             } else {
                 let pct = max(0, min(1, left / Double(max(1, total))))
                 ZStack(alignment: .leading) {
@@ -631,8 +679,7 @@ private struct RestBar: View {
 private struct Dock: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    @FocusState private var focus: Field?
-    @State private var draft = ""
+    @State private var buffer: String?
     let session: LiveSession
     let exercise: LiveExercise
     let set: LiveSet
@@ -643,13 +690,12 @@ private struct Dock: View {
         switch set.type {
         case .warmup: return ("Warming-up", Tokens.warm)
         case .drop: return ("Dropset", Tokens.drop)
-        case .failure: return ("Tot falen · \(ni) van \(nums.count)", Tokens.danger)
+        case .failure: return ("Tot falen \u{00B7} \(ni) van \(nums.count)", Tokens.danger)
         case .work: return ("Set \(ni) van \(nums.count)", Tokens.text2)
         }
     }
 
-    var body: some View {
-        let t = tag
+    private var prevText: String {
         let kind = Catalog.kind(exercise.name)
         var prev: String
         if let pw = set.pw, let pr = set.pr {
@@ -658,8 +704,14 @@ private struct Dock: View {
             prev = "Nog geen vorige keer"
         }
         if kind == .timed { prev = set.type == .warmup ? "Warming-up" : "Op tijd" }
-        if set.done { prev = "Gedaan · pas aan en tik op Klaar" }
-        if let m = set.rmax, let lo = set.rmin, m > lo, kind != .cardio && kind != .timed { prev += " · doel \(lo)–\(m) reps" }
+        if set.done { prev = "Gedaan \u{00B7} pas aan en tik op Klaar" }
+        if let m = set.rmax, let lo = set.rmin, m > lo, kind != .cardio && kind != .timed { prev += " \u{00B7} doel \(lo)\u{2013}\(m) reps" }
+        return prev
+    }
+
+    var body: some View {
+        let t = tag
+        let kind = Catalog.kind(exercise.name)
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
@@ -667,84 +719,103 @@ private struct Dock: View {
                 Text(t.text).sa(13, .semibold).foregroundColor(t.color)
             }
             .padding(.horizontal, 4)
-            Text(prev).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
+            Text(prevText).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
                 .padding(.horizontal, 4).padding(.top, 1)
 
             HStack(spacing: 10) {
-                if kind != .timed {
-                    weightStepper(kind)
-                }
-                repsStepper(kind)
+                if kind != .timed { weightBox(kind) }
+                repsBox(kind)
             }
             .padding(.top, 10)
 
-            PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
+            if model.editField != nil {
+                Numpad(onKey: { key($0, kind) })
+                    .padding(.top, 10)
+                HStack(spacing: 10) {
+                    Button { model.editField = nil } label: {
+                        Text("Klaar met invullen").sa(16, .semibold).foregroundColor(Tokens.text)
+                            .frame(maxWidth: .infinity).frame(height: 52)
+                            .card(Tokens.raised, radius: Radius.button)
+                    }
+                    .buttonStyle(.plain)
+                    PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: 52, icon: Icon.check(22)) { model.complete() }
+                }
                 .padding(.top, 10)
+            } else {
+                PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
+                    .padding(.top, 10)
+            }
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)
         .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
-        .onChange(of: focus) { _ in draft = "" }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Klaar") { focus = nil }
-            }
-        }
+        .onChange(of: model.editField) { _ in buffer = nil }
+        .onChange(of: set.id) { _ in buffer = nil }
     }
 
-    private enum Field { case weight, reps }
+    // MARK: Invoer
 
     private func weightText(_ kind: ExerciseKind) -> String {
         kind == .cardio ? Format.km(set.w) : Format.weight(set.w)
     }
 
-    private func weightStepper(_ kind: ExerciseKind) -> some View {
-        let binding = Binding<String>(
-            get: { focus == .weight ? draft : weightText(kind) },
-            set: { value in
-                draft = value
-                if let v = Double(value.replacingOccurrences(of: ",", with: ".")) { model.setCurrentValues(w: v, r: nil) }
-            }
-        )
-        return stepper(text: binding, placeholder: weightText(kind), unit: kind == .cardio ? " km" : " kg",
-                       field: .weight, keyboard: .decimalPad, minus: "Minder gewicht", plus: "Meer gewicht",
-                       onMinus: { model.stepWeight(-1) }, onPlus: { model.stepWeight(1) })
+    private func key(_ k: NumpadKey, _ kind: ExerciseKind) {
+        guard let field = model.editField else { return }
+        var text = buffer ?? ""
+        switch k {
+        case .digit(let d):
+            if text.count < 6 { text += String(d) }
+        case .comma:
+            if field == .weight && !text.contains(",") { text += text.isEmpty ? "0," : "," }
+        case .back:
+            if !text.isEmpty { text.removeLast() }
+        }
+        buffer = text
+        let parsed = text.replacingOccurrences(of: ",", with: ".")
+        if field == .weight {
+            if let v = Double(parsed) { model.setCurrentValues(w: v, r: nil) } else if text.isEmpty { model.setCurrentValues(w: 0, r: nil) }
+        } else if let v = Int(parsed) {
+            model.setCurrentValues(w: nil, r: v)
+        }
     }
 
-    private func repsStepper(_ kind: ExerciseKind) -> some View {
-        let binding = Binding<String>(
-            get: { focus == .reps ? draft : String(set.r) },
-            set: { value in
-                draft = value
-                if let v = Int(value) { model.setCurrentValues(w: nil, r: v) }
-            }
-        )
-        return stepper(text: binding, placeholder: String(set.r), unit: (kind == .cardio || kind == .timed) ? " min" : " reps",
-                       field: .reps, keyboard: .numberPad, minus: "Minder reps", plus: "Meer reps",
-                       onMinus: { model.stepReps(-1) }, onPlus: { model.stepReps(1) })
+    private func shown(_ field: EditField, _ normal: String) -> String {
+        if model.editField == field, let b = buffer, !b.isEmpty { return b }
+        return normal
     }
 
-    private func stepper(text: Binding<String>, placeholder: String, unit: String, field: Field, keyboard: UIKeyboardType,
-                         minus: String, plus: String,
-                         onMinus: @escaping () -> Void, onPlus: @escaping () -> Void) -> some View {
-        HStack(spacing: 0) {
+    private func weightBox(_ kind: ExerciseKind) -> some View {
+        valueBox(field: .weight, text: shown(.weight, weightText(kind)), unit: kind == .cardio ? " km" : " kg",
+                 minus: "Minder gewicht", plus: "Meer gewicht",
+                 onMinus: { buffer = nil; model.stepWeight(-1) }, onPlus: { buffer = nil; model.stepWeight(1) })
+    }
+
+    private func repsBox(_ kind: ExerciseKind) -> some View {
+        valueBox(field: .reps, text: shown(.reps, String(set.r)), unit: (kind == .cardio || kind == .timed) ? " min" : " reps",
+                 minus: "Minder reps", plus: "Meer reps",
+                 onMinus: { buffer = nil; model.stepReps(-1) }, onPlus: { buffer = nil; model.stepReps(1) })
+    }
+
+    private func valueBox(field: EditField, text: String, unit: String, minus: String, plus: String,
+                          onMinus: @escaping () -> Void, onPlus: @escaping () -> Void) -> some View {
+        let active = model.editField == field
+        return HStack(spacing: 0) {
             Button(action: onMinus) {
                 Icon.minus(20).foregroundColor(Tokens.text).frame(width: Size.stepperButtonWidth, height: Size.stepperBar)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(minus)
-            HStack(spacing: 0) {
-                TextField(placeholder, text: text)
-                    .sa(26, .semibold, tracking: -0.5, mono: true).foregroundColor(Tokens.text)
-                    .keyboardType(keyboard)
-                    .multilineTextAlignment(.trailing)
-                    .focused($focus, equals: field)
-                    .fixedSize()
-                Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
+            Button { model.editField = field } label: {
+                HStack(spacing: 0) {
+                    Text(text).sa(26, .semibold, tracking: -0.5, mono: true).foregroundColor(Tokens.text)
+                    Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
+                }
+                .lineLimit(1).minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity).frame(height: Size.stepperBar)
+                .contentShape(Rectangle())
             }
-            .lineLimit(1).minimumScaleFactor(0.7)
-            .frame(maxWidth: .infinity)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Vul in met het toetsenblok")
             Button(action: onPlus) {
                 Icon.plus(20, 2.4).foregroundColor(Tokens.text).frame(width: Size.stepperButtonWidth, height: Size.stepperBar)
                     .contentShape(Rectangle())
@@ -755,5 +826,49 @@ private struct Dock: View {
         .frame(maxWidth: .infinity)
         .frame(height: Size.stepperBar)
         .card(Tokens.raised, radius: Radius.row)
+        .overlay(RoundedRectangle(cornerRadius: Radius.row, style: .continuous).stroke(active ? ac.accentLine : Color.clear, lineWidth: 2))
+    }
+}
+
+enum NumpadKey: Hashable {
+    case digit(Int), comma, back
+}
+
+/// Eigen toetsenblok: 1 t/m 9, komma, 0 en wissen.
+private struct Numpad: View {
+    let onKey: (NumpadKey) -> Void
+    private let rows: [[NumpadKey]] = [
+        [.digit(1), .digit(2), .digit(3)],
+        [.digit(4), .digit(5), .digit(6)],
+        [.digit(7), .digit(8), .digit(9)],
+        [.comma, .digit(0), .back]
+    ]
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ForEach(0..<rows.count, id: \.self) { r in
+                HStack(spacing: 8) {
+                    ForEach(0..<3, id: \.self) { c in
+                        keyButton(rows[r][c])
+                    }
+                }
+            }
+        }
+    }
+
+    private func keyButton(_ k: NumpadKey) -> some View {
+        Button { onKey(k) } label: {
+            Group {
+                switch k {
+                case .digit(let d): Text(String(d)).sa(24, .semibold, mono: true)
+                case .comma: Text(",").sa(24, .semibold, mono: true)
+                case .back: Text("\u{232B}").sa(22, .semibold)
+                }
+            }
+            .foregroundColor(Tokens.text)
+            .frame(maxWidth: .infinity).frame(height: 48)
+            .card(Tokens.raised, radius: Radius.field)
+        }
+        .buttonStyle(.plain)
     }
 }
