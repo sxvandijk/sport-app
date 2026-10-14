@@ -5,7 +5,7 @@ import AudioToolbox
 
 enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts }
 enum HomeTab: Int, CaseIterable, Identifiable {
-    case start, training, progress, gym, profile
+    case gym, progress, start, training, profile
     var id: Int { rawValue }
     var title: String {
         switch self {
@@ -167,7 +167,8 @@ struct PersistedState: Codable {
 final class AppModel: ObservableObject {
     // Navigatie
     @Published var screen: Screen = .home
-    @Published var splash: String?
+    /// Ready, Set, Go bij het openen van de app.
+    @Published var launchSplash = false
     @Published var tab: HomeTab = .start
     @Published var sheet: SheetKind?
     @Published var sheetEx: UUID?
@@ -374,11 +375,6 @@ final class AppModel: ObservableObject {
     }
 
     // MARK: Start, stoppen, afronden
-
-    /// Snel starten vanaf het startscherm: eerst Ready, Set, Go, dan begint de training.
-    func quickStart(_ name: String) {
-        if session != nil { askStart(name) } else { splash = name }
-    }
 
     func askStart(_ name: String) {
         if session != nil {
