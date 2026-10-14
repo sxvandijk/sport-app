@@ -16,30 +16,47 @@ struct AppTabBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(HomeTab.allCases) { tab in
-                let on = model.tab == tab
-                Button {
-                    model.tab = tab
-                } label: {
-                    VStack(spacing: 3) {
-                        icon(tab)
-                        Text(tab.title).sa(11, .semibold)
+        GeometryReader { geo in
+            let count = CGFloat(HomeTab.allCases.count)
+            let slot = (geo.size.width - 10) / count
+            ZStack(alignment: .leading) {
+                Capsule().fill(ac.accentSoft)
+                    .frame(width: slot, height: 54)
+                    .offset(x: 5 + CGFloat(model.tab.rawValue) * slot)
+                    .animation(.easeOut(duration: 0.2), value: model.tab)
+                HStack(spacing: 0) {
+                    ForEach(HomeTab.allCases) { tab in
+                        let on = model.tab == tab
+                        VStack(spacing: 3) {
+                            icon(tab)
+                            Text(tab.title).sa(11, .semibold)
+                        }
+                        .foregroundColor(on ? ac.accentText : Tokens.text2)
+                        .frame(width: slot, height: 54)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+                        .accessibilityAction { model.tab = tab }
                     }
-                    .foregroundColor(on ? ac.accentText : Tokens.text2)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(Capsule().fill(on ? ac.accentSoft : Color.clear))
-                    .contentShape(Capsule())
                 }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(on ? .isSelected : [])
+                .padding(.horizontal, 5)
             }
+            .frame(height: 64)
+            .contentShape(Capsule())
+            // Tik of houd je vinger op de balk en schuif: de markering volgt je vinger.
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { v in
+                    let i = Int(((v.location.x - 5) / slot).rounded(.down))
+                    let clamped = min(max(i, 0), HomeTab.allCases.count - 1)
+                    if let t = HomeTab(rawValue: clamped), t != model.tab {
+                        Haptics.light()
+                        model.tab = t
+                    }
+                })
         }
-        .padding(5)
+        .frame(height: 64)
         .glassSurface(Capsule(), interactive: true)
         .padding(.horizontal, 16)
-        .padding(.bottom, 6)
+        .padding(.bottom, -8)
     }
 }
 
@@ -112,7 +129,7 @@ struct HomeContainer: View {
                 }
                 .padding(.horizontal, Spacing.screenMargin)
                 .padding(.top, 8)
-                .padding(.bottom, model.session == nil ? 110 : 190)
+                .padding(.bottom, model.session == nil ? 100 : 180)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             VStack(spacing: 8) {
@@ -121,6 +138,15 @@ struct HomeContainer: View {
             }
         }
         .background(AppBackground())
+        .simultaneousGesture(DragGesture(minimumDistance: 40)
+            .onEnded { v in
+                guard abs(v.translation.width) > abs(v.translation.height) * 1.8, abs(v.translation.width) > 70 else { return }
+                let next = model.tab.rawValue + (v.translation.width < 0 ? 1 : -1)
+                if let t = HomeTab(rawValue: next) {
+                    Haptics.light()
+                    withAnimation(.easeOut(duration: 0.2)) { model.tab = t }
+                }
+            })
     }
 }
 
@@ -301,6 +327,8 @@ struct ProgressTab: View {
     @State private var volumeInfo = false
     @State private var selectedWeek: Int?
     @State private var openWorkout: UUID?
+    @State private var workoutFilter: String?
+    @State private var workoutLimit = 10
 
     var body: some View {
         let stats = ProgressStats.make(history: model.history, now: Date())
@@ -320,6 +348,7 @@ struct ProgressTab: View {
             CalendarCard(expandable: true, openKey: \.calOpenProgress).padding(.top, 20)
             volumeCard(stats).padding(.top, 12)
             muscleCard(stats).padding(.top, 12)
+            allWorkoutsCard().padding(.top, 12)
             recordsSection(stats).padding(.top, 12)
         }
     }
@@ -403,44 +432,91 @@ struct ProgressTab: View {
             if items.isEmpty {
                 Text("Geen trainingen in deze week.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 8)
             }
-            ForEach(items) { h in
-                let open = openWorkout == h.id
-                VStack(alignment: .leading, spacing: 0) {
-                    Button { openWorkout = open ? nil : h.id } label: {
-                        HStack(spacing: 10) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(h.name).sa(16, .semibold).foregroundColor(Tokens.text)
-                                Text(DateText.short(h.date) + " \u{00B7} \(h.minutes) min \u{00B7} " + Format.thousands(ProgressStats.volume(of: h)) + " kg")
-                                    .sa(13).foregroundColor(Tokens.text2)
-                            }
-                            Spacer(minLength: 0)
-                            (open ? Icon.chevronUp(14) : Icon.chevronDown(14)).foregroundColor(Tokens.text3)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-                        .contentShape(Rectangle())
+            ForEach(items) { h in workoutRow(h) }
+        }
+    }
+
+    private func workoutRow(_ h: HistoryEntry) -> some View {
+        let open = openWorkout == h.id
+        return VStack(alignment: .leading, spacing: 0) {
+            Button { openWorkout = open ? nil : h.id } label: {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(h.name).sa(16, .semibold).foregroundColor(Tokens.text)
+                        Text(DateText.short(h.date) + " \u{00B7} \(h.minutes) min \u{00B7} " + Format.thousands(ProgressStats.volume(of: h)) + " kg")
+                            .sa(13).foregroundColor(Tokens.text2)
                     }
-                    .buttonStyle(.plain)
-                    if open {
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(h.exercises ?? [], id: \.name) { e in
-                                let sets = e.sets.filter { $0.type != .warmup }
-                                HStack(alignment: .firstTextBaseline) {
-                                    Text(e.name).sa(14, .medium).foregroundColor(Tokens.text).lineLimit(1)
-                                    Spacer(minLength: 8)
-                                    Text(sets.map { Format.weight($0.w) + "\u{00D7}" + String($0.r) }.joined(separator: ", "))
-                                        .sa(12, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
-                                }
-                            }
-                            if (h.exercises ?? []).isEmpty {
-                                Text("Van deze training is geen detail bewaard.").sa(13).foregroundColor(Tokens.text2)
-                            }
-                        }
-                        .padding(.bottom, 10)
-                    }
-                    Divider().background(Tokens.line)
+                    Spacer(minLength: 0)
+                    (open ? Icon.chevronUp(14) : Icon.chevronDown(14)).foregroundColor(Tokens.text3)
                 }
+                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if open {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(h.exercises ?? [], id: \.name) { e in
+                        let sets = e.sets.filter { $0.type != .warmup }
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(e.name).sa(14, .medium).foregroundColor(Tokens.text).lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text(sets.map { Format.weight($0.w) + "\u{00D7}" + String($0.r) }.joined(separator: ", "))
+                                .sa(12, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
+                        }
+                    }
+                    if (h.exercises ?? []).isEmpty {
+                        Text("Van deze training is geen detail bewaard.").sa(13).foregroundColor(Tokens.text2)
+                    }
+                }
+                .padding(.bottom, 10)
+            }
+            Divider().background(Tokens.line)
+        }
+    }
+
+    private func allWorkoutsCard() -> some View {
+        let names = Array(Set(model.history.map { $0.name })).sorted()
+        let all = model.history.sorted { $0.date > $1.date }
+        let shown = all.filter { workoutFilter == nil || $0.name == workoutFilter }
+        let visible = Array(shown.prefix(workoutLimit))
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Alle trainingen").sa(17, .semibold).foregroundColor(Tokens.text)
+                Spacer(minLength: 8)
+                Text("\(shown.count)").sa(13, .medium, mono: true).foregroundColor(Tokens.text2)
+            }
+            Menu {
+                Button { workoutFilter = nil; workoutLimit = 10 } label: { Label("Alle trainingen", systemImage: workoutFilter == nil ? "checkmark" : "circle") }
+                ForEach(names, id: \.self) { n in
+                    Button { workoutFilter = n; workoutLimit = 10 } label: { Label(n, systemImage: workoutFilter == n ? "checkmark" : "circle") }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Icon.filter(18)
+                    Text(workoutFilter ?? "Alle trainingen").sa(14, .medium).lineLimit(1)
+                    Icon.chevronDown(12, 2.4)
+                }
+                .foregroundColor(workoutFilter != nil ? ac.onAccent : Tokens.text)
+                .padding(.horizontal, 14).frame(height: 40)
+                .background(Capsule().fill(workoutFilter != nil ? ac.accentLine : Tokens.raised))
+            }
+            .padding(.top, 10).padding(.bottom, 4)
+            .accessibilityLabel("Filter op training")
+            if visible.isEmpty {
+                Text("Nog geen trainingen.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 10)
+            }
+            ForEach(visible) { h in workoutRow(h) }
+            if shown.count > visible.count {
+                Button { workoutLimit += 10 } label: {
+                    Text("Toon meer").sa(15, .semibold).foregroundColor(ac.accentText)
+                        .frame(maxWidth: .infinity).frame(height: 48).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(Tokens.surface, radius: Radius.card)
     }
 
     private func muscleCard(_ stats: ProgressStats) -> some View {

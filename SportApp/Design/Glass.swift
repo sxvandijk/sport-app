@@ -31,12 +31,21 @@ extension View {
 /// Rustige achtergrond met een zweem accentkleur bovenin, zodat glas iets heeft om doorheen te laten schijnen.
 struct AppBackground: View {
     @Environment(\.accentColors) private var ac
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         ZStack {
             Tokens.bg
-            LinearGradient(colors: [ac.accentSoft.opacity(0.55), Color.clear],
-                           startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.42))
+            if scheme == .dark {
+                LinearGradient(colors: [ac.accentSoft.opacity(0.55), Color.clear],
+                               startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.42))
+            } else {
+                // Lichte modus: een duidelijker kleurvlak bovenin en een zweem onderin.
+                LinearGradient(colors: [ac.accent.opacity(0.34), ac.accent.opacity(0.10), Color.clear],
+                               startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.55))
+                LinearGradient(colors: [Color.clear, ac.accent.opacity(0.10)],
+                               startPoint: UnitPoint(x: 0.5, y: 0.75), endPoint: .bottom)
+            }
         }
         .ignoresSafeArea()
     }
