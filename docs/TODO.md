@@ -8,6 +8,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Ronde 3c: "Alle trainingen" met filter in Progressie, tabbalk lager + glijdende markering + swipen tussen schermen, lichte achtergrond in light mode
 
 ## Volgende
+- [ ] Plaatje bij elke oefening (afbeelding/illustratie)
+- [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
 - [ ] Nieuw startscherm (bij openen): meer gecentreerd, snel de volgende training starten, "Ready Set Go"-splash
 - [ ] Design-ronde: moderner, nog minimalistisch (skills: ui-ux-pro-max, SwiftUI-expert, Apple HIG)
 - [ ] Machine-database controleren met echte gegevens (Basic-Fit, jouw gym); geen openbare bron met stapgroottes gevonden
