@@ -12,11 +12,11 @@ struct StartTab: View {
                 .frame(height: 44)
                 .frame(maxWidth: .infinity)
 
+            CalendarCard(expandable: true)
+
             Spacer(minLength: 24)
             hero(next)
             Spacer(minLength: 24)
-
-            CalendarCard(expandable: true)
         }
         .frame(minHeight: UIScreen.main.bounds.height - 230)
     }
@@ -43,15 +43,15 @@ struct StartTab: View {
                 Text(info.sub).sa(15, .medium).foregroundColor(Tokens.text2)
                 Text(info.muscles).sa(14).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
                 PrimaryButton(title: "Start \(name)", height: 64, fontSize: 19, icon: Icon.play(18)) {
-                    model.quickStart(name)
+                    model.askStart(name)
                 }
                 .padding(.top, 20)
                 HStack(spacing: 10) {
-                    secondary("Bekijk") { model.ovName = name; model.screen = .overview }
-                    secondary("Andere training") { model.tab = .training }
-                    secondary("Vrij") { model.askStart("") }
+                    secondary("Oefeningen bekijken") { model.ovName = name; model.screen = .overview }
+                    secondary("Andere training kiezen") { model.tab = .training }
                 }
                 .padding(.top, 4)
+                secondary("Vrije training zonder schema") { model.askStart("") }
             }
             .frame(maxWidth: .infinity)
         } else {
@@ -76,7 +76,7 @@ struct StartTab: View {
     }
 }
 
-/// Ready, Set, Go: korte opening voordat de training begint. Tik om over te slaan.
+/// Ready, Set, Go bij het openen van de app. Tik om over te slaan.
 struct SplashOverlay: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
@@ -84,36 +84,34 @@ struct SplashOverlay: View {
     private let words = ["Ready", "Set", "Go!"]
 
     var body: some View {
-        if let name = model.splash {
+        if model.launchSplash {
             ZStack {
+                Tokens.bg.ignoresSafeArea()
                 AppBackground()
                 VStack(spacing: 10) {
                     Text(words[step]).sa(84, .bold, tracking: -2)
                         .foregroundColor(step == 2 ? ac.accentText : Tokens.text)
                         .id(step)
                         .transition(.scale(scale: 0.6).combined(with: .opacity))
-                    Text(name).sa(18, .medium).foregroundColor(Tokens.text2)
+                    Text("Set").sa(18, .medium).foregroundColor(Tokens.text2)
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { go(name) }
-            .task(id: name) {
+            .onTapGesture { finish() }
+            .task {
                 for i in 0..<3 {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { step = i }
                     Haptics.light()
-                    try? await Task.sleep(nanoseconds: 550_000_000)
-                    if model.splash == nil { return }
+                    try? await Task.sleep(nanoseconds: 450_000_000)
+                    if !model.launchSplash { return }
                 }
-                go(name)
+                finish()
             }
             .transition(.opacity)
         }
     }
 
-    private func go(_ name: String) {
-        guard model.splash != nil else { return }
-        model.splash = nil
-        step = 0
-        model.doStart(name)
+    private func finish() {
+        withAnimation(.easeOut(duration: 0.25)) { model.launchSplash = false }
     }
 }

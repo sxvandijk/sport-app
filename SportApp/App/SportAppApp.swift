@@ -32,6 +32,7 @@ struct SportAppApp: App {
             _model = StateObject(wrappedValue: model)
         } else {
             let model = AppModel(fileURL: AppModel.defaultFileURL())
+            model.launchSplash = true
             UNUserNotificationCenter.current().delegate = NotificationHandler.shared
             Notifier.registerCategories()
             Notifier.onCreatineTaken = { model.markCreaDoneFromNotification() }
