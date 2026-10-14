@@ -11,9 +11,10 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Volgende
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
 - [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
+- [ ] Alle trainingen-pagina anders uitwerken en mooier maken
 - [ ] Leuker statistiekenscherm
 - [ ] Opzetstukken per oefening (touw, rechte stang, V-stang...): kiezen welke je gebruikt, gewicht/stap per opzetstuk apart; toevoegen via Gym > accessoires
-- [ ] Nieuw startscherm (bij openen): meer gecentreerd, snel de volgende training starten, "Ready Set Go"-splash
+- [x] Nieuw startscherm (Ronde 4a): tab "Start", gecentreerd, volgende training in één tik, Ready-Set-Go
 - [ ] Design-ronde: moderner, nog minimalistisch (skills: ui-ux-pro-max, SwiftUI-expert, Apple HIG)
 - [ ] Machine-database controleren met echte gegevens (Basic-Fit, jouw gym); geen openbare bron met stapgroottes gevonden
 

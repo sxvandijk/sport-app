@@ -300,6 +300,7 @@ extension Icon {
     }
 
     // Tabbalk (omtrek, 24 × 24, lijn 2)
+    static let tabStart = Icon(paths: ["M13 3L5 14h6l-1 7 8-11h-6l1-7z"])
     static let tabTraining = Icon(paths: ["M6.5 6v12M17.5 6v12M3.5 9v6M20.5 9v6M6.5 12h11"])
     static let tabProgress = Icon(paths: ["M5 20v-8M12 20V5M19 20v-5"])
     static let tabGym = Icon(paths: ["M4 21V9l8-5 8 5v12M9 21v-6h6v6"])
