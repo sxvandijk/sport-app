@@ -305,9 +305,17 @@ struct ReorderRow: ViewModifier {
         let lifted = coord.active == id
         return ZStack {
             content
+                .background(
+                    RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
+                        .fill(lifted ? Tokens.surface : Color.clear)
+                        .padding(.horizontal, lifted ? -10 : 0)
+                        .padding(.vertical, lifted ? -4 : 0)
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
                         .stroke(ac.accentLine, lineWidth: lifted ? 2 : 0)
+                        .padding(.horizontal, lifted ? -10 : 0)
+                        .padding(.vertical, lifted ? -4 : 0)
                 )
                 .offset(y: coord.offset(for: id))
                 .scaleEffect(lifted ? 1.02 : 1)

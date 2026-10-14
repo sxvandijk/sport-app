@@ -270,6 +270,7 @@ struct EditorScreen: View {
                             .card(Tokens.surface, radius: Radius.row)
 
                         if !reordering { warmupSection(draft, warmCount: warmCount) }
+                        if draft.items.count > 1 { reorderBar.padding(.top, 14) }
 
                         HStack(alignment: .firstTextBaseline) {
                             SectionLabel(text: reordering ? "Volgorde" : "Oefeningen")
@@ -279,17 +280,8 @@ struct EditorScreen: View {
                                     .sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
                                     .padding(.trailing, 8)
                             }
-                            if draft.items.count > 1 {
-                                Button { withAnimation(.easeOut(duration: 0.2)) { reordering.toggle() } } label: {
-                                    Text(reordering ? "Klaar" : "Volgorde aanpassen").sa(14, .semibold)
-                                        .foregroundColor(reordering ? ac.onAccent : ac.accentText)
-                                        .padding(.horizontal, 12).frame(height: 32)
-                                        .background(Capsule().fill(reordering ? ac.accentLine : ac.accentSoft))
-                                }
-                                .buttonStyle(.plain)
-                            }
                         }
-                        .padding(.top, reordering ? 24 : 24).padding(.bottom, 8)
+                        .padding(.top, 14).padding(.bottom, 8)
 
                         if reordering { reorderList(draft, ssList: supersetIndices(draft)) }
 
@@ -322,6 +314,7 @@ struct EditorScreen: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 4)
+                        if draft.items.count > 1 { reorderBar.padding(.top, 8) }
 
                         Text("Koppel twee oefeningen met de knop ertussen om er een superset van te maken.")
                             .sa(12).foregroundColor(Tokens.text3).multilineTextAlignment(.center).lineSpacing(3)
@@ -497,33 +490,69 @@ struct EditorScreen: View {
         .padding(.top, -4).padding(.bottom, 4)
     }
 
-    /// Compacte lijst om de volgorde aan te passen, zoals in het overzicht.
+    private var reorderBar: some View {
+        Button { withAnimation(.easeOut(duration: 0.2)) { reordering.toggle() } } label: {
+            HStack(spacing: 8) {
+                Icon.sort(16)
+                Text(reordering ? "Klaar met volgorde" : "Volgorde aanpassen").sa(14, .semibold)
+            }
+            .foregroundColor(reordering ? ac.onAccent : ac.accentText)
+            .frame(maxWidth: .infinity).frame(height: 40)
+            .background(Capsule().fill(reordering ? ac.accentLine : ac.accentSoft))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Compacte lijst om de volgorde aan te passen. Een superset beweegt als een geheel.
     @ViewBuilder
     private func reorderList(_ draft: Draft, ssList: [Int?]) -> some View {
-        ForEach(draft.items) { it in
-            let i = draft.items.firstIndex(where: { $0.id == it.id }) ?? 0
-            let hue: Color? = it.isWarmup ? Tokens.warm : ssList[i].map { SupersetStyle.color($0) }
-            HStack(spacing: 12) {
-                if it.isWarmup {
-                    Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
-                } else {
-                    NumberBadge(text: String(i - draft.items.filter { $0.isWarmup }.count + 1), hue: hue, size: 28)
+        let warmTotal = draft.items.filter { $0.isWarmup }.count
+        let blocks = draft.blocks
+        ForEach(blocks, id: \.first!.id) { members in
+            let head = members[0]
+            let hi = draft.items.firstIndex(where: { $0.id == head.id }) ?? 0
+            if !head.isWarmup && hi > warmTotal { linkToggle(hi, head, hue: nil) }
+            if members.count > 1 {
+                SupersetFrame(index: ssList[hi] ?? 0, count: members.count) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(members) { m in
+                            let mi = draft.items.firstIndex(where: { $0.id == m.id }) ?? 0
+                            if m.id != head.id { linkToggle(mi, m, hue: ssList[mi].map { SupersetStyle.color($0) }) }
+                            reorderItemRow(m, number: mi - warmTotal + 1, hue: ssList[mi].map { SupersetStyle.color($0) }, handle: false)
+                        }
+                    }
+                    .padding(.horizontal, 10)
                 }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(it.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
-                    Text((it.isWarmup ? "Warming-up \u{00B7} " : "") + "\(it.sets) \u{00D7} \(it.reps)")
-                        .sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
-                }
-                Spacer(minLength: 0)
-                cardHandle(it)
+                .overlay(alignment: .trailing) { cardHandle(head).padding(.trailing, 4) }
+                .reorderRow(head.id, coord)
+                .padding(.bottom, 8)
+            } else {
+                reorderItemRow(head, number: hi - warmTotal + 1, hue: nil, handle: true)
+                    .padding(.leading, 14).padding(.trailing, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .card(Tokens.surface, radius: Radius.button)
+                    .reorderRow(head.id, coord)
+                    .padding(.bottom, 8)
             }
-            .padding(.leading, 14).padding(.trailing, 4).frame(minHeight: 60)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .card(Tokens.surface, radius: Radius.button)
-            .overlay(RoundedRectangle(cornerRadius: Radius.button, style: .continuous).stroke(hue?.opacity(0.7) ?? Color.clear, lineWidth: 1.5))
-            .reorderRow(it.id, coord)
-            .padding(.bottom, 8)
         }
+    }
+
+    private func reorderItemRow(_ it: DraftItem, number: Int, hue: Color?, handle: Bool) -> some View {
+        HStack(spacing: 12) {
+            if it.isWarmup {
+                Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
+            } else {
+                NumberBadge(text: String(number), hue: hue, size: 28)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(it.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                Text((it.isWarmup ? "Warming-up \u{00B7} " : "") + "\(it.sets) \u{00D7} \(it.reps)")
+                    .sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
+            }
+            Spacer(minLength: 0)
+            if handle { cardHandle(it) } else { Color.clear.frame(width: 40, height: 44) }
+        }
+        .frame(minHeight: 60)
     }
 
     /// Drie streepjes: vasthouden en slepen. Alleen hier, zodat je overal anders gewoon kunt scrollen.
@@ -535,7 +564,7 @@ struct EditorScreen: View {
         }
         .frame(width: 40, height: 44)
         .contentShape(Rectangle())
-        .reorderGesture(it.id, coord) { target in model.moveDraftItem(it.id, onto: target) }
+        .reorderGesture(it.id, coord) { target in model.moveDraftBlock(it.id, onto: target) }
         .accessibilityLabel("Sleep om te verplaatsen")
     }
 

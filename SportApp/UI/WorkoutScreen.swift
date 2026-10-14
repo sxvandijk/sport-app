@@ -47,12 +47,14 @@ struct WorkoutScreen: View {
                     // Na een set of een andere oefening: het blok van de huidige oefening naar boven.
                     .onChange(of: info.cur?.setID) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
                     .onChange(of: openID) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
+                    .onChange(of: model.scrollTick) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
                     .onAppear { scrollToHead(proxy, headID, animated: false) }
                 }
-                if model.noteEdit == nil {
-                    WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
-                }
+                WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
+                    .opacity(model.noteEdit == nil ? 1 : 0)
+                    .allowsHitTesting(model.noteEdit == nil)
             }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .overlay { if model.noteEdit != nil { NotePopup() } }
             .background(Tokens.bg.ignoresSafeArea())
         }
@@ -61,7 +63,7 @@ struct WorkoutScreen: View {
     /// Zet het blok bovenaan. Een paar pogingen, omdat de lijst eerst van vorm verandert.
     private func scrollToHead(_ proxy: ScrollViewProxy, _ id: UUID?, animated: Bool) {
         guard let id = id else { return }
-        for delay in [0.05, 0.3] {
+        for delay in [0.05, 0.3, 0.6] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                 if animated {
                     withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("blk-\(id.uuidString)", anchor: .top) }
@@ -363,17 +365,20 @@ private struct OpenExerciseCard: View {
         let entries = Array((model.noteLog[exercise.name] ?? []).prefix(4))
         let start = model.session?.startAt ?? Date()
         return VStack(alignment: .leading, spacing: 6) {
-            Button { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: nil, text: "") } label: {
-                HStack(spacing: 8) {
-                    Icon.edit(16).foregroundColor(Tokens.text3)
-                    Text("Notitie, bijv. stoelstand 4").sa(14).foregroundColor(Tokens.text3)
-                    Spacer(minLength: 0)
+            HStack {
+                Text("NOTITIES").sa(12, .semibold, tracking: 0.48).foregroundColor(Tokens.text3)
+                Spacer(minLength: 0)
+                Button { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: nil, text: "") } label: {
+                    Icon.plus(14, 2.4).foregroundColor(ac.accentText)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(Tokens.raised))
+                        .frame(width: 44, height: 36)
+                        .contentShape(Rectangle())
                 }
-                .padding(.horizontal, 12).frame(height: 40)
-                .card(Tokens.raised, radius: Radius.field)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .accessibilityLabel("Notitie toevoegen")
             }
-            .buttonStyle(.plain)
+            .padding(.leading, 4).padding(.trailing, -8)
             ForEach(entries) { e in
                 noteRow(e, isNew: e.date >= start)
             }
@@ -481,7 +486,7 @@ private struct SetRow: View {
     }
 
     private var rowFill: Color {
-        if set.done { return ac.accentSoft.opacity(0.22) }
+        if set.done { return ac.accentSoft.opacity(0.42) }
         return isCur ? Tokens.raised : Tokens.surface
     }
 
@@ -494,7 +499,7 @@ private struct SetRow: View {
         case .work: typeColor = nil
         }
         let labelColor = typeColor ?? (isCur ? ac.accentText : Tokens.text2)
-        let valueColor = isCur ? Tokens.text : (set.done ? Tokens.text3 : Tokens.text2)
+        let valueColor = isCur ? Tokens.text : Tokens.text2
 
         return ZStack(alignment: .trailing) {
             HStack(spacing: 6) {
@@ -776,8 +781,11 @@ private struct Dock: View {
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)
         .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
-        .animation(nil, value: model.editField)
-        .transaction { $0.animation = nil }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight }
+        }
+        .animation(.easeOut(duration: 0.22), value: model.editField)
         .onChange(of: model.editField) { _ in buffer = nil }
         .onChange(of: set.id) { _ in buffer = nil }
     }
