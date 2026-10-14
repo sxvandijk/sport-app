@@ -128,7 +128,7 @@ private struct SheetBody: View {
             Color.clear.frame(height: inset)
         }
         .frame(maxWidth: .infinity)
-        .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface))
+        .glassSurface(TopRounded(radius: 28), fallback: Tokens.surface)
     }
 
     private var padded: some View {

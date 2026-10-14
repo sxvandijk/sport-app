@@ -117,11 +117,11 @@ struct WorkoutScreen: View {
                     if info.cur != nil && pill != 0 {
                         Button { scroller.scrollToHead(animated: true) } label: {
                             HStack(spacing: 6) {
-                                (pill < 0 ? Icon.chevronDown(16) : Icon.chevronUp(16)).foregroundColor(ac.onAccent)
-                                Text("Naar huidige set").sa(14, .semibold).foregroundColor(ac.onAccent)
+                                (pill < 0 ? Icon.chevronDown(16) : Icon.chevronUp(16)).foregroundColor(ac.accentText)
+                                Text("Naar huidige set").sa(14, .semibold).foregroundColor(Tokens.text)
                             }
-                            .padding(.horizontal, 16).frame(height: 40)
-                            .background(Capsule().fill(ac.accentLine))
+                            .padding(.horizontal, 18).frame(height: 44)
+                            .glassSurface(Capsule(), tint: ac.accentSoft, interactive: true, fallback: Tokens.raised)
                         }
                         .buttonStyle(.plain)
                         .padding(.bottom, 10)
@@ -694,7 +694,7 @@ private struct WorkoutBottom: View {
                     PrimaryButton(title: "Workout afronden", height: 58, fontSize: 18) { model.finish() }
                 }
                 .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 12)
-                .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
+                .background(TopRounded(radius: 28).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
             }
         }
     }
@@ -836,7 +836,7 @@ private struct Dock: View {
             }
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)
-        .background(TopRounded(radius: Radius.sheetTop).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
+        .background(TopRounded(radius: 28).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
         .contentShape(Rectangle())
         .onTapGesture {
             if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight }
@@ -1021,7 +1021,7 @@ private struct NotePopup: View {
                 }
             }
             .padding(22)
-            .card(Tokens.surface, radius: Radius.card)
+            .glassSurface(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .padding(.horizontal, 14)
         }
         .onAppear { focused = true }

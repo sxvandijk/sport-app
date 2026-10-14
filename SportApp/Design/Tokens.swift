@@ -3,10 +3,10 @@ import SwiftUI
 /// Alle vaste maten uit DESIGN.md hoofdstuk 4. Gebruik nooit losse getallen in een scherm.
 enum Radius {
     static let badge: CGFloat = 8
-    static let field: CGFloat = 12        // setrij, invoerveld, stepper in de schema-editor
-    static let row: CGFloat = 14          // +/−-balk in de dock, rij in een sheet
-    static let button: CGFloat = 16       // hoofdknop, schemablok, rij met een training
-    static let card: CGFloat = 20         // open oefening, kalenderblok, minibalk
+    static let field: CGFloat = 14        // setrij, invoerveld, stepper in de schema-editor
+    static let row: CGFloat = 16          // +/−-balk in de dock, rij in een sheet
+    static let button: CGFloat = 18       // hoofdknop, schemablok, rij met een training
+    static let card: CGFloat = 24         // open oefening, kalenderblok, minibalk
     static let sheetTop: CGFloat = 24     // bovenkant van de dock en van een sheet
     // Chips, Hervat en Wissel zijn pillen: gebruik `Capsule()`.
 }
