@@ -948,22 +948,42 @@ private struct GymSheet: View {
     @Environment(\.accentColors) private var ac
 
     var body: some View {
-        ForEach(model.gyms) { g in
-            ListRow(title: g.name, sub: g.summary, selected: g.id == model.gym.id) { model.chooseGym(g.id) }
+        // De actieve gym staat bovenaan en heeft een kleurtje.
+        let ordered = model.gyms.sorted { a, _ in a.id == model.gym.id }
+        ForEach(ordered) { g in
+            let active = g.id == model.gym.id
+            HStack(spacing: 0) {
+                Button { model.chooseGym(g.id) } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 8) {
+                            Text(g.name).sa(17, .semibold).foregroundColor(active ? ac.accentText : Tokens.text).lineLimit(1)
+                            if active { Text("Actief").sa(11, .bold, tracking: 0.4).foregroundColor(ac.accentText) }
+                        }
+                        Text(g.summary).sa(13).foregroundColor(Tokens.text2)
+                    }
+                    .padding(.leading, 16)
+                    .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                Button {
+                    let id = g.id
+                    model.sheet = nil
+                    model.nameEdit = NameEdit(title: "Gym hernoemen", subtitle: g.name, placeholder: "Nieuwe naam", text: g.name, confirmTitle: "Bewaar") { model.renameGym(id, to: $0) }
+                } label: {
+                    Icon.edit(18).foregroundColor(Tokens.text2).frame(width: 48, height: 48).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Hernoem \(g.name)")
+            }
+            .background(RoundedRectangle(cornerRadius: Radius.row, style: .continuous).fill(active ? ac.accentSoft : Tokens.raised))
+            .padding(.bottom, 6)
         }
         SheetRowButton(action: {
             model.sheet = nil
             model.nameEdit = NameEdit(title: "Nieuwe gym", placeholder: "Naam van de gym", text: "", confirmTitle: "Maak aan") { model.addGym(name: $0) }
         }) {
             actionRow(icon: Icon.plus(18, 2.4), title: "Nieuwe gym", color: ac.accentText)
-        }
-        .padding(.top, 2).padding(.bottom, 6)
-        SheetRowButton(action: {
-            let current = model.gym.name
-            model.sheet = nil
-            model.nameEdit = NameEdit(title: "Gym hernoemen", subtitle: current, placeholder: "Nieuwe naam", text: current, confirmTitle: "Bewaar") { model.renameGym($0) }
-        }) {
-            actionRow(icon: Icon.edit(18), title: "Hernoem \(model.gym.name)", color: Tokens.text)
         }
         .padding(.bottom, 6)
         if model.gyms.count > 1 {
