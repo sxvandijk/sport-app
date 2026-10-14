@@ -510,6 +510,41 @@ struct ProgressTab: View {
         .buttonStyle(.plain)
     }
 
+    private func muscleCard(_ stats: ProgressStats) -> some View {
+        let rows = Array(stats.muscleSets.prefix(8))
+        let top = max(rows.map { $0.sets }.max() ?? 1, 1)
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Sets per spiergroep").sa(17, .semibold).foregroundColor(Tokens.text)
+                Spacer()
+                Text("deze week").sa(13).foregroundColor(Tokens.text2)
+            }
+            .padding(.bottom, 8)
+            if rows.isEmpty {
+                Text("Nog geen sets deze week.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 6)
+            }
+            ForEach(0..<rows.count, id: \.self) { i in
+                HStack(spacing: 12) {
+                    Text(rows[i].muscle).sa(15).foregroundColor(Tokens.text).frame(width: 92, alignment: .leading)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Tokens.track)
+                            Capsule().fill(ac.accentLine)
+                                .frame(width: geo.size.width * CGFloat(rows[i].sets) / CGFloat(top))
+                        }
+                    }
+                    .frame(height: 8)
+                    Text("\(rows[i].sets)").sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
+                        .frame(width: 24, alignment: .trailing)
+                }
+                .frame(height: 30)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(radius: Radius.card)
+    }
+
     // MARK: Persoonlijke records (eigen pagina)
 
     private func recordsSection(_ stats: ProgressStats) -> some View {
