@@ -179,9 +179,8 @@ struct OverviewScreen: View {
                     model.askStart(name)
                 }
                 .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 12)
-                .background(Tokens.bg.ignoresSafeArea(edges: .bottom))
             }
-            .background(Tokens.bg.ignoresSafeArea())
+            .background(AppBackground())
         }
     }
 

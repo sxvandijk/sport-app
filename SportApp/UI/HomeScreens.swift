@@ -15,15 +15,24 @@ struct AppTabBar: View {
         }
     }
 
+    @State private var dragX: CGFloat?
+
     var body: some View {
         GeometryReader { geo in
             let count = CGFloat(HomeTab.allCases.count)
             let slot = (geo.size.width - 10) / count
+            let rest = 5 + CGFloat(model.tab.rawValue) * slot
+            let lensX = dragX.map { min(max($0 - slot / 2, 5), 5 + slot * (count - 1)) } ?? rest
             ZStack(alignment: .leading) {
-                Capsule().fill(ac.accentSoft)
+                // De "lens": volgt je vinger vloeiend en veert daarna in het gekozen tabblad.
+                Color.clear
                     .frame(width: slot, height: 54)
-                    .offset(x: 5 + CGFloat(model.tab.rawValue) * slot)
-                    .animation(.easeOut(duration: 0.2), value: model.tab)
+                    .glassSurface(Capsule(), tint: ac.accent.opacity(0.45), interactive: false, fallback: ac.accentSoft)
+                    .scaleEffect(dragX != nil ? 1.12 : 1)
+                    .offset(x: lensX)
+                    .animation(dragX != nil ? .interactiveSpring(response: 0.18, dampingFraction: 0.85)
+                                            : .spring(response: 0.38, dampingFraction: 0.74), value: lensX)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragX != nil)
                 HStack(spacing: 0) {
                     ForEach(HomeTab.allCases) { tab in
                         let on = model.tab == tab
@@ -42,19 +51,21 @@ struct AppTabBar: View {
             }
             .frame(height: 64)
             .contentShape(Capsule())
-            // Tik of houd je vinger op de balk en schuif: de markering volgt je vinger.
+            // Tik of houd je vinger op de balk en schuif: het glas volgt je vinger.
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { v in
+                    dragX = v.location.x
                     let i = Int(((v.location.x - 5) / slot).rounded(.down))
                     let clamped = min(max(i, 0), HomeTab.allCases.count - 1)
                     if let t = HomeTab(rawValue: clamped), t != model.tab {
                         Haptics.light()
                         model.tab = t
                     }
-                })
+                }
+                .onEnded { _ in dragX = nil })
         }
         .frame(height: 64)
-        .glassSurface(Capsule(), interactive: true)
+        .glassSurface(Capsule())
         .padding(.horizontal, 16)
         .padding(.bottom, -8)
     }
@@ -329,6 +340,7 @@ struct ProgressTab: View {
     @State private var openWorkout: UUID?
     @State private var workoutFilter: String?
     @State private var workoutLimit = 10
+    @State private var allOpen = false
 
     var body: some View {
         let stats = ProgressStats.make(history: model.history, now: Date())
@@ -480,11 +492,22 @@ struct ProgressTab: View {
         let shown = all.filter { workoutFilter == nil || $0.name == workoutFilter }
         let visible = Array(shown.prefix(workoutLimit))
         return VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Alle trainingen").sa(17, .semibold).foregroundColor(Tokens.text)
-                Spacer(minLength: 8)
-                Text("\(shown.count)").sa(13, .medium, mono: true).foregroundColor(Tokens.text2)
+            Button { withAnimation(.easeOut(duration: 0.2)) { allOpen.toggle() } } label: {
+                HStack(spacing: 14) {
+                    Icon.tabTraining.foregroundColor(ac.accentText)
+                        .frame(width: 48, height: 48).background(Circle().fill(ac.accentSoft))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Alle trainingen").sa(17, .semibold).foregroundColor(Tokens.text)
+                        Text("\(all.count) \(all.count == 1 ? "training" : "trainingen")").sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    (allOpen ? Icon.chevronUp(18) : Icon.chevronDown(18)).foregroundColor(Tokens.text2)
+                }
+                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            if allOpen {
             Menu {
                 Button { workoutFilter = nil; workoutLimit = 10 } label: { Label("Alle trainingen", systemImage: workoutFilter == nil ? "checkmark" : "circle") }
                 ForEach(names, id: \.self) { n in
@@ -513,8 +536,9 @@ struct ProgressTab: View {
                 }
                 .buttonStyle(.plain)
             }
+            }
         }
-        .padding(16)
+        .padding(.horizontal, 16).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.surface, radius: Radius.card)
     }
@@ -622,6 +646,14 @@ struct GymTab: View {
             .buttonStyle(.plain)
             .padding(.top, 16)
 
+            Button { model.openSheet(.machineadd) } label: {
+                Text("+ Apparaat toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
+                    .frame(maxWidth: .infinity).frame(height: 52)
+                    .card(Tokens.raised, radius: Radius.button)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 14)
+
             SectionLabel(text: "Apparaten in deze gym").padding(.top, 24).padding(.bottom, 2)
             if gym.equipment.isEmpty {
                 Text("Voeg de apparaten toe die jouw gym heeft. De plus/min-knoppen in je training volgen dan de gewichtsstappen van die apparaten.")
@@ -661,14 +693,6 @@ struct GymTab: View {
                 }
                 .card(Tokens.surface, radius: Radius.button)
             }
-
-            Button { model.openSheet(.machineadd) } label: {
-                Text("+ Apparaat toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
-                    .frame(maxWidth: .infinity).frame(height: 52)
-                    .card(Tokens.raised, radius: Radius.button)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 12)
 
             Text("Tik op een apparaat om de stappen aan te passen. De waarden uit de lijst zijn standaarden; controleer ze bij jouw machines.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 10)

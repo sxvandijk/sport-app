@@ -141,7 +141,7 @@ struct WorkoutScreen: View {
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .overlay { if model.noteEdit != nil { NotePopup().transition(.opacity) } }
             .animation(.easeOut(duration: 0.18), value: model.noteEdit != nil)
-            .background(Tokens.bg.ignoresSafeArea())
+            .background(AppBackground())
         }
     }
 }
@@ -198,7 +198,7 @@ private struct WorkoutTopBar: View {
             .frame(height: Size.progressLine)
             .padding(.horizontal, 20)
         }
-        .background(Tokens.bg)
+        .background(Color.clear)
     }
 
     private func stat(_ value: String, _ label: String) -> some View {
@@ -694,7 +694,7 @@ private struct WorkoutBottom: View {
                     PrimaryButton(title: "Workout afronden", height: 58, fontSize: 18) { model.finish() }
                 }
                 .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 12)
-                .background(TopRounded(radius: 28).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
+                .background { Color.clear.glassSurface(TopRounded(radius: 28), fallback: Tokens.surface).ignoresSafeArea(edges: .bottom) }
             }
         }
     }
@@ -836,7 +836,7 @@ private struct Dock: View {
             }
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 12)
-        .background(TopRounded(radius: 28).fill(Tokens.surface).ignoresSafeArea(edges: .bottom))
+        .background { Color.clear.glassSurface(TopRounded(radius: 28), fallback: Tokens.surface).ignoresSafeArea(edges: .bottom) }
         .contentShape(Rectangle())
         .onTapGesture {
             if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight }
