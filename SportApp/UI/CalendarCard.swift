@@ -87,7 +87,7 @@ struct CalendarCard: View {
             }
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
-        .card(Tokens.surface, radius: Radius.card)
+        .glassCard(radius: Radius.card)
     }
 
     private func info(for day: Date, today: Date) -> String {

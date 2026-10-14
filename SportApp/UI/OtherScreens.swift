@@ -159,7 +159,7 @@ struct OverviewScreen: View {
                             Spacer(minLength: 0)
                         }
                         .padding(.horizontal, 14).padding(.vertical, 12)
-                        .card(Tokens.surface, radius: Radius.row)
+                        .glassCard(radius: Radius.row)
                         .padding(.top, 14)
 
                         if !warmItems.isEmpty {
@@ -266,7 +266,7 @@ struct EditorScreen: View {
                         TextField("Bijv. Push B", text: nameBinding)
                             .sa(22, .semibold).foregroundColor(Tokens.text)
                             .padding(.horizontal, 16).frame(height: 56)
-                            .card(Tokens.surface, radius: Radius.row)
+                            .glassCard(radius: Radius.row)
 
                         if !reordering { warmupSection(draft, warmCount: warmCount) }
                         if draft.items.count > 1 { reorderBar.padding(.top, 14) }
@@ -333,7 +333,7 @@ struct EditorScreen: View {
                     .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 40)
                 }
             }
-            .background(Tokens.bg.ignoresSafeArea())
+            .background(AppBackground())
         }
     }
 
@@ -411,7 +411,7 @@ struct EditorScreen: View {
         }
         .padding(.leading, 16).padding(.trailing, 8).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.surface, radius: Radius.button)
+        .glassCard(radius: Radius.button)
         .reorderRow(it.id, coord)
         .padding(.bottom, 8)
     }
@@ -460,7 +460,7 @@ struct EditorScreen: View {
         }
         .padding(.leading, 16).padding(.trailing, 8).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.surface, radius: Radius.button)
+        .glassCard(radius: Radius.button)
         .overlay(itemBorder(hue))
         .reorderRow(it.id, coord)
         .padding(.bottom, 8)
@@ -534,7 +534,7 @@ struct EditorScreen: View {
                 reorderItemRow(head, number: hi - warmTotal + 1, hue: nil, handle: true)
                     .padding(.leading, 14).padding(.trailing, 4)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .card(Tokens.surface, radius: Radius.button)
+                    .glassCard(radius: Radius.button)
                     .reorderRow(head.id, coord)
                     .padding(.bottom, 8)
             }
@@ -802,7 +802,7 @@ struct SummaryScreen: View {
                 PrimaryButton(title: "Klaar", height: 58, fontSize: 18) { model.goHome() }
                     .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 12)
             }
-            .background(Tokens.bg.ignoresSafeArea())
+            .background(AppBackground())
         }
     }
 

@@ -96,6 +96,11 @@ extension EnvironmentValues {
 
 extension View {
     /// Een vlak met afgeronde hoeken (altijd `.continuous`).
+    /// Standaardvlak van de app: Liquid Glass op iOS 26, rustig matglas op oudere iOS.
+    func glassCard(radius: CGFloat) -> some View {
+        glassSurface(RoundedRectangle(cornerRadius: radius, style: .continuous), fallback: Tokens.surface)
+    }
+
     func card(_ fill: Color, radius: CGFloat) -> some View {
         background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
     }

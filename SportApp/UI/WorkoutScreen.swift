@@ -537,7 +537,7 @@ private struct OpenExerciseCard: View {
                 .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 2)
         }
         .padding(.top, 16).padding(.bottom, 10)
-        .card(Tokens.surface, radius: Radius.card)
+        .glassCard(radius: Radius.card)
         .padding(.horizontal, -8)
         .padding(.top, 4).padding(.bottom, 10)
     }
