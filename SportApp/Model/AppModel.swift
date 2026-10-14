@@ -17,7 +17,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, superset, add, settype, gym, program, tplmenu, exmenu
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -127,6 +127,7 @@ struct PersistedState: Codable {
     var creaLateTime: Int? = nil
     var creaDone: [String]? = nil     // dagen (yyyy-MM-dd) waarop je hem hebt afgevinkt
     var dataVersion: Int? = nil
+    var notes: [String: String]? = nil
 }
 
 /// De toestand van de hele app. De regels staan in `LiveSession`; dit is de laag die schermen en opslag verbindt.
@@ -160,6 +161,7 @@ final class AppModel: ObservableObject {
     @Published var creaLateOn: Bool
     @Published var creaLateTime: Int
     @Published var creaDone: [String]
+    @Published var notes: [String: String]
 
     // Werkscherm
     @Published var focusID: UUID?
@@ -215,6 +217,7 @@ final class AppModel: ObservableObject {
         creaLateOn = state.creaLateOn ?? true
         creaLateTime = state.creaLateTime ?? 18 * 60
         creaDone = state.creaDone ?? []
+        notes = state.notes ?? [:]
         // Eerdere versies hadden 1:30 als standaard rusttijd; de nieuwe standaard is 3:00.
         if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
@@ -259,7 +262,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, dataVersion: AppModel.dataVersion)
+                       creaDone: creaDone, dataVersion: AppModel.dataVersion, notes: notes)
     }
 
     func save() {
@@ -406,9 +409,57 @@ final class AppModel: ObservableObject {
 
     /// Kies zelf een set (ook een al gedane, om aan te passen). Daarna ga je weer verder waar je was.
     func selectSet(exID: UUID, setID: UUID) {
+        // Alleen de huidige set of een al gedane set (om aan te passen); een set die nog niet aan de beurt is blijft dicht.
+        let isCurrent = current().cur?.setID == setID
+        let isDone = session?.findSet(setID)?.done == true
+        guard isCurrent || isDone else { return }
         focusID = exID
         focusSetID = setID
         Haptics.light()
+    }
+
+    /// Vinkje van een gedane set weghalen.
+    func uncompleteSet(exID: UUID, setID: UUID) {
+        guard var s = session else { return }
+        s.uncomplete(set: setID, exID: exID)
+        session = s
+        focusSetID = nil
+        focusID = exID
+        restEnd = nil
+        Haptics.light()
+        save()
+    }
+
+    /// Cijfers die je met het toetsenbord intikt voor de huidige set.
+    func setCurrentValues(w: Double?, r: Int?) {
+        guard var s = session, let c = current().cur else { return }
+        s.setValues(set: c.setID, exID: c.exID, w: w, r: r)
+        session = s
+        save()
+    }
+
+    func setNote(_ text: String, for exercise: String) {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        notes[exercise] = t.isEmpty ? nil : text
+        save()
+    }
+
+    /// Ster: deze oefening wordt je vaste keuze als de oorspronkelijke bezet is.
+    func togglePreference(original: String, choice: String) {
+        if prefs[original] == choice { prefs[original] = nil } else { prefs[original] = choice }
+        save()
+    }
+
+    /// Verplaats een oefening in de editor naar de plek van een andere (slepen).
+    func moveDraftItem(_ id: UUID, onto targetID: UUID) {
+        guard var d = draft, id != targetID,
+              let from = d.items.firstIndex(where: { $0.id == id }),
+              let to = d.items.firstIndex(where: { $0.id == targetID }),
+              d.items[from].isWarmup == d.items[to].isWarmup else { return }
+        let item = d.items.remove(at: from)
+        d.items.insert(item, at: to)
+        EditorScreen.normalize(&d)
+        draft = d
     }
 
     func complete() {
@@ -428,7 +479,6 @@ final class AppModel: ObservableObject {
         if let seconds = result.restSeconds {
             restTotal = seconds
             restEnd = Date().addingTimeInterval(TimeInterval(seconds))
-            Notifier.scheduleRest(seconds: seconds)
         } else {
             restEnd = nil
             Notifier.cancelRest()
@@ -565,7 +615,6 @@ final class AppModel: ObservableObject {
             restEnd = end.addingTimeInterval(TimeInterval(delta))
             restTotal += delta
         }
-        if let e = restEnd { Notifier.scheduleRest(seconds: max(1, Int(e.timeIntervalSinceNow))) }
     }
 
     func skipRest() {

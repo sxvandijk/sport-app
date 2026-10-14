@@ -45,7 +45,9 @@ private struct SheetBody: View {
             }
             return ("Er loopt al een workout", "")
         case .explain: return ("Uitleg", name)
-        case .swap: return ("Oefening wisselen", name.isEmpty ? "" : "Bijvoorbeeld als de machine bezet is. Gedane sets van \(name) blijven staan.")
+        case .change: return ("Oefening wisselen", name.isEmpty ? "" : "Kies of je \(name) alleen nu of ook in je schema wisselt.")
+        case .pref: return ("Voorkeur kiezen", name.isEmpty ? "" : "Wat wil je doen als \(name) bezet is? Tik op de ster bij je keuze.")
+        case .swap: return ("Machine bezet", name.isEmpty ? "" : "Vervang \(name) voor nu. Gedane sets blijven staan.")
         case .superset: return ("Superset", name.isEmpty ? "" : "Koppel oefeningen aan \(name). Je wisselt na elke set.")
         case .add:
             if model.addToDraftWarmup { return ("Warming-up toevoegen", "Komt vooraan in deze training") }
@@ -120,7 +122,9 @@ private struct SheetBody: View {
         case .stop: StopSheet()
         case .start: StartSheet()
         case .explain: ExplainSheet()
-        case .swap: SwapSheet()
+        case .swap: SwapSheet(mode: .busy)
+        case .change: SwapSheet(mode: .change)
+        case .pref: SwapSheet(mode: .pref)
         case .superset: SupersetSheet()
         case .add: SearchList(mode: .add)
         case .settype: SetTypeSheet()
@@ -224,7 +228,7 @@ private struct ExerciseMenuSheet: View {
     var body: some View {
         SheetRowButton(action: {
             let id = model.sheetEx
-            model.openSheet(.swap, exID: id)
+            model.openSheet(.change, exID: id)
         }) {
             HStack(spacing: 12) {
                 Icon.swap(20).foregroundColor(Tokens.text)
@@ -365,36 +369,24 @@ private struct ExplainSheet: View {
 // MARK: - Machine bezet
 
 private struct SwapSheet: View {
+    enum Mode { case busy, change, pref }
+
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    let mode: Mode
 
     private func scopeText(_ scope: SwapScope) -> String {
-        switch scope {
-        case .now: return "Alleen nu"
-        case .schema: return "Vast in schema"
-        case .prefOnly: return "Als voorkeur"
-        }
+        scope == .now ? "Alleen nu" : "Vast in schema"
     }
 
     private var scopeHelp: String {
-        switch model.swapScope {
-        case .now: return "Alleen in deze workout. Je schema blijft zoals het was."
-        case .schema: return "De oefening wordt ook in je schema vervangen."
-        case .prefOnly: return "Je wisselt nu niet, maar de app onthoudt je keuze voor als het apparaat bezet is."
-        }
+        model.swapScope == .schema ? "De oefening wordt ook in je schema vervangen." : "Alleen in deze workout. Je schema blijft zoals het was."
     }
 
-    var body: some View {
-        let ex = model.session?.exercise(model.sheetEx)
-        let name = ex?.name ?? ""
-        let original = ex?.from ?? name
-        let inWorkout = model.session?.exercises.map { $0.name } ?? []
-        let suggestion = Catalog.suggestion(for: name, excluding: inWorkout)
-        let preference = model.prefs[original]
-
+    private var scopePicker: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
-                ForEach([SwapScope.now, .schema, .prefOnly], id: \.self) { scope in
+                ForEach([SwapScope.now, .schema], id: \.self) { scope in
                     let on = model.swapScope == scope
                     Button { model.swapScope = scope } label: {
                         Text(scopeText(scope)).sa(14, .semibold)
@@ -411,52 +403,54 @@ private struct SwapSheet: View {
             .card(Tokens.raised, radius: Radius.row)
             Text(scopeHelp).sa(13).foregroundColor(Tokens.text2).padding(.top, 8).padding(.horizontal, 4)
         }
+    }
 
-        SectionLabel(text: "Suggestie van de app").padding(.top, 18).padding(.bottom, 8)
-        SheetRowButton(action: { model.swapExercise(to: suggestion, manual: false) }) {
-            HStack(spacing: 12) {
-                TitleSub(title: suggestion, sub: Catalog.meta(suggestion))
-                Spacer(minLength: 0)
-                Icon.swap(20).foregroundColor(Tokens.text)
+    var body: some View {
+        let ex = model.session?.exercise(model.sheetEx)
+        let name = ex?.name ?? ""
+        let original = ex?.from ?? name
+        let inWorkout = model.session?.exercises.map { $0.name } ?? []
+        let suggestion = Catalog.suggestion(for: name, excluding: inWorkout)
+        let preference = model.prefs[original]
+
+        if mode == .change { scopePicker }
+
+        if mode != .pref {
+            SectionLabel(text: "Suggestie van de app").padding(.top, mode == .change ? 18 : 4).padding(.bottom, 8)
+            SheetRowButton(action: { model.swapExercise(to: suggestion, manual: false) }) {
+                HStack(spacing: 12) {
+                    TitleSub(title: suggestion, sub: Catalog.meta(suggestion))
+                    Spacer(minLength: 0)
+                    Icon.swap(20).foregroundColor(Tokens.text)
+                }
+                .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 60)
             }
-            .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 60)
         }
 
-        SectionLabel(text: "Mijn voorkeur").padding(.top, 20).padding(.bottom, 8)
+        SectionLabel(text: "Mijn voorkeur").padding(.top, mode == .pref ? 4 : 20).padding(.bottom, 8)
         if let pref = preference {
-            SheetRowButton(action: { model.swapExercise(to: pref, manual: false) }) {
+            SheetRowButton(action: { if mode != .pref { model.swapExercise(to: pref, manual: false) } }) {
                 HStack(spacing: 12) {
                     Icon.star(20).foregroundColor(ac.accentText)
                     TitleSub(title: pref, sub: Catalog.meta(pref))
                     Spacer(minLength: 0)
+                    if mode != .pref { Icon.swap(20).foregroundColor(Tokens.text) }
                 }
                 .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 60)
             }
-            Button { model.clearPreference(for: original) } label: {
-                Text("Voorkeur wissen").sa(14, .medium).foregroundColor(Tokens.text2)
-                    .frame(height: 40, alignment: .leading)
+            if mode == .pref {
+                Button { model.clearPreference(for: original) } label: {
+                    Text("Voorkeur wissen").sa(14, .medium).foregroundColor(Tokens.text2).frame(height: 40, alignment: .leading)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         } else {
-            Text("Nog geen voorkeur. Kies ‘Als voorkeur’ hierboven en tik daarna een oefening aan.")
+            Text(mode == .pref ? "Nog geen voorkeur. Tik hieronder op de ster bij een oefening." : "Nog geen voorkeur. Tik op een ster bij een oefening hieronder.")
                 .sa(15).foregroundColor(Tokens.text2).padding(.vertical, 4)
         }
 
-        SectionLabel(text: "Zelf kiezen").padding(.top, 20).padding(.bottom, 8)
-        SearchList(mode: .swap)
-
-        if model.swapScope != .prefOnly {
-            HStack(spacing: 12) {
-                Text("Bewaar mijn keuze ook als voorkeur").sa(15, .medium).foregroundColor(Tokens.text)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                SAToggle(isOn: model.savePref, onColor: ac.accentLine, label: "Bewaar als voorkeur") {
-                    model.savePref.toggle()
-                }
-            }
-            .padding(.horizontal, 16).padding(.vertical, 10)
-            .card(Tokens.raised, radius: Radius.row)
-            .padding(.top, 12)
-        }
+        SectionLabel(text: mode == .pref ? "Oefeningen" : "Zelf kiezen").padding(.top, 20).padding(.bottom, 8)
+        SearchList(mode: mode == .pref ? .preference : .swap, showStar: mode != .change)
     }
 }
 
@@ -526,11 +520,12 @@ private struct SupersetSheet: View {
 // MARK: - Zoeken (toevoegen, bezet, superset)
 
 private struct SearchList: View {
-    enum Mode { case add, swap, superset }
+    enum Mode { case add, swap, superset, preference }
 
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     let mode: Mode
+    var showStar = false
     @State private var creating = false
     @State private var newKind: ExerciseKind = .weights
     @State private var newMuscle = "Overig"
@@ -544,20 +539,20 @@ private struct SearchList: View {
         let current = model.session?.exercise(model.sheetEx)
         let pool: [(name: String, info: ExerciseInfo)] = Catalog.all + Catalog.custom.keys.sorted().map { (name: $0, info: Catalog.info($0)) }
         var names = pool.filter { item in
-            if mode == .swap, let c = current, item.name == c.name { return false }
+            if mode == .swap || mode == .preference, let c = current, item.name == c.name { return false }
             if let m = muscleFilter, item.info.muscle != m { return false }
             return q.isEmpty || item.name.lowercased().contains(q) || item.info.muscle.lowercased().contains(q)
         }
         if model.addToDraftWarmup && q.isEmpty && muscleFilter == nil {
             let first = names.filter { Catalog.warmupNames.contains($0.name) }
             names = first + names.filter { !Catalog.warmupNames.contains($0.name) }
-        } else if mode == .swap && q.isEmpty && muscleFilter == nil, let c = current {
+        } else if (mode == .swap || mode == .preference) && q.isEmpty && muscleFilter == nil, let c = current {
             let muscle = Catalog.info(c.name).muscle
             let same = names.filter { $0.info.muscle == muscle }
             let other = names.filter { $0.info.muscle != muscle }
             names = same + other
         }
-        return Array(names.prefix((q.isEmpty && muscleFilter == nil) ? 10 : 40))
+        return names
     }
 
     var body: some View {
@@ -576,28 +571,53 @@ private struct SearchList: View {
             muscleChips.padding(.top, 8)
             Spacer().frame(height: 4)
 
-            ForEach(0..<shown.count, id: \.self) { i in
-                let item = shown[i]
-                let chosen = mode == .superset && model.selectedNew.contains(item.name)
-                Button { pick(item.name) } label: {
-                    HStack(spacing: 12) {
-                        TitleSub(title: item.name, sub: Catalog.meta(item.name), titleSize: 17, titleWeight: .medium)
-                        Spacer(minLength: 0)
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(0..<shown.count, id: \.self) { i in
+                    row(shown[i])
+                }
+                if shown.isEmpty {
+                    Text("Niets gevonden.").sa(15).foregroundColor(Tokens.text2).padding(.horizontal, 4).padding(.vertical, 12)
+                }
+            }
+            // Vaste minimale hoogte: de lijst springt niet omlaag als er minder resultaten zijn.
+            .frame(maxWidth: .infinity, minHeight: 420, alignment: .topLeading)
+            createSection
+        }
+    }
+
+    private var originalName: String {
+        let ex = model.session?.exercise(model.sheetEx)
+        return ex?.from ?? ex?.name ?? ""
+    }
+
+    private func row(_ item: (name: String, info: ExerciseInfo)) -> some View {
+        let chosen = mode == .superset && model.selectedNew.contains(item.name)
+        let isPref = model.prefs[originalName] == item.name
+        return HStack(spacing: 4) {
+            Button { pick(item.name) } label: {
+                HStack(spacing: 12) {
+                    TitleSub(title: item.name, sub: Catalog.meta(item.name), titleSize: 17, titleWeight: .medium)
+                    Spacer(minLength: 0)
+                    if mode != .preference {
                         iconFor(chosen: chosen)
                             .foregroundColor(chosen ? ac.onAccent : Tokens.text)
                             .frame(width: 32, height: 32)
                             .background(Circle().fill(chosen ? ac.accentLine : Tokens.raised))
                     }
-                    .padding(.horizontal, 4).padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-                    .contentShape(Rectangle())
+                }
+                .padding(.horizontal, 4).padding(.vertical, 8)
+                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if showStar {
+                Button { model.togglePreference(original: originalName, choice: item.name) } label: {
+                    Icon.star(20).foregroundColor(isPref ? ac.accentText : Tokens.text3)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(isPref ? "Voorkeur, tik om te wissen" : "Maak dit je voorkeur")
             }
-            if shown.isEmpty {
-                Text("Niets gevonden.").sa(15).foregroundColor(Tokens.text2).padding(.horizontal, 4).padding(.vertical, 12)
-            }
-            createSection
         }
     }
 
@@ -676,7 +696,7 @@ private struct SearchList: View {
 
     private func iconFor(chosen: Bool) -> Icon {
         switch mode {
-        case .swap: return Icon.swap(16)
+        case .swap, .preference: return Icon.swap(16)
         case .add: return Icon.plus(16, 2.6)
         case .superset: return chosen ? Icon.check(16, 2.6) : Icon.plus(16, 2.6)
         }
@@ -698,7 +718,7 @@ private struct SearchList: View {
             } else {
                 model.addExercise(name)
             }
-        case .swap:
+        case .swap, .preference:
             model.swapExercise(to: name, manual: true)
         case .superset:
             if let i = model.selectedNew.firstIndex(of: name) { model.selectedNew.remove(at: i) } else { model.selectedNew.append(name) }

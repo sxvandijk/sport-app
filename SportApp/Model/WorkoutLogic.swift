@@ -290,6 +290,18 @@ struct LiveSession: Codable, Hashable {
         exercises[e].sets[s].w = Catalog.step(exercises[e].name, weight: exercises[e].sets[s].w, dir: dir)
     }
 
+    mutating func setValues(set setID: UUID, exID: UUID, w: Double?, r: Int?) {
+        guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
+        if let w = w { exercises[e].sets[s].w = max(0, (w * 100).rounded() / 100) }
+        if let r = r { exercises[e].sets[s].r = max(1, r) }
+    }
+
+    /// Haalt het vinkje van een gedane set weg.
+    mutating func uncomplete(set setID: UUID, exID: UUID) {
+        guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
+        exercises[e].sets[s].done = false
+    }
+
     mutating func stepReps(set setID: UUID, exID: UUID, dir: Int) {
         guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
         exercises[e].sets[s].r = max(1, exercises[e].sets[s].r + dir)

@@ -204,13 +204,13 @@ struct SupersetFrame<Content: View>: View {
                 Icon.link(14, 2.4)
                 Text("SUPERSET \(index + 1) \u{00B7} \(count) OEFENINGEN").sa(11, .bold, tracking: 0.66)
             }
-            .foregroundColor(hue)
-            .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+            .foregroundColor(hue.opacity(0.75))
+            .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 2)
             content
         }
         .padding(.bottom, 6)
-        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(hue.opacity(0.10)))
-        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).stroke(hue.opacity(0.55), lineWidth: 1.5))
+        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(hue.opacity(0.05)))
+        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).stroke(hue.opacity(0.28), lineWidth: 1))
         .padding(.vertical, 6)
     }
 }
