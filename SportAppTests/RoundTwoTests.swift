@@ -71,7 +71,7 @@ final class RoundTwoTests: XCTestCase {
         model.addGym(name: "Basic-Fit Zuid")
         XCTAssertEqual(model.gyms.count, 2)
         XCTAssertEqual(model.gym.name, "Basic-Fit Zuid")
-        model.renameGym("Basic-Fit Noord")
+        model.renameGym(model.gym.id, to: "Basic-Fit Noord")
         XCTAssertEqual(model.gym.name, "Basic-Fit Noord")
         model.deleteGym(model.gym.id)
         XCTAssertEqual(model.gyms.count, 1)

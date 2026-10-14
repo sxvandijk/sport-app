@@ -1010,11 +1010,11 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    func renameGym(_ name: String) {
+    func renameGym(_ id: String, to name: String) {
         let n = name.trimmingCharacters(in: .whitespaces)
-        guard !n.isEmpty else { return }
-        mutateGym { $0.name = n }
-        sheet = nil
+        guard !n.isEmpty, let i = gyms.firstIndex(where: { $0.id == id }) else { return }
+        gyms[i].name = n
+        save()
     }
 
     func deleteGym(_ id: String) {
