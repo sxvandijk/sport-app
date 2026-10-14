@@ -3,8 +3,16 @@ import SwiftUI
 struct WorkoutScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    @State private var openMinY: CGFloat = 0
     @State private var userScrolled = false
+    @State private var viewportY: CGFloat = 0
+    @State private var cardY: CGFloat = 0
+
+    /// Waar de open oefening nu staat ten opzichte van de bovenkant van de lijst.
+    private var openMinY: CGFloat { cardY - viewportY }
+
+    private func updateOffset() {
+        if openMinY > -30 && openMinY < 190 { userScrolled = false }
+    }
 
     var body: some View {
         if let s = model.session {
@@ -22,19 +30,20 @@ struct WorkoutScreen: View {
                             .animation(nil, value: openID)
                     }
                     .coordinateSpace(name: "wscroll")
-                    .onPreferenceChange(OpenCardKey.self) { value in
-                        openMinY = value
-                        if value > -20 && value < 150 { userScrolled = false }
-                    }
+                    .background(GeometryReader { g in
+                        Color.clear.preference(key: ViewportKey.self, value: g.frame(in: .global).minY)
+                    })
+                    .onPreferenceChange(ViewportKey.self) { viewportY = $0; updateOffset() }
+                    .onPreferenceChange(OpenCardKey.self) { cardY = $0; updateOffset() }
                     .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { _ in userScrolled = true })
                     .overlay(alignment: .bottom) {
-                        if info.cur != nil && (userScrolled || openMinY < -60 || openMinY > 520) {
+                        if info.cur != nil && (userScrolled || openMinY < -30 || openMinY > 190) {
                             Button {
                                 userScrolled = false
-                                scrollToHead(proxy, headID, animated: true)
+                                scrollToHead(proxy, headID, animated: true, repeats: false)
                             } label: {
                                 HStack(spacing: 6) {
-                                    (openMinY > 520 ? Icon.chevronDown(16) : Icon.chevronUp(16)).foregroundColor(ac.onAccent)
+                                    (openMinY > 190 ? Icon.chevronDown(16) : Icon.chevronUp(16)).foregroundColor(ac.onAccent)
                                     Text("Naar huidige set").sa(14, .semibold).foregroundColor(ac.onAccent)
                                 }
                                 .padding(.horizontal, 16).frame(height: 40)
@@ -46,10 +55,11 @@ struct WorkoutScreen: View {
                     }
                     // Na een set of een andere oefening: het blok van de huidige oefening naar boven.
                     .onChange(of: info.cur?.setID) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
-                    .onChange(of: openID) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
                     .onChange(of: model.scrollTick) { _ in userScrolled = false; scrollToHead(proxy, headID, animated: false) }
                     .onAppear { scrollToHead(proxy, headID, animated: false) }
                 }
+                // Een andere oefening: de lijst start opnieuw bovenaan en springt dan naar het goede blok.
+                .id(openID)
                 WorkoutBottom(session: s, cur: info.cur, hasQueue: !info.queue.isEmpty)
                     .opacity(model.noteEdit == nil ? 1 : 0)
                     .allowsHitTesting(model.noteEdit == nil)
@@ -61,9 +71,9 @@ struct WorkoutScreen: View {
     }
 
     /// Zet het blok bovenaan. Een paar pogingen, omdat de lijst eerst van vorm verandert.
-    private func scrollToHead(_ proxy: ScrollViewProxy, _ id: UUID?, animated: Bool) {
+    private func scrollToHead(_ proxy: ScrollViewProxy, _ id: UUID?, animated: Bool, repeats: Bool = true) {
         guard let id = id else { return }
-        for delay in [0.05, 0.3, 0.6] {
+        for delay in (repeats ? [0.05, 0.3, 0.6] : [0.0]) {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                 if animated {
                     withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("blk-\(id.uuidString)", anchor: .top) }
@@ -75,6 +85,11 @@ struct WorkoutScreen: View {
             }
         }
     }
+}
+
+private struct ViewportKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
 /// Waar de open oefening in beeld staat (voor de knop "Naar huidige set").
@@ -171,6 +186,19 @@ private struct WorkoutList: View {
                 let bi = blocks.firstIndex(where: { $0.first?.id == members.first?.id }) ?? 0
                 Color.clear.frame(height: 0).id("blk-\(members[0].id.uuidString)")
                 blockView(members, blockIndex: bi, blocks: blocks, openID: openID)
+            }
+            if !session.exercises.isEmpty {
+                Button { model.openSheet(.add) } label: {
+                    HStack(spacing: 6) {
+                        Icon.plus(18, 2.4)
+                        Text("Oefening toevoegen").sa(16, .semibold)
+                    }
+                    .foregroundColor(ac.accentText)
+                    .frame(maxWidth: .infinity).frame(height: 52)
+                    .card(Tokens.raised, radius: Radius.button)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 14)
             }
             // Ruimte onderaan, zodat ook het laatste blok bovenaan kan staan.
             Color.clear.frame(height: 420)
@@ -369,16 +397,20 @@ private struct OpenExerciseCard: View {
                 Text("NOTITIES").sa(12, .semibold, tracking: 0.48).foregroundColor(Tokens.text3)
                 Spacer(minLength: 0)
                 Button { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: nil, text: "") } label: {
-                    Icon.plus(14, 2.4).foregroundColor(ac.accentText)
-                        .frame(width: 28, height: 28)
-                        .background(Circle().fill(Tokens.raised))
-                        .frame(width: 44, height: 36)
-                        .contentShape(Rectangle())
+                    HStack(spacing: 4) {
+                        Icon.plus(12, 2.6)
+                        Text("Notitie").sa(13, .semibold)
+                    }
+                    .foregroundColor(ac.accentText)
+                    .padding(.horizontal, 10).frame(height: 28)
+                    .background(Capsule().fill(Tokens.raised))
+                    .frame(minHeight: 36)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Notitie toevoegen")
             }
-            .padding(.leading, 4).padding(.trailing, -8)
+            .padding(.leading, 4)
             ForEach(entries) { e in
                 noteRow(e, isNew: e.date >= start)
             }
@@ -460,7 +492,7 @@ private struct OpenExerciseCard: View {
         .padding(.top, 16).padding(.bottom, 10)
         .card(Tokens.surface, radius: Radius.card)
         .background(GeometryReader { g in
-            Color.clear.preference(key: OpenCardKey.self, value: g.frame(in: .named("wscroll")).minY)
+            Color.clear.preference(key: OpenCardKey.self, value: g.frame(in: .global).minY)
         })
         .padding(.horizontal, -8)
         .padding(.top, 4).padding(.bottom, 10)
@@ -610,10 +642,6 @@ private struct WorkoutBottom: View {
                 }
             }
 
-            if let end = model.restEnd, cur != nil {
-                RestBar(end: end, total: model.restTotal)
-            }
-
             if let cur = cur, let ex = session.exercise(cur.exID), let set = session.findSet(cur.setID) {
                 Dock(session: session, exercise: ex, set: set)
             } else if hasQueue {
@@ -628,7 +656,8 @@ private struct WorkoutBottom: View {
     }
 }
 
-private struct RestBar: View {
+/// Kleine rust-timer, in het invoervak onder de oefennaam.
+private struct RestInline: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     let end: Date
@@ -637,57 +666,30 @@ private struct RestBar: View {
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 0.25)) { context in
             let left = end.timeIntervalSince(context.date)
-            if left <= 0 {
-                HStack(spacing: 8) {
-                    Icon.timer(16).foregroundColor(ac.accentText)
-                    Text("Rust voorbij").sa(13, .medium).foregroundColor(Tokens.text2)
-                    Text("+" + Format.clock(seconds: Int(-left))).sa(14, .semibold, mono: true).foregroundColor(ac.accentText)
-                    Spacer(minLength: 0)
-                    Button { model.skipRest() } label: {
-                        Icon.close(14).foregroundColor(Tokens.text2).frame(width: 44, height: 36).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Sluit")
-                }
-                .padding(.leading, 14).padding(.trailing, 2)
-                .frame(height: 36)
-                .card(ac.accentSoft, radius: Radius.field)
-                .padding(.horizontal, 12).padding(.bottom, 6)
-            } else {
-                let pct = max(0, min(1, left / Double(max(1, total))))
+            let over = left <= 0
+            let pct = over ? 0 : max(0, min(1, left / Double(max(1, total))))
+            Button { model.skipRest() } label: {
                 ZStack(alignment: .leading) {
                     GeometryReader { geo in
                         Rectangle().fill(ac.accentSoft).frame(width: geo.size.width * CGFloat(pct))
                     }
-                    HStack(spacing: 4) {
-                        Icon.timer(20).foregroundColor(Tokens.text)
-                        Text("Rust").sa(15, .medium).foregroundColor(Tokens.text2).padding(.leading, 4)
-                        Text(Format.clock(seconds: Int(left + 0.999))).sa(22, .semibold, mono: true)
-                            .foregroundColor(Tokens.text).frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 8)
-                        Button { model.adjustRest(-15) } label: {
-                            Text("−15").sa(15, .semibold, mono: true).foregroundColor(Tokens.text).frame(width: 48, height: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("15 seconden minder")
-                        Button { model.adjustRest(15) } label: {
-                            Text("+15").sa(15, .semibold, mono: true).foregroundColor(Tokens.text).frame(width: 48, height: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("15 seconden meer")
-                        Button { model.skipRest() } label: {
-                            Text("Sla over").sa(15, .semibold).foregroundColor(Tokens.text)
-                                .padding(.horizontal, 14).frame(height: 44)
-                                .background(Capsule().fill(Tokens.surface))
-                        }
-                        .buttonStyle(.plain)
+                    HStack(spacing: 8) {
+                        Icon.timer(15).foregroundColor(over ? ac.accentText : Tokens.text)
+                        Text(over ? "Rust voorbij" : "Rust").sa(13, .medium).foregroundColor(Tokens.text2)
+                        Text(over ? "+" + Format.clock(seconds: Int(-left)) : Format.clock(seconds: Int(left + 0.999)))
+                            .sa(15, .semibold, mono: true).foregroundColor(over ? ac.accentText : Tokens.text)
+                        Spacer(minLength: 0)
+                        Text(over ? "Sluit" : "Sla over").sa(13, .semibold).foregroundColor(Tokens.text2)
                     }
-                    .padding(.leading, 14).padding(.trailing, 6)
+                    .padding(.horizontal, 12)
                 }
-                .frame(height: Size.restBar)
-                .card(Tokens.raised, radius: Radius.button)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
-                .padding(.horizontal, 12).padding(.bottom, 8)
+                .frame(height: 32)
+                .background(Tokens.raised)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel(over ? "Rust voorbij, sluit" : "Rust, sla over")
         }
     }
 }
@@ -754,6 +756,10 @@ private struct Dock: View {
             .padding(.horizontal, 4)
             Text(prevText).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
                 .padding(.horizontal, 4).padding(.top, 1)
+
+            if let end = model.restEnd {
+                RestInline(end: end, total: model.restTotal).padding(.top, 8)
+            }
 
             HStack(spacing: 10) {
                 if kind != .timed { weightBox(kind) }

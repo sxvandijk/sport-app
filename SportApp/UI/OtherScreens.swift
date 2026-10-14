@@ -314,7 +314,7 @@ struct EditorScreen: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 4)
-                        if draft.items.count > 1 { reorderBar.padding(.top, 8) }
+                        if draft.items.count > 1 { reorderBar.padding(.top, 22) }
 
                         Text("Koppel twee oefeningen met de knop ertussen om er een superset van te maken.")
                             .sa(12).foregroundColor(Tokens.text3).multilineTextAlignment(.center).lineSpacing(3)

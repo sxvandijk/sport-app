@@ -483,8 +483,12 @@ final class AppModel: ObservableObject {
 
     func saveNoteEdit() {
         guard let e = noteEdit else { return }
-        if let id = e.entryID { updateNote(id, text: e.text, for: e.exercise) } else { addNote(e.text, for: e.exercise) }
         noteEdit = nil
+        // Eerst het venster en het toetsenbord weg, dan pas opslaan: voorkomt een hapering.
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if let id = e.entryID { self.updateNote(id, text: e.text, for: e.exercise) } else { self.addNote(e.text, for: e.exercise) }
+        }
     }
 
     func updateNote(_ id: UUID, text: String, for exercise: String) {
