@@ -8,6 +8,7 @@ struct AppTabBar: View {
 
     private func icon(_ tab: HomeTab) -> Icon {
         switch tab {
+        case .start: return Icon.tabStart
         case .training: return Icon.tabTraining
         case .progress: return Icon.tabProgress
         case .gym: return Icon.tabGym
@@ -136,6 +137,7 @@ struct HomeContainer: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     switch model.tab {
+                    case .start: StartTab()
                     case .training: TrainingTab()
                     case .progress: ProgressTab()
                     case .gym: GymTab()

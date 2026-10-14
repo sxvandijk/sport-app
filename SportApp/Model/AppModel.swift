@@ -5,10 +5,11 @@ import AudioToolbox
 
 enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts }
 enum HomeTab: Int, CaseIterable, Identifiable {
-    case training, progress, gym, profile
+    case start, training, progress, gym, profile
     var id: Int { rawValue }
     var title: String {
         switch self {
+        case .start: return "Start"
         case .training: return "Training"
         case .progress: return "Progressie"
         case .gym: return "Gym"
@@ -166,7 +167,8 @@ struct PersistedState: Codable {
 final class AppModel: ObservableObject {
     // Navigatie
     @Published var screen: Screen = .home
-    @Published var tab: HomeTab = .training
+    @Published var splash: String?
+    @Published var tab: HomeTab = .start
     @Published var sheet: SheetKind?
     @Published var sheetEx: UUID?
     @Published var sheetSet: UUID?
@@ -372,6 +374,11 @@ final class AppModel: ObservableObject {
     }
 
     // MARK: Start, stoppen, afronden
+
+    /// Snel starten vanaf het startscherm: eerst Ready, Set, Go, dan begint de training.
+    func quickStart(_ name: String) {
+        if session != nil { askStart(name) } else { splash = name }
+    }
 
     func askStart(_ name: String) {
         if session != nil {

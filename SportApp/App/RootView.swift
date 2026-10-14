@@ -41,6 +41,7 @@ private struct ThemedRoot: View {
             SheetOverlay()
             ConfirmOverlay()
             NameOverlay()
+            SplashOverlay()
         }
         .tint(accent.accentText)
         .environment(\.accentColors, accent)

@@ -38,6 +38,7 @@ struct LaunchConfig {
             model.applyGym()
         }
         switch screen {
+        case "start": model.tab = .start
         case "training": model.tab = .training
         case "training-running": model.tab = .training
         case "calendar-open":
