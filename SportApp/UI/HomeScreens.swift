@@ -485,20 +485,29 @@ struct GymTab: View {
             .padding(.top, 16)
 
             SectionLabel(text: "Apparaten in deze gym").padding(.top, 24).padding(.bottom, 2)
-            ForEach(0..<gym.equipment.count, id: \.self) { i in
-                let q = gym.equipment[i]
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(q.name).sa(16, .medium).foregroundColor(q.on ? Tokens.text : Tokens.text2)
-                        Text(q.on ? q.steps : "Niet in deze gym").sa(13).foregroundColor(Tokens.text2)
+            if gym.equipment.isEmpty {
+                Text("Voeg de apparaten toe die jouw gym heeft. De plus/min-knoppen in je training volgen dan de gewichtsstappen van die apparaten.")
+                    .sa(14).foregroundColor(Tokens.text2).lineSpacing(3).padding(.vertical, 8)
+            }
+            ForEach(gym.equipment) { q in
+                HStack(spacing: 8) {
+                    Button {
+                        model.machineEditID = q.id
+                        model.openSheet(.machineedit)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(q.title).sa(16, .medium).foregroundColor(q.on ? Tokens.text : Tokens.text2).lineLimit(1)
+                            Text(q.on ? q.stepsText : "Niet in deze gym").sa(13).foregroundColor(Tokens.text2).lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
-                    Spacer(minLength: 0)
-                    SAToggle(isOn: q.on, onColor: ac.accentLine, label: q.name) { model.toggleMachine(i) }
+                    .buttonStyle(.plain)
+                    SAToggle(isOn: q.on, onColor: ac.accentLine, label: q.name) { model.toggleMachine(q.id) }
                 }
-                .frame(minHeight: 60)
             }
 
-            Button {} label: {
+            Button { model.openSheet(.machineadd) } label: {
                 Text("+ Apparaat toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
                     .frame(maxWidth: .infinity).frame(height: 52)
                     .card(Tokens.raised, radius: Radius.button)
@@ -506,7 +515,7 @@ struct GymTab: View {
             .buttonStyle(.plain)
             .padding(.top, 12)
 
-            Text("Later: een apparaat scannen met je camera, zodat de gewichten vanzelf worden ingevuld.")
+            Text("Tik op een apparaat om de stappen aan te passen. De waarden uit de lijst zijn standaarden; controleer ze bij jouw machines.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 10)
         }
     }

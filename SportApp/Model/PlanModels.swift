@@ -34,10 +34,102 @@ struct PlanProgram: Codable, Hashable, Identifiable {
     var workouts: [String]
 }
 
-struct GymMachine: Codable, Hashable {
+struct GymMachine: Codable, Hashable, Identifiable {
+    var id: String
+    var brand: String
     var name: String
-    var steps: String
     var on: Bool
+    /// "Machine", "Kabel" of "Dumbbells".
+    var family: String
+    var kind: WeightScale.Kind
+    var exercises: [String]
+    var min: Double
+    var max: Double
+    /// 0 = geen eigen stappen bekend (dan gelden de standaardstappen van de oefening).
+    var step: Double
+    var addOn: Double?
+    /// Tekst uit eerdere versies.
+    var legacySteps: String
+
+    init(id: String = UUID().uuidString, brand: String = "", name: String, on: Bool = true, family: String = "Machine",
+         kind: WeightScale.Kind = .stack, exercises: [String] = [], min: Double = 5, max: Double = 100,
+         step: Double = 5, addOn: Double? = nil, legacySteps: String = "") {
+        self.id = id
+        self.brand = brand
+        self.name = name
+        self.on = on
+        self.family = family
+        self.kind = kind
+        self.exercises = exercises
+        self.min = min
+        self.max = max
+        self.step = step
+        self.addOn = addOn
+        self.legacySteps = legacySteps
+    }
+
+    init(model m: MachineModel) {
+        self.init(brand: m.brand, name: m.name, family: m.family, kind: m.kind, exercises: m.exercises,
+                  min: m.min, max: m.max, step: m.step, addOn: m.addOn)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, brand, name, on, family, kind, exercises, min, max, step, addOn, legacySteps, steps
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
+        brand = try c.decodeIfPresent(String.self, forKey: .brand) ?? ""
+        name = try c.decode(String.self, forKey: .name)
+        on = try c.decodeIfPresent(Bool.self, forKey: .on) ?? true
+        family = try c.decodeIfPresent(String.self, forKey: .family) ?? "Machine"
+        kind = try c.decodeIfPresent(WeightScale.Kind.self, forKey: .kind) ?? .stack
+        exercises = try c.decodeIfPresent([String].self, forKey: .exercises) ?? []
+        min = try c.decodeIfPresent(Double.self, forKey: .min) ?? 0
+        max = try c.decodeIfPresent(Double.self, forKey: .max) ?? 0
+        step = try c.decodeIfPresent(Double.self, forKey: .step) ?? 0
+        addOn = try c.decodeIfPresent(Double.self, forKey: .addOn)
+        legacySteps = try c.decodeIfPresent(String.self, forKey: .legacySteps)
+            ?? c.decodeIfPresent(String.self, forKey: .steps) ?? ""
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(brand, forKey: .brand)
+        try c.encode(name, forKey: .name)
+        try c.encode(on, forKey: .on)
+        try c.encode(family, forKey: .family)
+        try c.encode(kind, forKey: .kind)
+        try c.encode(exercises, forKey: .exercises)
+        try c.encode(min, forKey: .min)
+        try c.encode(max, forKey: .max)
+        try c.encode(step, forKey: .step)
+        try c.encodeIfPresent(addOn, forKey: .addOn)
+        try c.encode(legacySteps, forKey: .legacySteps)
+    }
+
+    /// Gewichten die dit apparaat kan laden. nil als er geen stappen bekend zijn.
+    var scale: WeightScale? {
+        guard step > 0 else { return nil }
+        return WeightScale(kind: kind, minWeight: min, maxWeight: max, increment: step, addOnIncrement: addOn)
+    }
+
+    static func fmt(_ v: Double) -> String {
+        let r = (v * 100).rounded() / 100
+        if r == r.rounded() { return String(Int(r)) }
+        return String(r).replacingOccurrences(of: ".", with: ",")
+    }
+
+    var title: String { brand.isEmpty ? name : brand + " \u{00B7} " + name }
+
+    var stepsText: String {
+        guard step > 0 else { return legacySteps.isEmpty ? "Geen stappen ingesteld" : legacySteps }
+        var t = GymMachine.fmt(min) + "\u{2013}" + GymMachine.fmt(max) + " kg \u{00B7} stap " + GymMachine.fmt(step)
+        if let a = addOn { t += " (+" + GymMachine.fmt(a) + ")" }
+        return t
+    }
 }
 
 struct GymSetup: Codable, Hashable, Identifiable {

@@ -18,7 +18,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -168,6 +168,8 @@ final class AppModel: ObservableObject {
     @Published var progID: String
     @Published var gyms: [GymSetup]
     @Published var gymID: String
+    /// Apparaat dat in de bewerk-sheet openstaat.
+    @Published var machineEditID: String?
     @Published var history: [HistoryEntry]
     @Published var session: LiveSession?
 
@@ -256,6 +258,7 @@ final class AppModel: ObservableObject {
         // Eerdere versies hadden 1:30 als standaard rusttijd; de nieuwe standaard is 3:00.
         if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
+        applyGym()
     }
 
     static let dataVersion = 2
@@ -902,12 +905,91 @@ final class AppModel: ObservableObject {
     func chooseGym(_ id: String) {
         gymID = id
         sheet = nil
+        applyGym()
         save()
     }
 
-    func toggleMachine(_ index: Int) {
-        guard let gi = gyms.firstIndex(where: { $0.id == gym.id }), gyms[gi].equipment.indices.contains(index) else { return }
-        gyms[gi].equipment[index].on.toggle()
+    /// Zet de stappen van de aangevinkte apparaten van deze gym klaar voor de plus/min-knoppen.
+    func applyGym() {
+        var map: [String: WeightScale] = [:]
+        for m in gym.equipment where m.on {
+            guard let scale = m.scale else { continue }
+            for name in m.exercises where map[name] == nil { map[name] = scale }
+        }
+        Catalog.gymScales = map
+    }
+
+    private func mutateGym(_ body: (inout GymSetup) -> Void) {
+        guard let gi = gyms.firstIndex(where: { $0.id == gym.id }) else { return }
+        body(&gyms[gi])
+        applyGym()
+        save()
+    }
+
+    func toggleMachine(_ id: String) {
+        mutateGym { g in
+            if let i = g.equipment.firstIndex(where: { $0.id == id }) { g.equipment[i].on.toggle() }
+        }
+    }
+
+    func machine(_ id: String?) -> GymMachine? {
+        guard let id = id else { return nil }
+        return gym.equipment.first { $0.id == id }
+    }
+
+    func hasMachine(_ model: MachineModel) -> Bool {
+        gym.equipment.contains { $0.brand == model.brand && $0.name == model.name }
+    }
+
+    func addMachine(_ model: MachineModel) {
+        guard !hasMachine(model) else { return }
+        mutateGym { $0.equipment.append(GymMachine(model: model)) }
+        Haptics.light()
+    }
+
+    /// Eigen apparaat; geeft het id terug zodat de bewerk-sheet kan openen.
+    func addCustomMachine(name: String) -> String {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        let m = GymMachine(brand: "Eigen", name: n.isEmpty ? "Eigen apparaat" : n)
+        mutateGym { $0.equipment.append(m) }
+        return m.id
+    }
+
+    func updateMachine(_ id: String, _ body: (inout GymMachine) -> Void) {
+        mutateGym { g in
+            if let i = g.equipment.firstIndex(where: { $0.id == id }) { body(&g.equipment[i]) }
+        }
+    }
+
+    func removeMachine(_ id: String) {
+        mutateGym { $0.equipment.removeAll { $0.id == id } }
+        sheet = nil
+    }
+
+    func addGym(name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { return }
+        let g = GymSetup(id: UUID().uuidString, name: n, equipment: [])
+        gyms.append(g)
+        gymID = g.id
+        sheet = nil
+        applyGym()
+        save()
+    }
+
+    func renameGym(_ name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { return }
+        mutateGym { $0.name = n }
+        sheet = nil
+    }
+
+    func deleteGym(_ id: String) {
+        guard gyms.count > 1 else { return }
+        gyms.removeAll { $0.id == id }
+        if gymID == id { gymID = gyms[0].id }
+        sheet = nil
+        applyGym()
         save()
     }
 
