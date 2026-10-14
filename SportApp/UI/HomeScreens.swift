@@ -494,7 +494,7 @@ struct ProgressTab: View {
         return VStack(alignment: .leading, spacing: 0) {
             Button { withAnimation(.easeOut(duration: 0.2)) { allOpen.toggle() } } label: {
                 HStack(spacing: 14) {
-                    Icon.tabTraining(22).foregroundColor(ac.accentText)
+                    Icon.tabTraining.foregroundColor(ac.accentText)
                         .frame(width: 48, height: 48).background(Circle().fill(ac.accentSoft))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Alle trainingen").sa(17, .semibold).foregroundColor(Tokens.text)
