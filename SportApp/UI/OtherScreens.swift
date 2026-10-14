@@ -385,7 +385,12 @@ struct EditorScreen: View {
                     Text(info.muscle + " \u{00B7} " + kind.title).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
-                    Button { remove(i) } label: {
+                Button { model.draftSwapID = it.id; model.openSheet(.draftswap) } label: {
+                    Icon.swap(18).foregroundColor(Tokens.text2).frame(width: 40, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Wissel warming-up")
+                Button { confirmRemove(i, it) } label: {
                     Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -578,7 +583,12 @@ struct EditorScreen: View {
                 Text(sub).sa(13).foregroundColor(Tokens.text2)
             }
             Spacer(minLength: 0)
-            Button { remove(i) } label: {
+            Button { model.draftSwapID = it.id; model.openSheet(.draftswap) } label: {
+                Icon.swap(18).foregroundColor(Tokens.text2).frame(width: 40, height: 44).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Wissel oefening")
+            Button { confirmRemove(i, it) } label: {
                 Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -725,6 +735,15 @@ struct EditorScreen: View {
         d.items.swapAt(i, i - 1)
         EditorScreen.normalize(&d)
         model.draft = d
+    }
+
+    private func confirmRemove(_ i: Int, _ it: DraftItem) {
+        let id = it.id
+        model.confirm = ConfirmRequest(title: "\(it.name) verwijderen?",
+                                       message: "Deze oefening gaat uit het schema. Je kunt hem later opnieuw toevoegen.",
+                                       confirmTitle: "Verwijder") {
+            if let idx = model.draft?.items.firstIndex(where: { $0.id == id }) { remove(idx) }
+        }
     }
 
     private func remove(_ i: Int) {

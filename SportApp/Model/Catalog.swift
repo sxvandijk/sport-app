@@ -100,7 +100,21 @@ enum Catalog {
         ("Dumbbell Shrug", ExerciseInfo("Traps", "Dumbbells", step: 2.5, d: 20)),
         ("Cable Iron Cross", ExerciseInfo("Borst", "Kabel", step: 2.5, d: 10)),
         ("Cable One Arm Tricep Extension", ExerciseInfo("Triceps", "Kabel", step: 2.5, d: 10)),
-        ("Bayesian Bicep Cable Curl", ExerciseInfo("Biceps", "Kabel", step: 0.5, d: 10))
+        ("Bayesian Bicep Cable Curl", ExerciseInfo("Biceps", "Kabel", step: 0.5, d: 10)),
+        // Extra machines
+        ("Incline chest press machine", ExerciseInfo("Borst", "Machine", step: 5, d: 40)),
+        ("Biceps curl machine", ExerciseInfo("Biceps", "Machine", step: 5, d: 30)),
+        ("Triceps extension machine", ExerciseInfo("Triceps", "Machine", step: 5, d: 30)),
+        ("Lateral raise machine", ExerciseInfo("Schouders", "Machine", step: 5, d: 20)),
+        ("Assisted pull-up machine", ExerciseInfo("Lats", "Machine", step: 5, d: 40)),
+        ("Back extension machine", ExerciseInfo("Onderrug", "Machine", step: 5, d: 40)),
+        ("Rotary torso machine", ExerciseInfo("Core", "Machine", step: 5, d: 30)),
+        ("Glute kickback machine", ExerciseInfo("Billen", "Machine", step: 5, d: 30)),
+        ("Prone leg curl", ExerciseInfo("Hamstrings", "Machine", step: 5, d: 35)),
+        ("Pullover machine", ExerciseInfo("Lats", "Machine", step: 5, d: 30)),
+        ("Hack squat machine", ExerciseInfo("Quadriceps", "Machine", step: 5, d: 60)),
+        ("Smith machine squat", ExerciseInfo("Quadriceps", "Smith machine", step: 2.5, d: 40)),
+        ("Smith machine bench press", ExerciseInfo("Borst", "Smith machine", step: 2.5, d: 40))
     ]
 
     /// Voorstellen voor het warming-upblok.
@@ -117,6 +131,8 @@ enum Catalog {
 
     /// Stappen van de apparaten in de gekozen gym, per oefening (door `AppModel` gevuld).
     static var gymScales: [String: WeightScale] = [:]
+    /// Merk en type van het apparaat in de gekozen gym, per oefening (bv. "Matrix Ab crunch").
+    static var gymLabels: [String: String] = [:]
 
     /// Zelf toegevoegde oefeningen (door `AppModel` gevuld).
     static var custom: [String: ExerciseInfo] = [:]
@@ -143,7 +159,7 @@ enum Catalog {
 
     static func meta(_ name: String) -> String {
         let i = info(name)
-        return i.muscle + " · " + i.equipment
+        return i.muscle + " · " + (gymLabels[name] ?? i.equipment)
     }
 
     /// Eén stap omhoog (`dir` = 1) of omlaag (`dir` = -1) op het gewicht, volgens de stappen van het apparaat.

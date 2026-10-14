@@ -113,7 +113,19 @@ struct GymMachine: Codable, Hashable, Identifiable {
     /// Gewichten die dit apparaat kan laden. nil als er geen stappen bekend zijn.
     var scale: WeightScale? {
         guard step > 0 else { return nil }
-        return WeightScale(kind: kind, minWeight: min, maxWeight: max, increment: step, addOnIncrement: addOn)
+        guard let extra = addOn, extra > 0, max > min else {
+            return WeightScale(kind: kind, minWeight: min, maxWeight: max, increment: step)
+        }
+        // Extra plaatje (pin/schuif) dat je bovenop elke stand kunt hangen.
+        var weights = Set<Double>()
+        var w = min
+        while w <= max + 1e-9 {
+            weights.insert((w * 1000).rounded() / 1000)
+            let plus = w + extra
+            if plus <= max + 1e-9 { weights.insert((plus * 1000).rounded() / 1000) }
+            w += step
+        }
+        return WeightScale(kind: kind, minWeight: min, maxWeight: max, increment: step, availableWeights: weights.sorted())
     }
 
     static func fmt(_ v: Double) -> String {
@@ -122,7 +134,9 @@ struct GymMachine: Codable, Hashable, Identifiable {
         return String(r).replacingOccurrences(of: ".", with: ",")
     }
 
-    var title: String { brand.isEmpty ? name : brand + " \u{00B7} " + name }
+    var showsBrand: Bool { !["", "Eigen", "Algemeen"].contains(brand) }
+
+    var title: String { showsBrand ? brand + " " + name : name }
 
     var stepsText: String {
         guard step > 0 else { return legacySteps.isEmpty ? "Geen stappen ingesteld" : legacySteps }

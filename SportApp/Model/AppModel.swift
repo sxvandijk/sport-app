@@ -18,7 +18,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -98,6 +98,15 @@ struct NoteEdit: Equatable {
     var exercise: String
     var entryID: UUID?
     var text: String
+}
+
+struct NameEdit {
+    var title: String
+    var subtitle: String = ""
+    var placeholder: String
+    var text: String
+    var confirmTitle: String
+    var action: (String) -> Void
 }
 
 struct ConfirmRequest {
@@ -201,6 +210,9 @@ final class AppModel: ObservableObject {
     @Published var noteEdit: NoteEdit?
     @Published var scrollTick = 0
     @Published var confirm: ConfirmRequest?
+    @Published var nameEdit: NameEdit?
+    /// Oefening in het schema-bewerkscherm die gewisseld wordt.
+    @Published var draftSwapID: UUID?
     @Published var summary: SessionSummary?
 
     // Sheets en schermen
@@ -912,11 +924,15 @@ final class AppModel: ObservableObject {
     /// Zet de stappen van de aangevinkte apparaten van deze gym klaar voor de plus/min-knoppen.
     func applyGym() {
         var map: [String: WeightScale] = [:]
+        var labels: [String: String] = [:]
         for m in gym.equipment where m.on {
-            guard let scale = m.scale else { continue }
-            for name in m.exercises where map[name] == nil { map[name] = scale }
+            for name in m.exercises {
+                if let scale = m.scale, map[name] == nil { map[name] = scale }
+                if m.showsBrand || m.brand == "Eigen", labels[name] == nil { labels[name] = m.title }
+            }
         }
         Catalog.gymScales = map
+        Catalog.gymLabels = labels
     }
 
     private func mutateGym(_ body: (inout GymSetup) -> Void) {
@@ -959,6 +975,23 @@ final class AppModel: ObservableObject {
         mutateGym { g in
             if let i = g.equipment.firstIndex(where: { $0.id == id }) { body(&g.equipment[i]) }
         }
+    }
+
+    func replaceDraftItem(_ id: UUID, with name: String) {
+        guard var d = draft, let i = d.items.firstIndex(where: { $0.id == id }) else { return }
+        let old = d.items[i]
+        let kind = Catalog.kind(name)
+        let oldKind = Catalog.kind(old.name)
+        d.items[i].name = name
+        if kind != oldKind {
+            d.items[i].sets = kind == .cardio ? 1 : max(1, old.sets)
+            d.items[i].reps = kind == .cardio ? 10 : (oldKind == .cardio ? 8 : old.reps)
+            d.items[i].repsMax = kind == .cardio ? nil : old.repsMax
+        }
+        d.items[i].w = Catalog.info(name).defaultWeight
+        draft = d
+        draftSwapID = nil
+        sheet = nil
     }
 
     func removeMachine(_ id: String) {
