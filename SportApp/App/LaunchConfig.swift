@@ -30,6 +30,13 @@ struct LaunchConfig {
             model.session = ScreenshotScenario.session(now: now, templates: model.templates, history: model.history)
         }
 
+        if ["gym", "sheet-gym", "sheet-machineadd", "sheet-machineedit"].contains(screen) {
+            let picks = MachineDB.all.filter { $0.brand == "Technogym" && ["Chest press", "Lat pulldown", "Leg press"].contains($0.name) }
+                + MachineDB.all.filter { $0.brand == "Matrix" && $0.name == "Shoulder press" }
+            model.gyms[0].equipment = picks.map { GymMachine(model: $0) }
+            model.gyms[0].name = "Mijn sportschool"
+            model.applyGym()
+        }
         switch screen {
         case "training": model.tab = .training
         case "training-running": model.tab = .training
@@ -120,6 +127,11 @@ struct LaunchConfig {
             model.openSheet(.exmenu, exID: exID)
         case "gym":
             model.openSheet(.gym)
+        case "machineadd":
+            model.openSheet(.machineadd)
+        case "machineedit":
+            model.machineEditID = model.gym.equipment.first?.id
+            model.openSheet(.machineedit)
         case "program":
             model.openSheet(.program)
         case "tplmenu":

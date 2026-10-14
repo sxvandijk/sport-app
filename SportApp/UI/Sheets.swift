@@ -30,7 +30,7 @@ private struct SheetBody: View {
 
     private var keepsKeyboard: Bool {
         switch kind {
-        case .add, .swap, .change, .pref, .superset: return true
+        case .add, .swap, .change, .pref, .superset, .machineadd: return true
         default: return false
         }
     }
@@ -65,6 +65,8 @@ private struct SheetBody: View {
         case .swapscope: return ("Oefening wisselen", name.isEmpty ? "" : "Wanneer wil je \(name) wisselen?")
         case .settype: return ("Soort set", name)
         case .gym: return ("Kies je gym", "Machine bezet en de plus/min-stappen volgen de apparaten van deze gym.")
+        case .machineadd: return ("Apparaat toevoegen", "Kies merk en type. Je past de stappen daarna aan.")
+        case .machineedit: return (model.machine(model.machineEditID)?.title ?? "Apparaat", "Stappen en gekoppelde oefeningen")
         }
     }
 
@@ -144,6 +146,8 @@ private struct SheetBody: View {
         case .add: SearchList(mode: .add)
         case .settype: SetTypeSheet()
         case .gym: GymSheet()
+        case .machineadd: MachineAddSheet()
+        case .machineedit: MachineEditSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
         case .exmenu: ExerciseMenuSheet()
@@ -932,12 +936,218 @@ private struct SetTypeSheet: View {
 private struct GymSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @State private var name = ""
 
     var body: some View {
         ForEach(model.gyms) { g in
             ListRow(title: g.name, sub: g.summary, selected: g.id == model.gym.id) { model.chooseGym(g.id) }
         }
-        FlatButton(title: "+ Nieuwe gym", color: ac.accentText) { model.closeSheet() }.padding(.top, 6)
+        HStack(spacing: 8) {
+            TextField("Naam van een gym", text: $name)
+                .sa(16).foregroundColor(Tokens.text)
+                .padding(.horizontal, 14).frame(height: 48)
+                .card(Tokens.raised, radius: Radius.field)
+        }
+        .padding(.top, 8)
+        HStack(spacing: 10) {
+            Button { model.addGym(name: name) } label: {
+                Text("Nieuwe gym").sa(16, .bold).foregroundColor(ac.onAccent)
+                    .frame(maxWidth: .infinity).frame(height: 48)
+                    .card(ac.accent, radius: Radius.button).opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+            }
+            .buttonStyle(.plain)
+            Button { model.renameGym(name) } label: {
+                Text("Hernoem huidige").sa(16, .semibold).foregroundColor(Tokens.text)
+                    .frame(maxWidth: .infinity).frame(height: 48)
+                    .card(Tokens.raised, radius: Radius.button).opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.top, 8)
+        if model.gyms.count > 1 {
+            FlatButton(title: "Verwijder \(model.gym.name)", color: Tokens.danger) { model.deleteGym(model.gym.id) }.padding(.top, 4)
+        }
+    }
+}
+
+private struct MachineAddSheet: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+    @State private var brand: String?
+
+    private func results() -> [MachineModel] {
+        let q = model.query.lowercased().trimmingCharacters(in: .whitespaces)
+        return MachineDB.all.filter { m in
+            if let b = brand, m.brand != b { return false }
+            return q.isEmpty || m.name.lowercased().contains(q) || m.brand.lowercased().contains(q)
+                || m.exercises.contains { $0.lowercased().contains(q) }
+        }
+    }
+
+    var body: some View {
+        let shown = results()
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Icon.search(18).foregroundColor(Tokens.text2)
+                TextField("Zoek merk of apparaat", text: $model.query)
+                    .sa(16).foregroundColor(Tokens.text)
+                    .disableAutocorrection(true)
+                    .frame(height: 44)
+            }
+            .padding(.horizontal, 14).frame(height: 48)
+            .card(Tokens.raised, radius: Radius.field)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    chip("Alle merken", active: brand == nil) { brand = nil }
+                    ForEach(MachineDB.brands, id: \.self) { b in chip(b, active: brand == b) { brand = b } }
+                }
+            }
+            .padding(.top, 8)
+
+            Button {
+                let id = model.addCustomMachine(name: model.query)
+                model.machineEditID = id
+                model.openSheet(.machineedit)
+            } label: {
+                HStack(spacing: 12) {
+                    Icon.plus(18).foregroundColor(ac.accentText)
+                    Text(model.query.trimmingCharacters(in: .whitespaces).isEmpty ? "Eigen apparaat maken" : "Eigen apparaat \u{201C}\(model.query)\u{201D} maken")
+                        .sa(16, .semibold).foregroundColor(ac.accentText).lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 4).frame(minHeight: 52).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(shown) { m in
+                    let have = model.hasMachine(m)
+                    Button { model.addMachine(m) } label: {
+                        HStack(spacing: 12) {
+                            TitleSub(title: m.name, sub: m.brand + " \u{00B7} " + m.series, titleSize: 17, titleWeight: .medium)
+                            Spacer(minLength: 0)
+                            (have ? Icon.check(16) : Icon.plus(16))
+                                .foregroundColor(have ? ac.onAccent : Tokens.text)
+                                .frame(width: 32, height: 32)
+                                .background(Circle().fill(have ? ac.accentLine : Tokens.raised))
+                        }
+                        .padding(.horizontal, 4).padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                if shown.isEmpty {
+                    Text("Niets gevonden. Maak een eigen apparaat.").sa(15).foregroundColor(Tokens.text2).padding(.horizontal, 4).padding(.vertical, 12)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 360, alignment: .topLeading)
+        }
+        .onDisappear { model.query = "" }
+    }
+
+    private func chip(_ text: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(text).sa(14, .medium).foregroundColor(active ? ac.onAccent : Tokens.text)
+                .padding(.horizontal, 14).frame(height: 36)
+                .background(Capsule().fill(active ? ac.accentLine : Tokens.raised))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct MachineEditSheet: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+
+    private static let stepChoices: [Double] = [0.5, 1, 1.25, 2, 2.5, 4, 5, 10]
+    private static let addOnChoices: [Double] = [0.5, 1, 1.25, 2.5]
+
+    var body: some View {
+        if let m = model.machine(model.machineEditID) {
+            let id = m.id
+            VStack(alignment: .leading, spacing: 0) {
+                adjustRow("Eerste stand (kg)", value: m.min, delta: m.step > 0 ? m.step : 5) { v in
+                    model.updateMachine(id) { $0.min = Swift.max(0, Swift.min(v, $0.max)) }
+                }
+                adjustRow("Zwaarste stand (kg)", value: m.max, delta: m.step > 0 ? m.step : 5) { v in
+                    model.updateMachine(id) { $0.max = Swift.max(v, $0.min) }
+                }
+                HStack {
+                    Text("Stap per stand").sa(16, .medium).foregroundColor(Tokens.text)
+                    Spacer(minLength: 0)
+                    Menu {
+                        ForEach(Self.stepChoices, id: \.self) { v in
+                            Button(GymMachine.fmt(v) + " kg") { model.updateMachine(id) { $0.step = v } }
+                        }
+                    } label: { valuePill(m.step > 0 ? GymMachine.fmt(m.step) + " kg" : "Kies") }
+                }
+                .frame(minHeight: 52)
+                HStack {
+                    Text("Tussenplaatje").sa(16, .medium).foregroundColor(Tokens.text)
+                    Spacer(minLength: 0)
+                    Menu {
+                        Button("Geen") { model.updateMachine(id) { $0.addOn = nil } }
+                        ForEach(Self.addOnChoices, id: \.self) { v in
+                            Button("+" + GymMachine.fmt(v) + " kg") { model.updateMachine(id) { $0.addOn = v } }
+                        }
+                    } label: { valuePill(m.addOn.map { "+" + GymMachine.fmt($0) + " kg" } ?? "Geen") }
+                }
+                .frame(minHeight: 52)
+
+                SectionLabel(text: "Oefeningen op dit apparaat").padding(.top, 14).padding(.bottom, 2)
+                ForEach(MachineDB.candidates(family: m.family), id: \.self) { name in
+                    let on = m.exercises.contains(name)
+                    Button {
+                        model.updateMachine(id) { mm in
+                            if let i = mm.exercises.firstIndex(of: name) { mm.exercises.remove(at: i) } else { mm.exercises.append(name) }
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Text(name).sa(16, .medium).foregroundColor(Tokens.text).lineLimit(1)
+                            Spacer(minLength: 0)
+                            (on ? Icon.check(16) : Icon.plus(16))
+                                .foregroundColor(on ? ac.onAccent : Tokens.text)
+                                .frame(width: 32, height: 32)
+                                .background(Circle().fill(on ? ac.accentLine : Tokens.raised))
+                        }
+                        .padding(.horizontal, 4).frame(minHeight: 50).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                FlatButton(title: "Verwijder uit deze gym", color: Tokens.danger) { model.removeMachine(id) }.padding(.top, 10)
+            }
+        } else {
+            Text("Apparaat niet gevonden.").sa(15).foregroundColor(Tokens.text2)
+        }
+    }
+
+    private func valuePill(_ text: String) -> some View {
+        HStack(spacing: 6) {
+            Text(text).sa(15, .semibold)
+            Icon.chevronDown(12, 2.4)
+        }
+        .foregroundColor(Tokens.text)
+        .padding(.horizontal, 14).frame(height: 40)
+        .background(Capsule().fill(Tokens.raised))
+    }
+
+    private func adjustRow(_ title: String, value: Double, delta: Double, set: @escaping (Double) -> Void) -> some View {
+        HStack(spacing: 0) {
+            Text(title).sa(16, .medium).foregroundColor(Tokens.text)
+            Spacer(minLength: 0)
+            Button { set(Swift.max(0, value - delta)) } label: {
+                Icon.minus(18).foregroundColor(Tokens.text).frame(width: 44, height: 44).contentShape(Rectangle())
+            }.buttonStyle(.plain)
+            Text(GymMachine.fmt(value)).sa(16, .semibold, mono: true).foregroundColor(Tokens.text).frame(minWidth: 44)
+            Button { set(value + delta) } label: {
+                Icon.plus(18, 2.4).foregroundColor(Tokens.text).frame(width: 44, height: 44).contentShape(Rectangle())
+            }.buttonStyle(.plain)
+        }
+        .frame(minHeight: 52)
     }
 }
 

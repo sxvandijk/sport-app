@@ -115,6 +115,9 @@ enum Catalog {
         return out
     }
 
+    /// Stappen van de apparaten in de gekozen gym, per oefening (door `AppModel` gevuld).
+    static var gymScales: [String: WeightScale] = [:]
+
     /// Zelf toegevoegde oefeningen (door `AppModel` gevuld).
     static var custom: [String: ExerciseInfo] = [:]
 
@@ -145,6 +148,10 @@ enum Catalog {
 
     /// Eén stap omhoog (`dir` = 1) of omlaag (`dir` = -1) op het gewicht, volgens de stappen van het apparaat.
     static func step(_ name: String, weight: Double, dir: Int) -> Double {
+        if let scale = gymScales[name] {
+            let n = scale.step(from: weight, up: dir > 0)
+            return n < 0 ? 0 : n
+        }
         let i = info(name)
         if let list = i.list {
             if dir > 0 {
