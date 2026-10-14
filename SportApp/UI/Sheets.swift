@@ -45,7 +45,7 @@ private struct SheetBody: View {
             }
             return ("Er loopt al een workout", "")
         case .explain: return ("Uitleg", name)
-        case .change: return ("Oefening wisselen", name.isEmpty ? "" : "Kies of je \(name) alleen nu of ook in je schema wisselt.")
+        case .change: return ("Oefening wisselen", name)
         case .pref: return ("Voorkeur kiezen", name.isEmpty ? "" : "Wat wil je doen als \(name) bezet is? Tik op de ster bij je keuze.")
         case .swap: return ("Machine bezet", name.isEmpty ? "" : "Vervang \(name) voor nu. Gedane sets blijven staan.")
         case .superset: return ("Superset", name.isEmpty ? "" : "Koppel oefeningen aan \(name). Je wisselt na elke set.")
@@ -225,22 +225,28 @@ private struct MenuSheet: View {
 private struct ExerciseMenuSheet: View {
     @EnvironmentObject private var model: AppModel
 
-    var body: some View {
+    private func swapRow(_ title: String, _ sub: String, _ scope: SwapScope) -> some View {
         SheetRowButton(action: {
             let id = model.sheetEx
             model.openSheet(.change, exID: id)
+            model.swapScope = scope
         }) {
             HStack(spacing: 12) {
                 Icon.swap(20).foregroundColor(Tokens.text)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Oefening wisselen").sa(17, .medium).foregroundColor(Tokens.text)
-                    Text("Een keer of vast in je schema").sa(13).foregroundColor(Tokens.text2)
+                    Text(title).sa(17, .medium).foregroundColor(Tokens.text)
+                    Text(sub).sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 16).frame(minHeight: 60)
         }
         .padding(.bottom, 6)
+    }
+
+    var body: some View {
+        swapRow("Wisselen voor deze keer", "Alleen in deze workout. Je schema blijft zoals het is.", .now)
+        swapRow("Wisselen vast in schema", "De oefening wordt ook in je schema vervangen.", .schema)
         SheetRowButton(action: {
             if let id = model.sheetEx { model.addWarmup(id) }
             model.closeSheet()
@@ -375,42 +381,44 @@ private struct SwapSheet: View {
     @Environment(\.accentColors) private var ac
     let mode: Mode
 
-    @State private var scopeChosen = false
-
-    private func choice(_ title: String, _ sub: String, _ scope: SwapScope) -> some View {
-        SheetRowButton(action: {
-            model.swapScope = scope
-            scopeChosen = true
-        }) {
-            HStack(spacing: 12) {
-                TitleSub(title: title, sub: sub)
-                Spacer(minLength: 0)
-                Icon.chevronRight(18).foregroundColor(Tokens.text3)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 64)
+    /// Twee knoppen: voor deze keer, of vast in je schema.
+    private var scopeToggle: some View {
+        HStack(spacing: 4) {
+            scopeButton("Voor deze keer", .now)
+            scopeButton("Vast in schema", .schema)
         }
-        .padding(.bottom, 8)
+        .padding(4)
+        .card(Tokens.raised, radius: Radius.field)
     }
 
-    private var scopeStep: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            choice("Voor deze keer", "Alleen in deze workout. Je schema blijft zoals het was.", .now)
-            choice("Vast in schema", "De oefening wordt ook in je schema vervangen.", .schema)
+    private func scopeButton(_ title: String, _ scope: SwapScope) -> some View {
+        let on = model.swapScope == scope
+        return Button { model.swapScope = scope } label: {
+            Text(title).sa(14, .semibold)
+                .foregroundColor(on ? ac.onAccent : Tokens.text2)
+                .frame(maxWidth: .infinity).frame(height: 38)
+                .background(RoundedRectangle(cornerRadius: Radius.field - 2, style: .continuous).fill(on ? ac.accentLine : Color.clear))
         }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    private var scopeBadge: some View {
-        HStack(spacing: 8) {
-            Text(model.swapScope == .schema ? "Vast in schema" : "Voor deze keer")
-                .sa(13, .semibold).foregroundColor(ac.accentText)
-                .padding(.horizontal, 12).frame(height: 30)
-                .background(Capsule().fill(ac.accentSoft))
-            Button { scopeChosen = false } label: {
-                Text("Aanpassen").sa(13, .medium).foregroundColor(Tokens.text2).frame(height: 44)
-            }
-            .buttonStyle(.plain)
-            Spacer(minLength: 0)
+    /// Wat er vervangen wordt, vooral handig midden in een oefening.
+    private func replaceInfo(_ ex: LiveExercise) -> String {
+        let total = ex.sets.count
+        let open = ex.sets.filter { !$0.done }.count
+        var text: String
+        if open == 0 {
+            text = "Alle sets van \(ex.name) zijn al gedaan, dus er is niets te vervangen."
+        } else if open == total {
+            text = "Vervangt alle \(total) \(total == 1 ? "set" : "sets") van \(ex.name)."
+        } else if open == 1 {
+            text = "Vervangt het laatste setje. Je gedane sets blijven bij \(ex.name)."
+        } else {
+            text = "Vervangt de laatste \(open) sets. Je gedane sets blijven bij \(ex.name)."
         }
+        if model.swapScope == .schema { text += " Je schema krijgt de nieuwe oefening ook." }
+        return text
     }
 
     var body: some View {
@@ -421,22 +429,27 @@ private struct SwapSheet: View {
         let suggestion = Catalog.suggestion(for: name, excluding: inWorkout)
         let preference = model.prefs[original]
 
-        if mode == .change && !scopeChosen {
-            scopeStep
-        } else {
-            swapList(name: name, original: original, suggestion: suggestion, preference: preference)
+        if mode != .pref, let ex = ex {
+            if mode == .change { scopeToggle.padding(.bottom, 8) }
+            Text(replaceInfo(ex)).sa(13).foregroundColor(Tokens.text2).padding(.bottom, 14).padding(.horizontal, 2)
         }
+        swapList(original: original, suggestion: suggestion, preference: preference)
     }
 
     @ViewBuilder
-    private func swapList(name: String, original: String, suggestion: String, preference: String?) -> some View {
-        if mode == .change { scopeBadge }
-
+    private func swapList(original: String, suggestion: String, preference: String?) -> some View {
         if mode != .pref {
-            SectionLabel(text: "Suggestie van de app").padding(.top, mode == .change ? 8 : 4).padding(.bottom, 8)
+            let same = preference == suggestion
+            SectionLabel(text: same ? "Suggestie en jouw voorkeur" : "Suggestie van de app").padding(.top, 4).padding(.bottom, 8)
             SheetRowButton(action: { model.swapExercise(to: suggestion, manual: false) }) {
                 HStack(spacing: 12) {
-                    TitleSub(title: suggestion, sub: Catalog.meta(suggestion))
+                    if same { Icon.starFilled(20).foregroundColor(ac.accentText) }
+                    VStack(alignment: .leading, spacing: 2) {
+                        TitleSub(title: suggestion, sub: Catalog.meta(suggestion))
+                        if same {
+                            Text("De app raadt deze aan en het is ook je voorkeur.").sa(12).foregroundColor(ac.accentText)
+                        }
+                    }
                     Spacer(minLength: 0)
                     Icon.swap(20).foregroundColor(Tokens.text)
                 }
@@ -444,11 +457,11 @@ private struct SwapSheet: View {
             }
         }
 
-        SectionLabel(text: "Mijn voorkeur").padding(.top, mode == .pref ? 4 : 20).padding(.bottom, 8)
-        if let pref = preference {
+        if let pref = preference, pref != suggestion || mode == .pref {
+            SectionLabel(text: "Mijn voorkeur").padding(.top, mode == .pref ? 4 : 20).padding(.bottom, 8)
             SheetRowButton(action: { if mode != .pref { model.swapExercise(to: pref, manual: false) } }) {
                 HStack(spacing: 12) {
-                    Icon.star(20).foregroundColor(ac.accentText)
+                    Icon.starFilled(20).foregroundColor(ac.accentText)
                     TitleSub(title: pref, sub: Catalog.meta(pref))
                     Spacer(minLength: 0)
                     if mode != .pref { Icon.swap(20).foregroundColor(Tokens.text) }
@@ -461,8 +474,9 @@ private struct SwapSheet: View {
                 }
                 .buttonStyle(.plain)
             }
-        } else {
-            Text(mode == .pref ? "Nog geen voorkeur. Tik hieronder op de ster bij een oefening." : "Nog geen voorkeur. Tik op een ster bij een oefening hieronder.")
+        } else if preference == nil && mode == .pref {
+            SectionLabel(text: "Mijn voorkeur").padding(.top, 4).padding(.bottom, 8)
+            Text("Nog geen voorkeur. Tik hieronder op de ster bij een oefening.")
                 .sa(15).foregroundColor(Tokens.text2).padding(.vertical, 4)
         }
 
@@ -547,7 +561,7 @@ private struct SearchList: View {
     @State private var newKind: ExerciseKind = .weights
     @State private var newMuscle = "Overig"
     @State private var muscleFilter: String?
-    @State private var sort = SortMode.standard
+    @State private var sort = SortMode.az
 
     enum SortMode { case standard, az, muscle, equipment }
 
@@ -578,10 +592,16 @@ private struct SearchList: View {
         case .muscle: names.sort { ($0.info.muscle, $0.name.lowercased()) < ($1.info.muscle, $1.name.lowercased()) }
         case .equipment: names.sort { ($0.info.equipment, $0.name.lowercased()) < ($1.info.equipment, $1.name.lowercased()) }
         }
+        // Je voorkeur staat altijd bovenaan.
+        if showStar, let i = names.firstIndex(where: { $0.name == model.prefs[originalName] }) {
+            let p = names.remove(at: i)
+            names.insert(p, at: 0)
+        }
         return names
     }
 
     private func groupLabel(_ item: (name: String, info: ExerciseInfo)) -> String? {
+        if showStar && item.name == model.prefs[originalName] { return nil }
         switch sort {
         case .muscle: return item.info.muscle
         case .equipment: return item.info.equipment
@@ -631,7 +651,12 @@ private struct SearchList: View {
     private func row(_ item: (name: String, info: ExerciseInfo)) -> some View {
         let chosen = mode == .superset && model.selectedNew.contains(item.name)
         let isPref = model.prefs[originalName] == item.name
-        return HStack(spacing: 4) {
+        return rowContent(item, chosen: chosen, isPref: isPref)
+            .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(isPref && showStar ? ac.accentSoft.opacity(0.5) : Color.clear))
+    }
+
+    private func rowContent(_ item: (name: String, info: ExerciseInfo), chosen: Bool, isPref: Bool) -> some View {
+        HStack(spacing: 4) {
             Button { pick(item.name) } label: {
                 HStack(spacing: 12) {
                     TitleSub(title: item.name, sub: Catalog.meta(item.name), titleSize: 17, titleWeight: .medium)
@@ -650,7 +675,7 @@ private struct SearchList: View {
             .buttonStyle(.plain)
             if showStar {
                 Button { model.togglePreference(original: originalName, choice: item.name) } label: {
-                    Icon.star(20).foregroundColor(isPref ? ac.accentText : Tokens.text3)
+                    (isPref ? Icon.starFilled(20) : Icon.star(20)).foregroundColor(isPref ? ac.accentText : Tokens.text3)
                         .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -661,12 +686,21 @@ private struct SearchList: View {
 
     private var sortChips: some View {
         HStack(spacing: 8) {
-            Text("Sorteer").sa(12, .medium).foregroundColor(Tokens.text3)
-            chip("Standaard", on: sort == .standard) { sort = .standard }
-            chip("A\u{2013}Z", on: sort == .az) { sort = .az }
-            chip("Spiergroep", on: sort == .muscle) { sort = .muscle }
-            chip("Apparaat", on: sort == .equipment) { sort = .equipment }
             Spacer(minLength: 0)
+            Menu {
+                Button { sort = .az } label: { Label("A\u{2013}Z", systemImage: sort == .az ? "checkmark" : "textformat") }
+                Button { sort = .muscle } label: { Label("Spiergroep", systemImage: sort == .muscle ? "checkmark" : "figure.strengthtraining.traditional") }
+                Button { sort = .equipment } label: { Label("Apparaat", systemImage: sort == .equipment ? "checkmark" : "dumbbell") }
+            } label: {
+                HStack(spacing: 6) {
+                    Icon.filter(18)
+                    Text(sort == .az ? "A\u{2013}Z" : (sort == .muscle ? "Spiergroep" : (sort == .equipment ? "Apparaat" : "A\u{2013}Z"))).sa(13, .medium)
+                }
+                .foregroundColor(Tokens.text)
+                .padding(.horizontal, 12).frame(height: 36)
+                .background(Capsule().fill(Tokens.raised))
+            }
+            .accessibilityLabel("Sorteren")
         }
     }
 
