@@ -489,22 +489,39 @@ struct GymTab: View {
                 Text("Voeg de apparaten toe die jouw gym heeft. De plus/min-knoppen in je training volgen dan de gewichtsstappen van die apparaten.")
                     .sa(14).foregroundColor(Tokens.text2).lineSpacing(3).padding(.vertical, 8)
             }
-            ForEach(gym.equipment) { q in
-                HStack(spacing: 8) {
-                    Button {
-                        model.machineEditID = q.id
-                        model.openSheet(.machineedit)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(q.title).sa(16, .medium).foregroundColor(q.on ? Tokens.text : Tokens.text2).lineLimit(1)
-                            Text(q.on ? q.stepsText : "Niet in deze gym").sa(13).foregroundColor(Tokens.text2).lineLimit(1)
+            let groups = Dictionary(grouping: gym.equipment) { $0.showsBrand || $0.brand == "Eigen" ? $0.brand : "Overig" }
+            ForEach(groups.keys.sorted(), id: \.self) { brand in
+                SectionLabel(text: brand).padding(.top, 14).padding(.bottom, 4)
+                VStack(spacing: 0) {
+                    let rows = (groups[brand] ?? []).sorted { $0.name < $1.name }
+                    ForEach(rows) { q in
+                        HStack(spacing: 0) {
+                            Button {
+                                model.machineEditID = q.id
+                                model.openSheet(.machineedit)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Icon.machine(20).foregroundColor(q.on ? ac.accentText : Tokens.text3)
+                                        .frame(width: 40, height: 40)
+                                        .background(Circle().fill(q.on ? ac.accentSoft : Tokens.raised))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(q.name).sa(16, .medium).foregroundColor(q.on ? Tokens.text : Tokens.text2).lineLimit(1)
+                                        Text(q.on ? q.stepsText : "Niet in deze gym").sa(13).foregroundColor(Tokens.text2).lineLimit(1)
+                                    }
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(.leading, 12)
+                                .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            SAToggle(isOn: q.on, onColor: ac.accentLine, label: q.name) { model.toggleMachine(q.id) }
+                                .padding(.horizontal, 12)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-                        .contentShape(Rectangle())
+                        if q.id != rows.last?.id { Divider().background(Tokens.line).padding(.leading, 64) }
                     }
-                    .buttonStyle(.plain)
-                    SAToggle(isOn: q.on, onColor: ac.accentLine, label: q.name) { model.toggleMachine(q.id) }
                 }
+                .card(Tokens.surface, radius: Radius.button)
             }
 
             Button { model.openSheet(.machineadd) } label: {

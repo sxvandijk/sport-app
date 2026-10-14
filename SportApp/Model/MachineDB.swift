@@ -56,6 +56,18 @@ enum MachineDB {
         "add": Template(name: "Adductor", family: "Machine", kind: .stack, exercises: ["Adductor"], min: 5, max: 100, step: 5),
         "cable": Template(name: "Kabelstation", family: "Kabel", kind: .stack, exercises: cableExercises, min: 2.5, max: 90, step: 2.5),
         "dumb": Template(name: "Dumbbells (stap 2,5)", family: "Dumbbells", kind: .dumbbells, exercises: dumbbellExercises, min: 2.5, max: 50, step: 2.5),
+        "incline": Template(name: "Incline chest press", family: "Machine", kind: .stack, exercises: ["Incline chest press machine"], min: 5, max: 100, step: 5),
+        "biceps": Template(name: "Biceps curl", family: "Machine", kind: .stack, exercises: ["Biceps curl machine"], min: 5, max: 80, step: 5),
+        "triceps": Template(name: "Triceps extension", family: "Machine", kind: .stack, exercises: ["Triceps extension machine"], min: 5, max: 80, step: 5),
+        "lateral": Template(name: "Lateral raise", family: "Machine", kind: .stack, exercises: ["Lateral raise machine"], min: 5, max: 60, step: 5),
+        "assist": Template(name: "Assisted pull-up / dip", family: "Machine", kind: .stack, exercises: ["Assisted pull-up machine"], min: 5, max: 100, step: 5),
+        "backext": Template(name: "Back extension", family: "Machine", kind: .stack, exercises: ["Back extension machine"], min: 5, max: 100, step: 5),
+        "torso": Template(name: "Rotary torso", family: "Machine", kind: .stack, exercises: ["Rotary torso machine"], min: 5, max: 80, step: 5),
+        "glute": Template(name: "Glute kickback", family: "Machine", kind: .stack, exercises: ["Glute kickback machine"], min: 5, max: 80, step: 5),
+        "prone": Template(name: "Prone leg curl", family: "Machine", kind: .stack, exercises: ["Prone leg curl"], min: 5, max: 100, step: 5),
+        "pullover": Template(name: "Pullover", family: "Machine", kind: .stack, exercises: ["Pullover machine"], min: 5, max: 100, step: 5),
+        "hack": Template(name: "Hack squat", family: "Machine", kind: .plateLoaded, exercises: ["Hack squat machine"], min: 0, max: 300, step: 10),
+        "smith": Template(name: "Smith machine", family: "Smith machine", kind: .barbell, exercises: ["Smith machine squat", "Smith machine bench press"], min: 0, max: 200, step: 2.5),
         // Plate-loaded: de stap is een plaatje per kant.
         "p_chest": Template(name: "Chest press (plate-loaded)", family: "Machine", kind: .plateLoaded, exercises: ["Chest press machine"], min: 0, max: 200, step: 5),
         "p_shoulder": Template(name: "Shoulder press (plate-loaded)", family: "Machine", kind: .plateLoaded, exercises: ["Shoulder press machine"], min: 0, max: 150, step: 5),
@@ -65,7 +77,8 @@ enum MachineDB {
         "p_calf": Template(name: "Calf raise (plate-loaded)", family: "Machine", kind: .plateLoaded, exercises: ["Calf raise machine", "Calf Press"], min: 0, max: 300, step: 10)
     ]
 
-    private static let selectorized = ["chest", "fly", "rear", "shoulder", "lat", "row", "legpress", "ext", "curl", "calf", "crunch", "abd", "add", "cable"]
+    private static let selectorized = ["chest", "incline", "fly", "rear", "shoulder", "lateral", "lat", "row", "pullover", "biceps", "triceps",
+                                       "assist", "legpress", "ext", "curl", "prone", "calf", "abd", "add", "glute", "crunch", "torso", "backext", "cable", "smith"]
 
     private static let lines: [(brand: String, series: String, keys: [String])] = [
         ("Technogym", "Selection / Pure", selectorized),
@@ -73,7 +86,7 @@ enum MachineDB {
         ("Basic-Fit", "Standaard (controleer in je club)", selectorized + ["dumb"]),
         ("Life Fitness", "Signature / Insignia", selectorized),
         ("Gym80", "Pure Kraft / Sygnum", selectorized),
-        ("Hammer Strength", "Plate-loaded", ["p_chest", "p_shoulder", "p_lat", "p_row", "p_legpress", "p_calf"]),
+        ("Hammer Strength", "Plate-loaded", ["p_chest", "p_shoulder", "p_lat", "p_row", "p_legpress", "p_calf", "hack"]),
         ("Algemeen", "Geen merk", ["cable", "dumb"])
     ]
 

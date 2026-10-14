@@ -71,4 +71,33 @@ final class RoundTwoTests: XCTestCase {
         model.deleteGym(model.gym.id)
         XCTAssertEqual(model.gyms.count, 1)
     }
+
+    func testAddOnPlateAddsExtraWeights() {
+        let m = GymMachine(brand: "Test", name: "Lat", exercises: ["Lat pulldown"], min: 5, max: 20, step: 5, addOn: 4)
+        let weights = m.scale?.validWeights() ?? []
+        XCTAssertEqual(weights, [5, 9, 10, 14, 15, 19, 20])
+    }
+
+    func testMachineLabelShowsBrandInExerciseMeta() {
+        let model = AppModel(fileURL: nil)
+        XCTAssertEqual(Catalog.meta("Ab Crunch Machine"), "Core \u{00B7} Machine")
+        let crunch = MachineDB.all.first { $0.brand == "Matrix" && $0.name == "Ab crunch" }!
+        model.addMachine(crunch)
+        XCTAssertEqual(Catalog.meta("Ab Crunch Machine"), "Core \u{00B7} Matrix Ab crunch")
+        model.toggleMachine(model.gym.equipment[0].id)
+        XCTAssertEqual(Catalog.meta("Ab Crunch Machine"), "Core \u{00B7} Machine")
+    }
+
+    func testReplaceDraftExerciseKeepsPositionAndSets() {
+        let model = AppModel(fileURL: nil)
+        model.draft = Draft(name: "Test", plans: [])
+        model.draft?.items = [DraftItem(name: "Leg press", warmSets: 0, warmW: nil, sets: 4, reps: 10, w: 100, link: false),
+                              DraftItem(name: "Pec deck", warmSets: 0, warmW: nil, sets: 3, reps: 12, w: 40, link: false)]
+        let id = model.draft!.items[0].id
+        model.replaceDraftItem(id, with: "Hack squat machine")
+        XCTAssertEqual(model.draft?.items[0].name, "Hack squat machine")
+        XCTAssertEqual(model.draft?.items[0].id, id)
+        XCTAssertEqual(model.draft?.items[0].sets, 4)
+        XCTAssertEqual(model.draft?.items[1].name, "Pec deck")
+    }
 }

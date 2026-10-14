@@ -30,7 +30,7 @@ private struct SheetBody: View {
 
     private var keepsKeyboard: Bool {
         switch kind {
-        case .add, .swap, .change, .pref, .superset, .machineadd: return true
+        case .add, .swap, .change, .pref, .superset, .machineadd, .draftswap: return true
         default: return false
         }
     }
@@ -65,6 +65,7 @@ private struct SheetBody: View {
         case .swapscope: return ("Oefening wisselen", name.isEmpty ? "" : "Wanneer wil je \(name) wisselen?")
         case .settype: return ("Soort set", name)
         case .gym: return ("Kies je gym", "Machine bezet en de plus/min-stappen volgen de apparaten van deze gym.")
+        case .draftswap: return ("Oefening wisselen", model.draft?.items.first(where: { $0.id == model.draftSwapID })?.name ?? "")
         case .machineadd: return ("Apparaat toevoegen", "Kies merk en type. Je past de stappen daarna aan.")
         case .machineedit: return (model.machine(model.machineEditID)?.title ?? "Apparaat", "Stappen en gekoppelde oefeningen")
         }
@@ -106,10 +107,16 @@ private struct SheetBody: View {
                 .padding(.top, 8)
                 Spacer(minLength: 0)
                 Button { model.closeSheet() } label: {
-                    Icon.close(20).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
+                    if kind == .machineadd || kind == .machineedit {
+                        Icon.check(20, 2.6).foregroundColor(ac.onAccent).frame(width: 36, height: 36)
+                            .background(Circle().fill(ac.accentLine))
+                            .frame(width: 44, height: 44).contentShape(Rectangle())
+                    } else {
+                        Icon.close(20).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Sluiten")
+                .accessibilityLabel(kind == .machineadd || kind == .machineedit ? "Klaar" : "Sluiten")
             }
             .padding(.top, 10).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
 
@@ -146,6 +153,7 @@ private struct SheetBody: View {
         case .add: SearchList(mode: .add)
         case .settype: SetTypeSheet()
         case .gym: GymSheet()
+        case .draftswap: SearchList(mode: .draftSwap)
         case .machineadd: MachineAddSheet()
         case .machineedit: MachineEditSheet()
         case .program: ProgramSheet()
@@ -626,7 +634,7 @@ private struct SupersetSheet: View {
 // MARK: - Zoeken (toevoegen, bezet, superset)
 
 private struct SearchList: View {
-    enum Mode { case add, swap, superset, preference }
+    enum Mode { case add, swap, superset, preference, draftSwap }
 
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
@@ -856,7 +864,7 @@ private struct SearchList: View {
 
     private func iconFor(chosen: Bool) -> Icon {
         switch mode {
-        case .swap, .preference: return Icon.swap(16)
+        case .swap, .preference, .draftSwap: return Icon.swap(16)
         case .add: return Icon.plus(16, 2.6)
         case .superset: return chosen ? Icon.check(16, 2.6) : Icon.plus(16, 2.6)
         }
@@ -880,6 +888,8 @@ private struct SearchList: View {
             }
         case .swap, .preference:
             model.swapExercise(to: name, manual: true)
+        case .draftSwap:
+            if let id = model.draftSwapID { model.replaceDraftItem(id, with: name) }
         case .superset:
             if let i = model.selectedNew.firstIndex(of: name) { model.selectedNew.remove(at: i) } else { model.selectedNew.append(name) }
         }
@@ -936,37 +946,45 @@ private struct SetTypeSheet: View {
 private struct GymSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    @State private var name = ""
 
     var body: some View {
         ForEach(model.gyms) { g in
             ListRow(title: g.name, sub: g.summary, selected: g.id == model.gym.id) { model.chooseGym(g.id) }
         }
-        HStack(spacing: 8) {
-            TextField("Naam van een gym", text: $name)
-                .sa(16).foregroundColor(Tokens.text)
-                .padding(.horizontal, 14).frame(height: 48)
-                .card(Tokens.raised, radius: Radius.field)
+        SheetRowButton(action: {
+            model.sheet = nil
+            model.nameEdit = NameEdit(title: "Nieuwe gym", placeholder: "Naam van de gym", text: "", confirmTitle: "Maak aan") { model.addGym(name: $0) }
+        }) {
+            actionRow(icon: Icon.plus(18, 2.4), title: "Nieuwe gym", color: ac.accentText)
         }
-        .padding(.top, 8)
-        HStack(spacing: 10) {
-            Button { model.addGym(name: name) } label: {
-                Text("Nieuwe gym").sa(16, .bold).foregroundColor(ac.onAccent)
-                    .frame(maxWidth: .infinity).frame(height: 48)
-                    .card(ac.accent, radius: Radius.button).opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
-            }
-            .buttonStyle(.plain)
-            Button { model.renameGym(name) } label: {
-                Text("Hernoem huidige").sa(16, .semibold).foregroundColor(Tokens.text)
-                    .frame(maxWidth: .infinity).frame(height: 48)
-                    .card(Tokens.raised, radius: Radius.button).opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
-            }
-            .buttonStyle(.plain)
+        .padding(.top, 2).padding(.bottom, 6)
+        SheetRowButton(action: {
+            let current = model.gym.name
+            model.sheet = nil
+            model.nameEdit = NameEdit(title: "Gym hernoemen", subtitle: current, placeholder: "Nieuwe naam", text: current, confirmTitle: "Bewaar") { model.renameGym($0) }
+        }) {
+            actionRow(icon: Icon.edit(18), title: "Hernoem \(model.gym.name)", color: Tokens.text)
         }
-        .padding(.top, 8)
+        .padding(.bottom, 6)
         if model.gyms.count > 1 {
-            FlatButton(title: "Verwijder \(model.gym.name)", color: Tokens.danger) { model.deleteGym(model.gym.id) }.padding(.top, 4)
+            SheetRowButton(action: {
+                let g = model.gym
+                model.confirm = ConfirmRequest(title: "\(g.name) verwijderen?",
+                                               message: "Alle apparaten en stappen van deze gym gaan weg. Je trainingen blijven bewaard.",
+                                               confirmTitle: "Verwijder gym") { model.deleteGym(g.id) }
+            }) {
+                actionRow(icon: Icon.trash(18), title: "Verwijder \(model.gym.name)", color: Tokens.danger)
+            }
         }
+    }
+
+    private func actionRow(icon: Icon, title: String, color: Color) -> some View {
+        HStack(spacing: 12) {
+            icon.foregroundColor(color).frame(width: 24)
+            Text(title).sa(16, .semibold).foregroundColor(color).lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16).frame(minHeight: 54)
     }
 }
 
@@ -997,13 +1015,23 @@ private struct MachineAddSheet: View {
             .padding(.horizontal, 14).frame(height: 48)
             .card(Tokens.raised, radius: Radius.field)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    chip("Alle merken", active: brand == nil) { brand = nil }
-                    ForEach(MachineDB.brands, id: \.self) { b in chip(b, active: brand == b) { brand = b } }
+            Menu {
+                Button { brand = nil } label: { Label("Alle merken", systemImage: brand == nil ? "checkmark" : "circle") }
+                ForEach(MachineDB.brands, id: \.self) { b in
+                    Button { brand = b } label: { Label(b, systemImage: brand == b ? "checkmark" : "circle") }
                 }
+            } label: {
+                HStack(spacing: 6) {
+                    Icon.filter(18)
+                    Text(brand ?? "Alle merken").sa(14, .medium).lineLimit(1)
+                    Icon.chevronDown(12, 2.4)
+                }
+                .foregroundColor(brand != nil ? ac.onAccent : Tokens.text)
+                .padding(.horizontal, 14).frame(height: 40)
+                .background(Capsule().fill(brand != nil ? ac.accentLine : Tokens.raised))
             }
             .padding(.top, 8)
+            .accessibilityLabel("Filter op merk")
 
             Button {
                 let id = model.addCustomMachine(name: model.query)
@@ -1024,6 +1052,9 @@ private struct MachineAddSheet: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(shown) { m in
                     let have = model.hasMachine(m)
+                    if brand == nil, m.id == shown.first(where: { $0.brand == m.brand })?.id {
+                        SectionLabel(text: m.brand).padding(.top, 10).padding(.bottom, 2)
+                    }
                     Button { model.addMachine(m) } label: {
                         HStack(spacing: 12) {
                             TitleSub(title: m.name, sub: m.brand + " \u{00B7} " + m.series, titleSize: 17, titleWeight: .medium)
@@ -1048,27 +1079,31 @@ private struct MachineAddSheet: View {
         .onDisappear { model.query = "" }
     }
 
-    private func chip(_ text: String, active: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(text).sa(14, .medium).foregroundColor(active ? ac.onAccent : Tokens.text)
-                .padding(.horizontal, 14).frame(height: 36)
-                .background(Capsule().fill(active ? ac.accentLine : Tokens.raised))
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 private struct MachineEditSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
-    private static let stepChoices: [Double] = [0.5, 1, 1.25, 2, 2.5, 4, 5, 10]
-    private static let addOnChoices: [Double] = [0.5, 1, 1.25, 2.5]
+    private static let stepChoices: [Double] = [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4, 4.5, 5, 7.5, 10]
+    private static let addOnChoices: [Double] = [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4, 5]
 
     var body: some View {
         if let m = model.machine(model.machineEditID) {
             let id = m.id
             VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 12) {
+                    Icon.machine(24).foregroundColor(ac.accentText)
+                        .frame(width: 48, height: 48)
+                        .background(Circle().fill(ac.accentSoft))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(m.stepsText).sa(15, .medium).foregroundColor(Tokens.text)
+                        Text(m.exercises.isEmpty ? "Nog geen oefeningen gekoppeld" : "\(m.exercises.count) gekoppelde oefening" + (m.exercises.count == 1 ? "" : "en"))
+                            .sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.bottom, 8)
                 adjustRow("Eerste stand (kg)", value: m.min, delta: m.step > 0 ? m.step : 5) { v in
                     model.updateMachine(id) { $0.min = Swift.max(0, Swift.min(v, $0.max)) }
                 }
@@ -1086,7 +1121,10 @@ private struct MachineEditSheet: View {
                 }
                 .frame(minHeight: 52)
                 HStack {
-                    Text("Tussenplaatje").sa(16, .medium).foregroundColor(Tokens.text)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Extra plaatje").sa(16, .medium).foregroundColor(Tokens.text)
+                        Text("Schuif of pin die je bovenop een stand zet").sa(12).foregroundColor(Tokens.text2)
+                    }
                     Spacer(minLength: 0)
                     Menu {
                         Button("Geen") { model.updateMachine(id) { $0.addOn = nil } }
@@ -1118,7 +1156,10 @@ private struct MachineEditSheet: View {
                     .buttonStyle(.plain)
                 }
 
-                FlatButton(title: "Verwijder uit deze gym", color: Tokens.danger) { model.removeMachine(id) }.padding(.top, 10)
+                FlatButton(title: "Verwijder uit deze gym", color: Tokens.danger) {
+                    model.confirm = ConfirmRequest(title: "\(m.title) verwijderen?", message: "Dit apparaat gaat uit je gym. De stappen van de gekoppelde oefeningen worden weer standaard.",
+                                                   confirmTitle: "Verwijder") { model.removeMachine(id) }
+                }.padding(.top, 10)
             }
         } else {
             Text("Apparaat niet gevonden.").sa(15).foregroundColor(Tokens.text2)

@@ -415,3 +415,64 @@ struct ConfirmOverlay: View {
         }
     }
 }
+
+// MARK: - Naam invullen (popup, midden boven het toetsenbord)
+
+struct NameOverlay: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+    @FocusState private var focused: Bool
+
+    private func close() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        model.nameEdit = nil
+    }
+
+    var body: some View {
+        if let edit = model.nameEdit {
+            let text = Binding(get: { model.nameEdit?.text ?? "" }, set: { model.nameEdit?.text = $0 })
+            let empty = edit.text.trimmingCharacters(in: .whitespaces).isEmpty
+            ZStack {
+                Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { close() }
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(edit.title).sa(18, .bold).foregroundColor(Tokens.text)
+                        if !edit.subtitle.isEmpty { Text(edit.subtitle).sa(13).foregroundColor(Tokens.text2) }
+                    }
+                    TextField(edit.placeholder, text: text)
+                        .focused($focused)
+                        .sa(17).foregroundColor(Tokens.text)
+                        .submitLabel(.done)
+                        .padding(.horizontal, 14).frame(height: 52)
+                        .card(Tokens.raised, radius: Radius.field)
+                    HStack(spacing: 10) {
+                        Button { close() } label: {
+                            Text("Annuleer").sa(16, .semibold).foregroundColor(Tokens.text)
+                                .frame(maxWidth: .infinity).frame(height: 48)
+                                .card(Tokens.raised, radius: Radius.button)
+                        }
+                        .buttonStyle(.plain)
+                        Button {
+                            let value = edit.text
+                            let action = edit.action
+                            close()
+                            action(value)
+                        } label: {
+                            Text(edit.confirmTitle).sa(16, .bold).foregroundColor(ac.onAccent)
+                                .frame(maxWidth: .infinity).frame(height: 48)
+                                .card(ac.accent, radius: Radius.button)
+                                .opacity(empty ? 0.4 : 1)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(empty)
+                    }
+                }
+                .padding(22)
+                .card(Tokens.surface, radius: Radius.card)
+                .padding(.horizontal, 14)
+            }
+            .transition(.opacity)
+            .onAppear { focused = true }
+        }
+    }
+}
