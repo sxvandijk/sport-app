@@ -976,7 +976,6 @@ private struct NotePopup: View {
     @Environment(\.accentColors) private var ac
     @FocusState private var focused: Bool
     @State private var kb: CGFloat = 0
-    @State private var cardH: CGFloat = 0
 
     static func closeKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -986,19 +985,14 @@ private struct NotePopup: View {
         Binding(get: { model.noteEdit?.text ?? "" }, set: { model.noteEdit?.text = $0 })
     }
 
-    /// Zo centraal mogelijk; alleen omhoog als het toetsenbord anders over de popup valt.
-    private func shift(in height: CGFloat) -> CGFloat {
-        let bottom = height / 2 + cardH / 2
-        let limit = height - kb - 16
-        return kb > 0 ? min(0, limit - bottom) : 0
-    }
+    /// Midden van de ruimte boven het toetsenbord.
+    private var shift: CGFloat { -kb / 2 }
 
     var body: some View {
         let edit = model.noteEdit
         let isNew = edit?.entryID == nil
         let empty = (edit?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        return GeometryReader { geo in
-        ZStack(alignment: .center) {
+        return ZStack(alignment: .center) {
             Color.black.opacity(0.55).ignoresSafeArea()
                 .onTapGesture { NotePopup.closeKeyboard(); model.noteEdit = nil }
             VStack(alignment: .leading, spacing: 12) {
@@ -1008,10 +1002,10 @@ private struct NotePopup: View {
                 }
                 TextField("Bijv. stoelstand 4", text: textBinding, axis: .vertical)
                     .focused($focused)
-                    .lineLimit(3...7)
+                    .lineLimit(3...6)
                     .sa(17).foregroundColor(Tokens.text)
                     .padding(.horizontal, 14).padding(.vertical, 12)
-                    .frame(minHeight: 96, alignment: .topLeading)
+                    .frame(minHeight: 84, alignment: .topLeading)
                     .card(Tokens.raised, radius: Radius.field)
                 HStack(spacing: 10) {
                     Button { NotePopup.closeKeyboard(); model.noteEdit = nil } label: {
@@ -1033,9 +1027,7 @@ private struct NotePopup: View {
             .padding(22)
             .card(Tokens.surface, radius: Radius.card)
             .padding(.horizontal, 14)
-            .background(GeometryReader { g in Color.clear.onAppear { cardH = g.size.height }.onChange(of: g.size.height) { cardH = $0 } })
-            .offset(y: shift(in: geo.size.height))
-        }
+            .offset(y: shift)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { n in
             if let f = (n.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect) {
