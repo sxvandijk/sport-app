@@ -105,7 +105,7 @@ struct WorkoutScreen: View {
                         .background(ScrollBridge(controller: scroller))
                         .padding(.horizontal, 20)
                         .padding(.top, 18)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 84)
                         .animation(nil, value: openID)
                 }
                 .onPreferenceChange(HeadYKey.self) { y in
@@ -446,6 +446,7 @@ private struct OpenExerciseCard: View {
             ForEach(entries) { e in
                 noteRow(e, isNew: e.date >= start)
             }
+            HStack { Spacer(minLength: 0)
             Button { model.noteEdit = NoteEdit(exercise: exercise.name, entryID: nil, text: "") } label: {
                 HStack(spacing: 4) {
                     Icon.plus(12, 2.6)
@@ -459,6 +460,7 @@ private struct OpenExerciseCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Notitie toevoegen")
+            }
         }
     }
 
@@ -711,8 +713,9 @@ private struct RestInline: View {
             let left = end.map { $0.timeIntervalSince(now) } ?? 0
             let resting = end != nil && left > 0
             let pct = resting ? max(0, min(1, left / Double(max(1, model.restTotal)))) : 0
-            HStack(spacing: 0) {
-                ZStack(alignment: .leading) {
+            let overAt: Date = (end != nil && !resting) ? end! : (model.restOverAt ?? since)
+            HStack(spacing: 8) {
+                ZStack {
                     GeometryReader { geo in
                         Rectangle().fill(ac.accentSoft).frame(width: geo.size.width * CGFloat(pct))
                     }
@@ -720,33 +723,26 @@ private struct RestInline: View {
                         Icon.timer(15).foregroundColor(resting ? Tokens.text : ac.accentText)
                         if resting {
                             Text("Rust").sa(13, .medium).foregroundColor(Tokens.text2)
-                            Text(Format.clock(seconds: Int(left + 0.999))).sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
-                        } else if end != nil {
-                            Text("Rust voorbij").sa(13, .medium).foregroundColor(Tokens.text2)
-                            Text("+" + Format.clock(seconds: Int(-left))).sa(15, .semibold, mono: true).foregroundColor(ac.accentText)
+                            Text(Format.clock(seconds: Int(left + 0.999))).sa(17, .semibold, mono: true).foregroundColor(Tokens.text)
                         } else {
-                            Text("Sinds laatste set").sa(13, .medium).foregroundColor(Tokens.text2)
-                            Text(Format.clock(seconds: max(0, Int(now.timeIntervalSince(since))))).sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
+                            Text("Sinds rust").sa(13, .medium).foregroundColor(Tokens.text2)
+                            Text(Format.clock(seconds: max(0, Int(now.timeIntervalSince(overAt))))).sa(17, .semibold, mono: true).foregroundColor(ac.accentText)
                         }
-                        Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, 12)
                 }
-                .frame(maxWidth: .infinity).frame(height: 36)
+                .frame(maxWidth: .infinity).frame(height: 40)
+                .background(Tokens.raised)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
                 if end != nil {
                     Button { model.skipRest() } label: {
-                        Text(resting ? "Sla over" : "Stop").sa(13, .bold).foregroundColor(ac.onAccent)
-                            .padding(.horizontal, 14).frame(height: 28)
+                        Text(resting ? "Sla over" : "Stop").sa(14, .bold).foregroundColor(ac.onAccent)
+                            .padding(.horizontal, 16).frame(height: 40)
                             .background(Capsule().fill(ac.accentLine))
-                            .frame(minWidth: 44, minHeight: 36)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .padding(.trailing, 4)
                 }
             }
-            .background(Tokens.raised)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
         }
     }
 }
@@ -848,7 +844,7 @@ private struct Dock: View {
         .onTapGesture {
             if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight }
         }
-        .animation(.easeOut(duration: 0.22), value: model.editField)
+        .transaction { $0.animation = nil }
         .onChange(of: model.editField) { _ in buffer = nil }
         .onChange(of: set.id) { _ in buffer = nil }
     }
@@ -996,7 +992,7 @@ private struct NotePopup: View {
         let edit = model.noteEdit
         let isNew = edit?.entryID == nil
         let empty = (edit?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        return ZStack(alignment: .top) {
+        return ZStack(alignment: .center) {
             Color.black.opacity(0.55).ignoresSafeArea()
                 .onTapGesture { NotePopup.closeKeyboard(); model.noteEdit = nil }
             VStack(alignment: .leading, spacing: 12) {
@@ -1006,10 +1002,10 @@ private struct NotePopup: View {
                 }
                 TextField("Bijv. stoelstand 4", text: textBinding, axis: .vertical)
                     .focused($focused)
-                    .lineLimit(1...5)
+                    .lineLimit(3...7)
                     .sa(17).foregroundColor(Tokens.text)
                     .padding(.horizontal, 14).padding(.vertical, 12)
-                    .frame(minHeight: 52, alignment: .topLeading)
+                    .frame(minHeight: 96, alignment: .topLeading)
                     .card(Tokens.raised, radius: Radius.field)
                 HStack(spacing: 10) {
                     Button { NotePopup.closeKeyboard(); model.noteEdit = nil } label: {
@@ -1028,9 +1024,10 @@ private struct NotePopup: View {
                     .disabled(empty)
                 }
             }
-            .padding(18)
+            .padding(22)
             .card(Tokens.surface, radius: Radius.card)
-            .padding(.horizontal, 16).padding(.top, 70)
+            .padding(.horizontal, 14)
+            .offset(y: -90)
         }
         .onAppear { focused = true }
     }

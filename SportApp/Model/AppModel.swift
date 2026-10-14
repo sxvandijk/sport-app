@@ -192,6 +192,8 @@ final class AppModel: ObservableObject {
     @Published var editField: EditField?
     @Published var restEnd: Date?
     @Published var lastSetAt: Date?
+    /// Moment waarop de rust voorbij was of werd overgeslagen.
+    @Published var restOverAt: Date?
     @Published var restTotal: Int = 90
     @Published var toast: Toast?
     @Published var noteEdit: NoteEdit?
@@ -371,6 +373,7 @@ final class AppModel: ObservableObject {
         focusID = nil
         restEnd = nil
         lastSetAt = nil
+        restOverAt = nil
         sheet = nil
         toast = nil
         Notifier.requestAuthorizationIfNeeded()
@@ -396,6 +399,7 @@ final class AppModel: ObservableObject {
         sheet = nil
         restEnd = nil
         lastSetAt = nil
+        restOverAt = nil
         focusID = nil
         toast = nil
         Notifier.cancelRest()
@@ -577,6 +581,7 @@ final class AppModel: ObservableObject {
         focusID = result.nextFocus
         toast = nil
         lastSetAt = Date()
+        restOverAt = nil
         Haptics.success()
         if let seconds = result.restSeconds {
             restTotal = seconds
@@ -768,6 +773,7 @@ final class AppModel: ObservableObject {
 
     func skipRest() {
         restAlarm?.cancel()
+        if let end = restEnd { restOverAt = min(end, Date()) } else { restOverAt = Date() }
         restEnd = nil
         Notifier.cancelRest()
     }
