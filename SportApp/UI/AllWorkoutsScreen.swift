@@ -111,7 +111,7 @@ struct AllWorkoutsScreen: View {
                         HStack(alignment: .firstTextBaseline) {
                             Text(e.name).sa(14, .medium).foregroundColor(Tokens.text).lineLimit(1)
                             Spacer(minLength: 8)
-                            Text(sets.map { Format.weight($0.w) + "\u{00D7}" + String($0.r) }.joined(separator: ", "))
+                            Text(sets.map { Format.weight($0.w) + "\u{00D7}" + $0.repsText }.joined(separator: ", "))
                                 .sa(12, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
                         }
                     }

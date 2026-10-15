@@ -106,6 +106,57 @@ struct PrimaryButton: View {
 }
 
 /// Rij in een sheet: lichte achtergrond, afgerond.
+enum GlassRole { case primary, secondary, danger, destructive }
+
+/// Dé knop van de app voor bladen en bevestigingen: altijd Liquid Glass, alleen de tint verschilt.
+struct GlassButton: View {
+    let title: String
+    var role: GlassRole = .secondary
+    var height: CGFloat = 54
+    var icon: Icon?
+    let action: () -> Void
+    @Environment(\.accentColors) private var ac
+
+    private var textColor: Color {
+        switch role {
+        case .primary: return ac.onAccent
+        case .secondary: return Tokens.text
+        case .danger: return Tokens.danger
+        case .destructive: return Tokens.onDanger
+        }
+    }
+    private var tint: Color? {
+        switch role {
+        case .primary: return ac.accent
+        case .secondary: return nil
+        case .danger: return Tokens.danger.opacity(0.28)
+        case .destructive: return Tokens.danger
+        }
+    }
+    private var fallback: Color {
+        switch role {
+        case .primary: return ac.accent
+        case .secondary, .danger: return Tokens.raised
+        case .destructive: return Tokens.danger
+        }
+    }
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.button, style: .continuous)
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if let icon = icon { icon }
+                Text(title).sa(17, role == .secondary ? .semibold : .bold)
+            }
+            .foregroundColor(textColor)
+            .frame(maxWidth: .infinity).frame(height: height)
+            .glassSurface(shape, tint: tint, interactive: true, fallback: fallback)
+            .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct SheetRowButton<Content: View>: View {
     let action: () -> Void
     @ViewBuilder var content: () -> Content
@@ -113,7 +164,8 @@ struct SheetRowButton<Content: View>: View {
         Button(action: action) {
             content()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .card(Tokens.raised, radius: Radius.row)
+                .glassSurface(RoundedRectangle(cornerRadius: Radius.row, style: .continuous), interactive: true, fallback: Tokens.raised)
+                .contentShape(RoundedRectangle(cornerRadius: Radius.row, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -388,24 +440,14 @@ struct ConfirmOverlay: View {
                         Text(c.message).sa(14).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
                             .lineLimit(4).padding(.top, 8)
                     }
-                    Button {
+                    GlassButton(title: c.confirmTitle, role: .destructive, height: 52) {
                         let action = c.action
                         model.confirm = nil
                         action()
-                    } label: {
-                        Text(c.confirmTitle).sa(17, .bold).foregroundColor(Tokens.onDanger)
-                            .frame(maxWidth: .infinity).frame(height: 52)
-                            .card(Tokens.danger, radius: Radius.button)
                     }
-                    .buttonStyle(.plain)
                     .padding(.top, 20)
-                    Button { model.confirm = nil } label: {
-                        Text("Annuleer").sa(17, .semibold).foregroundColor(Tokens.text)
-                            .frame(maxWidth: .infinity).frame(height: 52)
-                            .card(Tokens.raised, radius: Radius.button)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 8)
+                    GlassButton(title: "Annuleer", role: .secondary, height: 52) { model.confirm = nil }
+                        .padding(.top, 8)
                 }
                 .padding(22)
                 .frame(maxWidth: 340)
@@ -447,24 +489,14 @@ struct NameOverlay: View {
                         .padding(.horizontal, 14).frame(height: 52)
                         .card(Tokens.raised, radius: Radius.field)
                     HStack(spacing: 10) {
-                        Button { close() } label: {
-                            Text("Annuleer").sa(16, .semibold).foregroundColor(Tokens.text)
-                                .frame(maxWidth: .infinity).frame(height: 48)
-                                .card(Tokens.raised, radius: Radius.button)
-                        }
-                        .buttonStyle(.plain)
-                        Button {
+                        GlassButton(title: "Annuleer", role: .secondary, height: 48) { close() }
+                        GlassButton(title: edit.confirmTitle, role: .primary, height: 48) {
                             let value = edit.text
                             let action = edit.action
                             close()
                             action(value)
-                        } label: {
-                            Text(edit.confirmTitle).sa(16, .bold).foregroundColor(ac.onAccent)
-                                .frame(maxWidth: .infinity).frame(height: 48)
-                                .card(ac.accent, radius: Radius.button)
-                                .opacity(empty ? 0.4 : 1)
                         }
-                        .buttonStyle(.plain)
+                        .opacity(empty ? 0.4 : 1)
                         .disabled(empty)
                     }
                 }

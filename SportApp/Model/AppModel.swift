@@ -23,7 +23,7 @@ enum SheetKind: String {
 }
 
 enum SwapScope { case now, schema, prefOnly }
-enum EditField { case weight, reps }
+enum EditField { case weight, reps, reps2 }
 
 struct DraftItem: Identifiable, Hashable {
     var id = UUID()
@@ -406,8 +406,8 @@ final class AppModel: ObservableObject {
             let minutes = max(1, Int((now.timeIntervalSince(s.startAt) / 60).rounded()))
             var logged: [LoggedExercise] = []
             for e in s.exercises {
-                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type) }
-                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done)) }
+                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2) }
+                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni)) }
             }
             history.insert(HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged), at: 0)
         }
@@ -452,9 +452,18 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    func stepReps(_ dir: Int) {
+    func toggleUnilateral(_ exID: UUID) {
+        guard var s = session else { return }
+        s.toggleUnilateral(exID)
+        session = s
+        editField = nil
+        Haptics.light()
+        save()
+    }
+
+    func stepReps(_ dir: Int, second: Bool = false) {
         guard var s = session, let c = current().cur else { return }
-        s.stepReps(set: c.setID, exID: c.exID, dir: dir)
+        s.stepReps(set: c.setID, exID: c.exID, dir: dir, second: second)
         session = s
         save()
     }
@@ -491,9 +500,9 @@ final class AppModel: ObservableObject {
     }
 
     /// Cijfers die je met het toetsenbord intikt voor de huidige set.
-    func setCurrentValues(w: Double?, r: Int?) {
+    func setCurrentValues(w: Double?, r: Int?, r2: Int? = nil) {
         guard var s = session, let c = current().cur else { return }
-        s.setValues(set: c.setID, exID: c.exID, w: w, r: r)
+        s.setValues(set: c.setID, exID: c.exID, w: w, r: r, r2: r2)
         session = s
         save()
     }
