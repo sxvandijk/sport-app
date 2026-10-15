@@ -797,6 +797,19 @@ struct ProfileTab: View {
                     }
                 }
                 .frame(minHeight: 64)
+
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Elke week opnieuw beginnen").sa(16, .medium).foregroundColor(Tokens.text)
+                        Text("Op maandag weer de eerste training van je schema").sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    SAToggle(isOn: model.weekReset, onColor: ac.accentLine, label: "Elke week opnieuw beginnen") {
+                        model.weekReset.toggle()
+                        model.save()
+                    }
+                }
+                .frame(minHeight: 64)
             }
             .padding(.horizontal, 16).padding(.vertical, 4)
             .glassCard(radius: Radius.button)

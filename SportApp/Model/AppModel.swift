@@ -164,6 +164,7 @@ struct PersistedState: Codable {
     var creaDayLate: [String: Int]? = nil  // eigen tijd van de tweede herinnering per weekdag
     var creaDayLateOff: [Int]? = nil       // weekdagen zonder tweede herinnering
     var exAcc: [String: [String]]? = nil   // per oefening: namen van de opzetstukken die je gebruikt
+    var weekReset: Bool? = nil             // nieuwe week: schema begint weer bij de eerste training
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -209,6 +210,7 @@ final class AppModel: ObservableObject {
     @Published var creaDayLate: [String: Int]
     @Published var creaDayLateOff: [Int]
     @Published var exAcc: [String: [String]]
+    @Published var weekReset: Bool
     @Published var accEditID: String?
     @Published var noteLog: [String: [NoteEntry]]
 
@@ -282,6 +284,7 @@ final class AppModel: ObservableObject {
         creaDayLate = state.creaDayLate ?? [:]
         creaDayLateOff = state.creaDayLateOff ?? []
         exAcc = state.exAcc ?? [:]
+        weekReset = state.weekReset ?? false
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -366,7 +369,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -420,6 +423,11 @@ final class AppModel: ObservableObject {
         if names.isEmpty { return nil }
         let sorted = history.sorted { $0.date > $1.date }
         if let last = sorted.first(where: { names.contains($0.name) }), let i = names.firstIndex(of: last.name) {
+            if weekReset {
+                var cal = Calendar.current
+                cal.firstWeekday = 2
+                if !cal.isDate(last.date, equalTo: now, toGranularity: .weekOfYear) { return names[0] }
+            }
             return names[(i + 1) % names.count]
         }
         return names[0]
