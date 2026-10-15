@@ -20,7 +20,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, acclist, sidemode
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -1019,10 +1019,10 @@ final class AppModel: ObservableObject {
         var acc: [String: [GymAccessory]] = [:]
         let all = gym.accessoryList
         for (ex, names) in exAcc {
-            let list = all.filter { names.contains($0.name) }
-            if !list.isEmpty { acc[ex] = list }
+            acc[ex] = all.filter { names.contains($0.name) }
         }
         Catalog.exAccessories = acc
+        Catalog.defaultAccessories = all
     }
 
     private func mutateGym(_ body: (inout GymSetup) -> Void) {
@@ -1075,6 +1075,7 @@ final class AppModel: ObservableObject {
         let n = name.trimmingCharacters(in: .whitespaces)
         guard !n.isEmpty, !gym.accessoryList.contains(where: { $0.name.lowercased() == n.lowercased() }) else { return }
         mutateAccessories { $0.append(GymAccessory(name: n)) }
+        syncLiveAccessories()
     }
 
     func renameAccessory(_ id: String, to name: String) {
@@ -1094,30 +1095,51 @@ final class AppModel: ObservableObject {
         mutateAccessories { $0.removeAll { $0.id == id } }
         for (ex, names) in exAcc where names.contains(old) { exAcc[ex] = names.filter { $0 != old } }
         applyGym()
+        syncLiveAccessories()
         save()
     }
 
     func accessory(_ id: String?) -> GymAccessory? { gym.accessoryList.first { $0.id == id } }
 
-    func exerciseUsesAccessory(_ exercise: String, _ acc: String) -> Bool { exAcc[exercise]?.contains(acc) == true }
+    /// Opzetstukken van een oefening: je eigen keuze, anders alles bij kabeloefeningen.
+    func accessoryNames(for exercise: String) -> [String] {
+        Catalog.accessories(for: exercise).map { $0.name }
+    }
+
+    func exerciseUsesAccessory(_ exercise: String, _ acc: String) -> Bool { accessoryNames(for: exercise).contains(acc) }
 
     func toggleExerciseAccessory(_ exercise: String, _ acc: String) {
-        var names = exAcc[exercise] ?? []
+        var names = accessoryNames(for: exercise)
         if let i = names.firstIndex(of: acc) { names.remove(at: i) } else { names.append(acc) }
-        exAcc[exercise] = names.isEmpty ? nil : names
+        exAcc[exercise] = names
         applyGym()
-        // Een lopende oefening pakt het eerste opzetstuk meteen op.
-        if var s = session {
-            var changed = false
-            for i in s.exercises.indices where s.exercises[i].name == exercise {
-                let list = Catalog.accessories(for: exercise)
-                if let cur = s.exercises[i].acc, list.contains(where: { $0.name == cur }) { continue }
-                s.exercises[i].acc = list.first?.name
-                s.exercises[i].accStep = (list.first?.step ?? 0) > 0 ? list.first?.step : nil
+        syncLiveAccessories()
+        save()
+    }
+
+    /// Een lopende oefening houdt altijd een opzetstuk dat nog bij hem hoort.
+    func syncLiveAccessories() {
+        guard var s = session else { return }
+        var changed = false
+        for i in s.exercises.indices {
+            let list = Catalog.accessories(for: s.exercises[i].name)
+            if list.isEmpty {
+                if s.exercises[i].acc != nil { s.exercises[i].acc = nil; s.exercises[i].accStep = nil; changed = true }
+            } else if !list.contains(where: { $0.name == s.exercises[i].acc }) {
+                s.exercises[i].acc = list[0].name
+                s.exercises[i].accStep = list[0].step > 0 ? list[0].step : nil
                 changed = true
             }
-            if changed { session = s }
         }
+        if changed { session = s }
+    }
+
+    func setSideMode(_ exID: UUID, _ mode: SideMode) {
+        guard var s = session else { return }
+        s.setSideMode(exID, mode)
+        session = s
+        editField = nil
+        Haptics.light()
         save()
     }
 

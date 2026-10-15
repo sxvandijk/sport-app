@@ -56,6 +56,9 @@ struct LiveSet: Identifiable, Codable, Hashable {
     var repsText: String { r2 == nil ? String(r) : "\(r)/\(r2 ?? 0)" }
 }
 
+/// Hoe je het gewicht en de reps van een oefening invult.
+enum SideMode { case single, perSide, separate }
+
 struct LiveExercise: Identifiable, Codable, Hashable {
     var id = UUID()
     var name: String
@@ -74,6 +77,8 @@ struct LiveExercise: Identifiable, Codable, Hashable {
     var accStep: Double? = nil
 
     var workSets: [LiveSet] { sets.filter { $0.type != .warmup } }
+
+    var sideMode: SideMode { uni == true ? .separate : (two == true ? .perSide : .single) }
 }
 
 struct QueueItem: Hashable {
@@ -404,6 +409,16 @@ struct LiveSession: Codable, Hashable {
                 exercises[e].sets[s].pr = prev.r
             }
             i += 1
+        }
+    }
+
+    mutating func setSideMode(_ exID: UUID, _ mode: SideMode) {
+        guard let e = index(of: exID) else { return }
+        exercises[e].two = mode == .perSide ? true : nil
+        let uni = mode == .separate
+        exercises[e].uni = uni ? true : nil
+        for i in exercises[e].sets.indices where exercises[e].sets[i].type != .warmup {
+            exercises[e].sets[i].r2 = uni ? (exercises[e].sets[i].r2 ?? exercises[e].sets[i].r) : nil
         }
     }
 

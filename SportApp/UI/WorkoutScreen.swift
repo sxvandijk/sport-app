@@ -820,14 +820,25 @@ private struct Dock: View {
             .padding(.horizontal, 4)
             Text(prevText).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
                 .padding(.horizontal, 4).padding(.top, 1)
-            if kind == .weights || kind == .bodyweight, set.type != .warmup {
-                if exercise.uni == true {
-                    Text("Links en rechts apart \u{00B7} je volume telt beide kanten op").sa(12, .medium).foregroundColor(ac.accentText)
-                        .padding(.horizontal, 4).padding(.top, 2)
-                } else if exercise.two == true {
-                    Text("Gewicht per arm of been \u{00B7} je volume telt dubbel (2\u{00D7})").sa(12, .medium).foregroundColor(ac.accentText)
-                        .padding(.horizontal, 4).padding(.top, 2)
+            if kind == .weights || kind == .bodyweight, set.type != .warmup, exercise.uni == true || exercise.two == true || Catalog.sidesAmbiguous(exercise.name) {
+                let caption: String = {
+                    switch exercise.sideMode {
+                    case .separate: return "Links en rechts apart \u{00B7} je volume telt beide kanten op"
+                    case .perSide: return "Gewicht per arm of been \u{00B7} je volume telt dubbel (2\u{00D7})"
+                    case .single: return "Eén gewicht in totaal \u{00B7} volume = gewicht \u{00D7} reps"
+                    }
+                }()
+                Button { model.openSheet(.sidemode, exID: exercise.id) } label: {
+                    HStack(spacing: 6) {
+                        Text(caption).sa(12, .medium).lineLimit(1).minimumScaleFactor(0.85)
+                        Icon.info(14)
+                    }
+                    .foregroundColor(ac.accentText)
+                    .frame(minHeight: 32, alignment: .leading).contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 4).padding(.top, 0)
+                .accessibilityLabel("Hoe vul je dit in? Tik voor uitleg")
             }
 
             if let since = model.lastSetAt {
