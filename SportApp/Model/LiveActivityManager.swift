@@ -14,6 +14,12 @@ enum LiveActivityManager {
         var lines: [String] = []
         let dir = Bundle.main.builtInPlugInsPath
         let names = dir.flatMap { try? FileManager.default.contentsOfDirectory(atPath: $0) } ?? []
+        lines.append("App-id: " + (Bundle.main.bundleIdentifier ?? "onbekend"))
+        for n in names {
+            let plist = (dir ?? "") + "/" + n + "/Info.plist"
+            let id = (NSDictionary(contentsOfFile: plist)?["CFBundleIdentifier"] as? String) ?? "onbekend"
+            lines.append("Extensie-id: " + id)
+        }
         lines.append(names.isEmpty ? "Widget-extensie: niet in de app gevonden" : "Widget-extensie: \(names.joined(separator: ", "))")
         #if canImport(ActivityKit)
         if #available(iOS 16.2, *) {
