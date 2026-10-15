@@ -806,6 +806,15 @@ private struct Dock: View {
             .padding(.horizontal, 4)
             Text(prevText).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
                 .padding(.horizontal, 4).padding(.top, 1)
+            if kind == .weights || kind == .bodyweight, set.type != .warmup {
+                if exercise.uni == true {
+                    Text("Links en rechts apart \u{00B7} je volume telt beide kanten op").sa(12, .medium).foregroundColor(ac.accentText)
+                        .padding(.horizontal, 4).padding(.top, 2)
+                } else if exercise.two == true {
+                    Text("Gewicht per arm of been \u{00B7} je volume telt dubbel (2\u{00D7})").sa(12, .medium).foregroundColor(ac.accentText)
+                        .padding(.horizontal, 4).padding(.top, 2)
+                }
+            }
 
             if let since = model.lastSetAt {
                 RestInline(since: since).padding(.top, 8)

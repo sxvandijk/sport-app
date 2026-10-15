@@ -328,6 +328,15 @@ private struct ExerciseMenuSheet: View {
         }
         .padding(.bottom, 6)
 
+        if let ex = exercise, ex.uni != true, Catalog.kind(ex.name) == .weights || Catalog.kind(ex.name) == .bodyweight {
+            let on = ex.two == true
+            plainRow(Icon.swap(20), Tokens.text, on ? "Gewicht is voor beide kanten samen" : "Gewicht per arm of been",
+                     on ? "Nu telt je volume dubbel: gewicht × reps × 2. Tik om dat uit te zetten." : "Je traint met twee losse armen of benen en vult het gewicht van één kant in. Je volume telt dan dubbel.") {
+                if let id = model.sheetEx { model.toggleTwoSides(id) }
+                model.closeSheet()
+            }
+        }
+
         if let ex = exercise, Catalog.kind(ex.name) == .weights || Catalog.kind(ex.name) == .bodyweight {
             let on = ex.uni == true
             plainRow(Icon.swap(20), Tokens.text, on ? "Links en rechts samen invullen" : "Links en rechts apart invullen",
