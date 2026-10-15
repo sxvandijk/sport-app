@@ -670,6 +670,43 @@ struct GymTab: View {
 
             Text("Tik op een apparaat om de stappen aan te passen. De waarden uit de lijst zijn standaarden; controleer ze bij jouw machines.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 10)
+
+            SectionLabel(text: "Opzetstukken").padding(.top, 24).padding(.bottom, 2)
+            Text("Touw, rechte stang, V-stang: per oefening kies je welke je gebruikt. Je gewicht wordt per opzetstuk onthouden.")
+                .sa(13).foregroundColor(Tokens.text2).lineSpacing(3).padding(.bottom, 8)
+            VStack(spacing: 0) {
+                let list = gym.accessoryList
+                ForEach(list) { a in
+                    Button {
+                        model.accEditID = a.id
+                        model.openSheet(.accedit)
+                    } label: {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(a.name).sa(16, .medium).foregroundColor(Tokens.text).lineLimit(1)
+                                Text(a.step > 0 ? "Stap \(GymMachine.fmt(a.step)) kg" : "Stap van de oefening").sa(13).foregroundColor(Tokens.text2)
+                            }
+                            Spacer(minLength: 0)
+                            Icon.chevronRight(16).foregroundColor(Tokens.text3)
+                        }
+                        .padding(.horizontal, 16)
+                        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    if a.id != list.last?.id { Divider().background(Tokens.line).padding(.leading, 16) }
+                }
+            }
+            .glassCard(radius: Radius.button)
+            Button {
+                model.nameEdit = NameEdit(title: "Nieuw opzetstuk", subtitle: "Bijvoorbeeld Triceps touw", placeholder: "Naam van het opzetstuk", text: "", confirmTitle: "Voeg toe") { model.addAccessory(name: $0) }
+            } label: {
+                Text("+ Opzetstuk toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
+                    .frame(maxWidth: .infinity).frame(height: 52)
+                    .card(Tokens.raised, radius: Radius.button)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 12)
         }
     }
 }

@@ -25,6 +25,10 @@ struct LaunchConfig {
             model.history = ScreenshotScenario.history(templates: model.templates, now: now)
         }
 
+        if screen.contains("acc") {
+            model.exAcc = ["Cable One Arm Tricep Extension": ["Touw", "Rechte stang"]]
+            model.applyGym()
+        }
         let needsSession = screen.hasPrefix("workout") || screen.hasPrefix("sheet-") || screen == "training-running"
         if needsSession {
             model.session = ScreenshotScenario.session(now: now, templates: model.templates, history: model.history)
@@ -58,6 +62,11 @@ struct LaunchConfig {
             model.restTotal = 90
             model.restEnd = now.addingTimeInterval(64)
             model.lastSetAt = now.addingTimeInterval(-26)
+        case "workout-acc":
+            model.screen = .workout
+            if let s = model.session, let target = s.exercises.first(where: { $0.name == "Cable One Arm Tricep Extension" }) {
+                model.focusID = target.id
+            }
         case "workout-superset":
             model.screen = .workout
             if let s = model.session, let target = s.exercises.first(where: { $0.name == "Dumbbell Shoulder Press" }) {
@@ -128,6 +137,13 @@ struct LaunchConfig {
         case "exmenu":
             model.screen = .workout
             model.openSheet(.exmenu, exID: exID)
+        case "accuse", "accpick":
+            model.screen = .workout
+            let target = model.session?.exercises.first(where: { $0.name == "Cable One Arm Tricep Extension" })?.id
+            model.openSheet(name == "accuse" ? .accuse : .accpick, exID: target)
+        case "accedit":
+            model.accEditID = model.gym.accessoryList.first?.id
+            model.openSheet(.accedit)
         case "gym":
             model.openSheet(.gym)
         case "machineadd":

@@ -68,6 +68,9 @@ private struct SheetBody: View {
         case .draftswap: return ("Oefening wisselen", model.draft?.items.first(where: { $0.id == model.draftSwapID })?.name ?? "")
         case .machineadd: return ("Apparaat toevoegen", "Kies merk en type. Je past de stappen daarna aan.")
         case .machineedit: return (model.machine(model.machineEditID)?.title ?? "Apparaat", "Stappen en gekoppelde oefeningen")
+        case .accedit: return (model.accessory(model.accEditID)?.name ?? "Opzetstuk", "Naam en gewichtsstap")
+        case .accpick: return ("Opzetstukken", name.isEmpty ? "" : "Welke gebruik je bij \(name)? Je gewicht wordt per opzetstuk onthouden.")
+        case .accuse: return ("Opzetstuk", name.isEmpty ? "" : "Waarmee train je \(name) nu?")
         }
     }
 
@@ -178,6 +181,9 @@ private struct SheetBody: View {
         case .draftswap: SearchList(mode: .draftSwap)
         case .machineadd: MachineAddSheet()
         case .machineedit: MachineEditSheet()
+        case .accedit: AccessoryEditSheet()
+        case .accpick: AccessoryPickSheet()
+        case .accuse: AccessoryUseSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
         case .exmenu: ExerciseMenuSheet()
@@ -343,6 +349,17 @@ private struct ExerciseMenuSheet: View {
                      on ? "Eén aantal reps voor beide kanten." : "Voor armen of benen los, bijvoorbeeld 10 links en 9 rechts. Het volume telt beide kanten.") {
                 if let id = model.sheetEx { model.toggleUnilateral(id) }
                 model.closeSheet()
+            }
+        }
+
+        if let ex = exercise, Catalog.kind(ex.name) == .weights {
+            if let acc = ex.acc {
+                plainRow(Icon.swap(20), Tokens.text, "Opzetstuk: \(acc)", "Tik om te wisselen, bijvoorbeeld naar touw of rechte stang.") {
+                    model.openSheet(.accuse, exID: model.sheetEx)
+                }
+            }
+            plainRow(Icon.link(20, 2), Tokens.text, "Opzetstukken kiezen", "Welke gebruik je bij deze oefening? Je voegt ze toe bij Gym.") {
+                model.openSheet(.accpick, exID: model.sheetEx)
             }
         }
 
@@ -1360,6 +1377,109 @@ private struct TemplateMenuSheet: View {
             }
             .foregroundColor(Tokens.danger)
             .padding(.horizontal, 16).frame(minHeight: 52)
+        }
+    }
+}
+
+
+// MARK: - Opzetstukken
+
+private func accessoryStepText(_ a: GymAccessory) -> String {
+    a.step > 0 ? "Stap \(GymMachine.fmt(a.step)) kg" : "Stap van de oefening"
+}
+
+/// Naam en gewichtsstap van een opzetstuk (Gym > Opzetstukken).
+private struct AccessoryEditSheet: View {
+    @EnvironmentObject private var model: AppModel
+    private static let stepChoices: [Double] = [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 7.5, 10]
+
+    var body: some View {
+        if let a = model.accessory(model.accEditID) {
+            let id = a.id
+            VStack(alignment: .leading, spacing: 0) {
+                Button {
+                    model.nameEdit = NameEdit(title: "Opzetstuk hernoemen", subtitle: a.name, placeholder: "Naam", text: a.name, confirmTitle: "Bewaar") { model.renameAccessory(id, to: $0) }
+                } label: {
+                    HStack {
+                        Text("Naam").sa(16, .medium).foregroundColor(Tokens.text)
+                        Spacer(minLength: 0)
+                        Text(a.name).sa(15, .semibold).foregroundColor(Tokens.text)
+                            .padding(.horizontal, 14).frame(height: 40).background(Capsule().fill(Tokens.raised))
+                    }
+                    .frame(minHeight: 52).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Stap per tik").sa(16, .medium).foregroundColor(Tokens.text)
+                        Text("Hoeveel kg de plus en min doen").sa(12).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    Menu {
+                        Button("Zoals de oefening") { model.setAccessoryStep(id, 0) }
+                        ForEach(Self.stepChoices, id: \.self) { v in
+                            Button(GymMachine.fmt(v) + " kg") { model.setAccessoryStep(id, v) }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(a.step > 0 ? GymMachine.fmt(a.step) + " kg" : "Standaard").sa(15, .semibold)
+                            Icon.chevronDown(12, 2.4)
+                        }
+                        .foregroundColor(Tokens.text)
+                        .padding(.horizontal, 14).frame(height: 40).background(Capsule().fill(Tokens.raised))
+                    }
+                }
+                .frame(minHeight: 56)
+                FlatButton(title: "Verwijder opzetstuk", color: Tokens.danger) {
+                    model.confirm = ConfirmRequest(title: "\(a.name) verwijderen?", message: "Het opzetstuk gaat uit je gym en bij oefeningen weg. Eerdere trainingen blijven bewaard.",
+                                                   confirmTitle: "Verwijder") { model.deleteAccessory(id); model.closeSheet() }
+                }.padding(.top, 10)
+            }
+        } else {
+            Text("Opzetstuk niet gevonden.").sa(15).foregroundColor(Tokens.text2)
+        }
+    }
+}
+
+/// Kies welke opzetstukken bij een oefening horen.
+private struct AccessoryPickSheet: View {
+    @EnvironmentObject private var model: AppModel
+    private var exercise: LiveExercise? { model.session?.exercise(model.sheetEx) }
+
+    var body: some View {
+        if let ex = exercise {
+            ForEach(model.gym.accessoryList) { a in
+                let on = model.exerciseUsesAccessory(ex.name, a.name)
+                ListRow(title: a.name, sub: accessoryStepText(a), selected: on) {
+                    model.toggleExerciseAccessory(ex.name, a.name)
+                }
+            }
+            Text("Opzetstukken toevoegen of aanpassen doe je bij Gym.").sa(13).foregroundColor(Tokens.text3).padding(.top, 6)
+        }
+    }
+}
+
+/// Wissel tijdens de workout van opzetstuk.
+private struct AccessoryUseSheet: View {
+    @EnvironmentObject private var model: AppModel
+    private var exercise: LiveExercise? { model.session?.exercise(model.sheetEx) }
+
+    var body: some View {
+        if let ex = exercise {
+            ForEach(Catalog.accessories(for: ex.name)) { a in
+                ListRow(title: a.name, sub: accessoryStepText(a), selected: ex.acc == a.name) {
+                    model.chooseAccessory(ex.id, a)
+                    model.closeSheet()
+                }
+            }
+            SheetRowButton(action: { model.openSheet(.accpick, exID: ex.id) }) {
+                HStack {
+                    Text("Andere opzetstukken kiezen").sa(16, .medium).foregroundColor(Tokens.text)
+                    Spacer(minLength: 0)
+                    Icon.chevronRight(16).foregroundColor(Tokens.text3)
+                }
+                .padding(.horizontal, 16).frame(minHeight: 52)
+            }
         }
     }
 }
