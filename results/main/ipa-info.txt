@@ -1,0 +1,105 @@
+commit: 2a0df6e300e15d11c93b63b78f1441be1819dfe5
+runner: GitHub Actions 1000000158
+Xcode 26.6
+Build version 17F113
+--- extensies
+Payload/SportApp.app/PlugIns/SetWidgets.appex
+--- Payload
+Payload
+Payload/SportApp.app
+Payload/SportApp.app/PlugIns
+Payload/SportApp.app/PlugIns/SetWidgets.appex
+Payload/SportApp.app/AppIcon60x60@2x.png
+Payload/SportApp.app/Assets.car
+Payload/SportApp.app/AppIcon76x76@2x~ipad.png
+Payload/SportApp.app/SportApp
+Payload/SportApp.app/Info.plist
+Payload/SportApp.app/PkgInfo
+--- app Info.plist
+{
+  "BuildMachineOSBuild" => "25G83"
+  "CFBundleDevelopmentRegion" => "en"
+  "CFBundleDisplayName" => "Set"
+  "CFBundleExecutable" => "SportApp"
+  "CFBundleIcons" => {
+    "CFBundlePrimaryIcon" => {
+      "CFBundleIconFiles" => [
+        0 => "AppIcon60x60"
+      ]
+      "CFBundleIconName" => "AppIcon"
+    }
+  }
+  "CFBundleIcons~ipad" => {
+    "CFBundlePrimaryIcon" => {
+      "CFBundleIconFiles" => [
+        0 => "AppIcon60x60"
+        1 => "AppIcon76x76"
+      ]
+    }
+  }
+  "CFBundleIdentifier" => "com.sxvandijk.sportapp"
+  "CFBundleInfoDictionaryVersion" => "6.0"
+  "CFBundleName" => "SportApp"
+  "CFBundlePackageType" => "APPL"
+  "CFBundleShortVersionString" => "1.0"
+  "CFBundleSupportedPlatforms" => [
+    0 => "iPhoneOS"
+  ]
+  "CFBundleVersion" => "1"
+  "DTCompiler" => "com.apple.compilers.llvm.clang.1_0"
+  "DTPlatformBuild" => "23F81a"
+  "DTPlatformName" => "iphoneos"
+  "DTPlatformVersion" => "26.5"
+  "DTSDKBuild" => "23F81a"
+  "DTSDKName" => "iphoneos26.5"
+  "DTXcode" => "2660"
+  "DTXcodeBuild" => "17F113"
+  "ITSAppUsesNonExemptEncryption" => false
+  "MinimumOSVersion" => "16.0"
+  "NSSupportsLiveActivities" => true
+  "UIDeviceFamily" => [
+    0 => 1
+  ]
+  "UILaunchScreen" => {
+  }
+  "UIRequiredDeviceCapabilities" => [
+    0 => "arm64"
+  ]
+  "UISupportedInterfaceOrientations" => [
+    0 => "UIInterfaceOrientationPortrait"
+  ]
+}
+--- Payload/SportApp.app/PlugIns/SetWidgets.appex Info.plist
+{
+  "BuildMachineOSBuild" => "25G83"
+  "CFBundleDevelopmentRegion" => "en"
+  "CFBundleDisplayName" => "Set"
+  "CFBundleExecutable" => "SetWidgets"
+  "CFBundleIdentifier" => "com.sxvandijk.sportapp.widgets"
+  "CFBundleInfoDictionaryVersion" => "6.0"
+  "CFBundleName" => "SetWidgets"
+  "CFBundlePackageType" => "XPC!"
+  "CFBundleShortVersionString" => "1.0"
+  "CFBundleSupportedPlatforms" => [
+    0 => "iPhoneOS"
+  ]
+  "CFBundleVersion" => "1"
+  "DTCompiler" => "com.apple.compilers.llvm.clang.1_0"
+  "DTPlatformBuild" => "23F81a"
+  "DTPlatformName" => "iphoneos"
+  "DTPlatformVersion" => "26.5"
+  "DTSDKBuild" => "23F81a"
+  "DTSDKName" => "iphoneos26.5"
+  "DTXcode" => "2660"
+  "DTXcodeBuild" => "17F113"
+  "MinimumOSVersion" => "16.1"
+  "NSExtension" => {
+    "NSExtensionPointIdentifier" => "com.apple.widgetkit-extension"
+  }
+  "UIDeviceFamily" => [
+    0 => 1
+  ]
+  "UIRequiredDeviceCapabilities" => [
+    0 => "arm64"
+  ]
+}
