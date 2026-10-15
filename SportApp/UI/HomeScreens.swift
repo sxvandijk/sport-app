@@ -767,9 +767,6 @@ struct ProfileTab: View {
             SectionLabel(text: "Herinneringen").padding(.top, 24).padding(.bottom, 10)
             CreatineRow()
 
-            SectionLabel(text: "Live Activity").padding(.top, 24).padding(.bottom, 10)
-            LiveActivityStatus()
-
             Text("Later hier ook: kg of lb, gegevens exporteren en een back-up.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 16)
         }
