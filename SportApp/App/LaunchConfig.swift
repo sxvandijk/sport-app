@@ -21,6 +21,8 @@ struct LaunchConfig {
         if let appearance = appearance { model.themeMode = appearance }
         if let accent = accent { model.accent = accent }
         guard let screen = screen else { return }
+        // Alleen voor CI: de Live Activity ook bij een screenshot-run laten starten.
+        if UserDefaults.standard.bool(forKey: "liveActivityTest") { model.startLiveActivityLink() }
         if !screen.hasSuffix("-empty") {
             model.history = ScreenshotScenario.history(templates: model.templates, now: now)
         }

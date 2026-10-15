@@ -46,6 +46,20 @@ struct CreatineScreen: View {
                             }
                         }
                         .frame(minHeight: 64)
+                        if model.crea {
+                            Divider().background(Tokens.line)
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Tweede herinnering").sa(17, .semibold).foregroundColor(Tokens.text)
+                                    Text("Alleen als je hem nog niet had").sa(13).foregroundColor(Tokens.text2)
+                                }
+                                Spacer(minLength: 0)
+                                SAToggle(isOn: model.creaLateOn, onColor: ac.accentLine, label: "Tweede herinnering") {
+                                    model.setCreaLate(on: !model.creaLateOn)
+                                }
+                            }
+                            .frame(minHeight: 64)
+                        }
                     }
                     .padding(.top, 20)
 
@@ -59,22 +73,16 @@ struct CreatineScreen: View {
                                     .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
                             }
                             .frame(minHeight: 56)
-                            Divider().background(Tokens.line)
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 2) {
+                            if model.creaLateOn {
+                                Divider().background(Tokens.line)
+                                HStack {
                                     Text("Tweede herinnering").sa(16).foregroundColor(Tokens.text)
-                                    Text("Alleen als je hem nog niet had").sa(12).foregroundColor(Tokens.text2)
-                                }
-                                Spacer(minLength: 0)
-                                if model.creaLateOn {
+                                    Spacer(minLength: 0)
                                     DatePicker("", selection: timeBinding(model.creaLateTime) { model.setCreaLateTime($0) }, displayedComponents: .hourAndMinute)
                                         .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
                                 }
-                                SAToggle(isOn: model.creaLateOn, onColor: ac.accentLine, label: "Tweede herinnering") {
-                                    model.setCreaLate(on: !model.creaLateOn)
-                                }
+                                .frame(minHeight: 56)
                             }
-                            .frame(minHeight: 60)
                         }
 
                         sectionLabel("Per dag")
@@ -133,7 +141,7 @@ struct CreatineScreen: View {
         var sub = "Geen melding"
         if on {
             sub = clockText(model.creaTime(forWeekday: d))
-            if model.creaLateOn { sub += " \u{00B7} " + clockText(model.creaLateTime(forWeekday: d)) }
+            if model.creaLateOn(forWeekday: d) { sub += " \u{00B7} " + clockText(model.creaLateTime(forWeekday: d)) }
         }
         return VStack(spacing: 0) {
             HStack(spacing: 10) {
@@ -158,18 +166,35 @@ struct CreatineScreen: View {
                 }
             }
             if open {
+                Divider().background(Tokens.line)
                 HStack {
-                    Text("Eerste").sa(14).foregroundColor(Tokens.text2)
+                    Text("Eerste herinnering").sa(15).foregroundColor(Tokens.text)
+                    Spacer(minLength: 0)
                     DatePicker("", selection: timeBinding(model.creaTime(forWeekday: d)) { model.setCreaDayTime(d, minutes: $0) }, displayedComponents: .hourAndMinute)
                         .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
-                    Spacer(minLength: 0)
-                    if model.creaLateOn {
-                        Text("Tweede").sa(14).foregroundColor(Tokens.text2)
-                        DatePicker("", selection: timeBinding(model.creaLateTime(forWeekday: d)) { model.setCreaDayLate(d, minutes: $0) }, displayedComponents: .hourAndMinute)
-                            .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
-                    }
                 }
-                .padding(.bottom, own ? 0 : 12)
+                .frame(minHeight: 50)
+                if model.creaLateOn {
+                    if model.creaLateOn(forWeekday: d) {
+                        Divider().background(Tokens.line)
+                        HStack {
+                            Text("Tweede herinnering").sa(15).foregroundColor(Tokens.text)
+                            Spacer(minLength: 0)
+                            DatePicker("", selection: timeBinding(model.creaLateTime(forWeekday: d)) { model.setCreaDayLate(d, minutes: $0) }, displayedComponents: .hourAndMinute)
+                                .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
+                        }
+                        .frame(minHeight: 50)
+                    }
+                    Divider().background(Tokens.line)
+                    HStack {
+                        Text("Tweede herinnering op deze dag").sa(15).foregroundColor(Tokens.text)
+                        Spacer(minLength: 0)
+                        SAToggle(isOn: model.creaLateOn(forWeekday: d), onColor: ac.accentLine, label: "Tweede herinnering op \(AppModel.weekdayNames[d])") {
+                            model.setCreaDayLate(d, on: !model.creaLateOn(forWeekday: d))
+                        }
+                    }
+                    .frame(minHeight: 50)
+                }
                 if own {
                     Button { model.resetCreaDay(d) } label: {
                         Text("Terug naar standaard").sa(13, .semibold).foregroundColor(ac.accentText)

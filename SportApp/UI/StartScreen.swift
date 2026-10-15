@@ -14,8 +14,6 @@ struct StartTab: View {
 
             CalendarCard(expandable: true)
 
-            if model.crea { CreatinePill().padding(.top, 10) }
-
             Spacer(minLength: 24)
             hero(next)
             Spacer(minLength: 24)
@@ -118,38 +116,3 @@ struct SplashOverlay: View {
 }
 
 
-/// Klein knopje op het startscherm: tik om creatine van vandaag af te vinken.
-struct CreatinePill: View {
-    @EnvironmentObject private var model: AppModel
-    @Environment(\.accentColors) private var ac
-
-    var body: some View {
-        let done = model.creaDoneToday
-        HStack(spacing: 0) {
-            Button { model.toggleCreaDone() } label: {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle().fill(done ? ac.accentLine : Color.clear)
-                        Circle().stroke(done ? ac.accentLine : Tokens.text3, lineWidth: 2)
-                        if done { Icon.check(12).foregroundColor(ac.onAccent) }
-                    }
-                    .frame(width: 22, height: 22)
-                    Text(done ? "Creatine gehad" : "Creatine nog niet gehad").sa(15, .medium).foregroundColor(Tokens.text)
-                    Spacer(minLength: 0)
-                }
-                .padding(.leading, 14)
-                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(done ? "Creatine gehad, tik om ongedaan te maken" : "Creatine afvinken")
-            Button { model.screen = .creatine } label: {
-                Icon.bell(18).foregroundColor(Tokens.text2).frame(width: 48, height: 48).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Creatine-herinnering instellen")
-        }
-        .glassSurface(Capsule(), interactive: false, fallback: Tokens.raised)
-        .padding(.horizontal, 16)
-    }
-}
