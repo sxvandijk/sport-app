@@ -51,6 +51,8 @@ struct LiveSet: Identifiable, Codable, Hashable {
     var r2: Int? = nil
 
     var totalReps: Int { r + (r2 ?? 0) }
+    /// Reps voor het volume: links + rechts, of bij gewicht per arm/been het aantal keer twee.
+    func volumeReps(twoSides: Bool) -> Int { r2 != nil ? r + (r2 ?? 0) : (twoSides ? 2 * r : r) }
     var repsText: String { r2 == nil ? String(r) : "\(r)/\(r2 ?? 0)" }
 }
 
@@ -65,6 +67,8 @@ struct LiveExercise: Identifiable, Codable, Hashable {
     var roundOffset: Int? = nil
     /// Armen/benen los invullen (links en rechts apart).
     var uni: Bool? = nil
+    /// Gewicht per arm of been (twee losse armen met hetzelfde aantal): het volume telt dubbel.
+    var two: Bool? = nil
 
     var workSets: [LiveSet] { sets.filter { $0.type != .warmup } }
 }
@@ -156,6 +160,10 @@ struct LiveSession: Codable, Hashable {
             sets.append(LiveSet(type: workType, w: w, r: r, pw: prev?.w, pr: prev?.r, rmax: base?.rmax, rmin: base?.r))
         }
         var ex = LiveExercise(name: name, group: group, from: nil, sets: sets)
+        if !isWarmupBlock, kind == .weights || kind == .bodyweight {
+            let twoDefault = Catalog.info(name).equipment == "Dumbbells"
+            if last?.two ?? twoDefault { ex.two = true }
+        }
         if last?.uni == true && !isWarmupBlock {
             ex.uni = true
             for i in ex.sets.indices where ex.sets[i].type != .warmup { ex.sets[i].r2 = ex.sets[i].r2 ?? ex.sets[i].r }
@@ -363,6 +371,11 @@ struct LiveSession: Codable, Hashable {
     }
 
     /// Links en rechts apart invullen aan of uit. Aan: de rechterkant start gelijk aan links.
+    mutating func toggleTwoSides(_ exID: UUID) {
+        guard let e = index(of: exID) else { return }
+        exercises[e].two = exercises[e].two == true ? nil : true
+    }
+
     mutating func toggleUnilateral(_ exID: UUID) {
         guard let e = index(of: exID) else { return }
         let on = exercises[e].uni != true
@@ -539,7 +552,7 @@ struct LiveSession: Codable, Hashable {
         for e in exercises {
             for s in e.sets where s.type != .warmup && s.done {
                 workDone += 1
-                if Catalog.kind(e.name) != .cardio { volume += s.w * Double(s.totalReps) }
+                if Catalog.kind(e.name) != .cardio { volume += s.w * Double(s.volumeReps(twoSides: e.two == true)) }
             }
         }
         var lines: [SummaryLine] = []

@@ -765,7 +765,7 @@ struct ProfileTab: View {
             .glassCard(radius: Radius.button)
 
             SectionLabel(text: "Herinneringen").padding(.top, 24).padding(.bottom, 10)
-            CreatineSettings()
+            CreatineRow()
 
             Text("Later hier ook: kg of lb, gegevens exporteren en een back-up.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 16)
@@ -863,11 +863,11 @@ struct ModePicker: View {
 
 // MARK: - Creatine
 
-private func clockText(_ minutes: Int) -> String {
+func clockText(_ minutes: Int) -> String {
     String(format: "%02d:%02d", minutes / 60, minutes % 60)
 }
 
-private func timeBinding(_ value: Int, _ set: @escaping (Int) -> Void) -> Binding<Date> {
+func timeBinding(_ value: Int, _ set: @escaping (Int) -> Void) -> Binding<Date> {
     Binding<Date>(
         get: { Calendar.current.date(bySettingHour: value / 60, minute: value % 60, second: 0, of: Date()) ?? Date() },
         set: { d in
@@ -877,125 +877,28 @@ private func timeBinding(_ value: Int, _ set: @escaping (Int) -> Void) -> Bindin
     )
 }
 
-private struct CreatineSettings: View {
+/// Rij in Profiel die het aparte creatine-scherm opent.
+private struct CreatineRow: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
-    @State private var perDay = false
-
-    private var subtitle: String {
-        if !model.crea { return "Uit" }
-        var t = (model.creaDayOff.isEmpty && model.creaDayTime.isEmpty ? "Elke dag om " : "Om ") + clockText(model.creaTime)
-        if model.creaLateOn && model.creaLateTime > model.creaTime { t += ", anders om " + clockText(model.creaLateTime) }
-        return t
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
+        Button { model.screen = .creatine } label: {
+            HStack(spacing: 14) {
+                Icon.bell(20).foregroundColor(ac.accentText)
+                    .frame(width: 44, height: 44).background(Circle().fill(ac.accentSoft))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Creatine").sa(16, .medium).foregroundColor(Tokens.text)
-                    Text(subtitle).sa(13).foregroundColor(Tokens.text2)
+                    Text("Creatine").sa(17, .semibold).foregroundColor(Tokens.text)
+                    Text(model.creaSummary).sa(13).foregroundColor(Tokens.text2).lineLimit(2)
                 }
                 Spacer(minLength: 0)
-                SAToggle(isOn: model.crea, onColor: ac.accentLine, label: "Creatine-herinnering") {
-                    model.setCreatine(!model.crea)
-                }
+                Icon.chevronRight(18).foregroundColor(Tokens.text2)
             }
-            .frame(minHeight: 64)
-
-            if model.crea {
-                Divider().background(Tokens.line)
-                HStack {
-                    Text("Eerste herinnering").sa(15).foregroundColor(Tokens.text)
-                    Spacer(minLength: 0)
-                    DatePicker("", selection: timeBinding(model.creaTime) { model.setCreaTime($0) }, displayedComponents: .hourAndMinute)
-                        .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
-                }
-                .frame(minHeight: 52)
-                Divider().background(Tokens.line)
-                Button { withAnimation(.easeOut(duration: 0.2)) { perDay.toggle() } } label: {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Per dag aanpassen").sa(15).foregroundColor(Tokens.text)
-                            Text(model.creaDayOff.isEmpty && model.creaDayTime.isEmpty ? "Bijvoorbeeld geen melding op zondag" : "Aangepast voor sommige dagen")
-                                .sa(12).foregroundColor(Tokens.text2)
-                        }
-                        Spacer(minLength: 0)
-                        (perDay ? Icon.chevronUp(16) : Icon.chevronDown(16)).foregroundColor(Tokens.text2)
-                    }
-                    .frame(minHeight: 56)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                if perDay {
-                    // Maandag eerst; Calendar telt 1 = zondag.
-                    ForEach([2, 3, 4, 5, 6, 7, 1], id: \.self) { d in
-                        let on = !model.creaDayOff.contains(d)
-                        HStack(spacing: 10) {
-                            Text(["", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"][d]).sa(15)
-                                .foregroundColor(on ? Tokens.text : Tokens.text3)
-                            Spacer(minLength: 0)
-                            if on {
-                                DatePicker("", selection: timeBinding(model.creaTime(forWeekday: d)) { model.setCreaDayTime(d, minutes: $0) }, displayedComponents: .hourAndMinute)
-                                    .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
-                            }
-                            SAToggle(isOn: on, onColor: ac.accentLine, label: "Herinnering op dag \(d)") { model.setCreaDay(d, on: !on) }
-                        }
-                        .frame(minHeight: 48)
-                    }
-                    if !model.creaDayTime.isEmpty {
-                        Button { model.resetCreaDayTimes() } label: {
-                            Text("Alle dagen weer op de eerste tijd").sa(14, .semibold).foregroundColor(ac.accentText)
-                                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Text("Later: koppelen aan je weekplanning, zodat je geen melding krijgt op de dagen dat je een shake na het sporten neemt.")
-                        .sa(12).foregroundColor(Tokens.text3).padding(.bottom, 8)
-                }
-                Divider().background(Tokens.line)
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Nog niet gehad? Herinner me later").sa(15).foregroundColor(Tokens.text)
-                        Text("Bijvoorbeeld bij het avondeten. Tik in de melding op ‘Gehad’ of vink hem af, dan komt er geen tweede melding. Tik je op ‘Later’ of negeer je hem, dan komt de tweede wel.")
-                            .sa(12).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    SAToggle(isOn: model.creaLateOn, onColor: ac.accentLine, label: "Latere herinnering") {
-                        model.setCreaLate(on: !model.creaLateOn)
-                    }
-                }
-                .frame(minHeight: 60)
-                if model.creaLateOn {
-                    Divider().background(Tokens.line)
-                    HStack {
-                        Text("Tweede herinnering").sa(15).foregroundColor(Tokens.text)
-                        Spacer(minLength: 0)
-                        DatePicker("", selection: timeBinding(model.creaLateTime) { model.setCreaLateTime($0) }, displayedComponents: .hourAndMinute)
-                            .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
-                    }
-                    .frame(minHeight: 52)
-                }
-                Divider().background(Tokens.line)
-                Button { model.toggleCreaDone() } label: {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle().fill(model.creaDoneToday ? ac.accentLine : Color.clear)
-                            Circle().stroke(model.creaDoneToday ? ac.accentLine : Tokens.line, lineWidth: 2)
-                            if model.creaDoneToday { Icon.check(14).foregroundColor(ac.onAccent) }
-                        }
-                        .frame(width: 24, height: 24)
-                        Text(model.creaDoneToday ? "Vandaag gehad" : "Vandaag afvinken").sa(15).foregroundColor(Tokens.text)
-                        Spacer(minLength: 0)
-                    }
-                    .frame(minHeight: 52)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .glassCard(radius: Radius.button)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 16).padding(.vertical, 4)
-        .glassCard(radius: Radius.button)
+        .buttonStyle(.plain)
     }
 }

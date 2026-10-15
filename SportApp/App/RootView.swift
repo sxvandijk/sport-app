@@ -37,6 +37,7 @@ private struct ThemedRoot: View {
             case .summary: SummaryScreen()
             case .records: RecordsScreen()
             case .allWorkouts: AllWorkoutsScreen()
+            case .creatine: CreatineScreen()
             }
             SheetOverlay()
             ConfirmOverlay()

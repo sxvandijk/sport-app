@@ -3,7 +3,7 @@ import SwiftUI
 import UserNotifications
 import AudioToolbox
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine }
 enum HomeTab: Int, CaseIterable, Identifiable {
     case gym, progress, start, training, profile
     var id: Int { rawValue }
@@ -412,8 +412,8 @@ final class AppModel: ObservableObject {
             let minutes = max(1, Int((now.timeIntervalSince(s.startAt) / 60).rounded()))
             var logged: [LoggedExercise] = []
             for e in s.exercises {
-                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2) }
-                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni)) }
+                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.two == true && $0.type != .warmup ? 2 : nil) }
+                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two)) }
             }
             history.insert(HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged), at: 0)
         }
@@ -455,6 +455,14 @@ final class AppModel: ObservableObject {
         guard var s = session, let c = current().cur else { return }
         s.stepWeight(set: c.setID, exID: c.exID, dir: dir)
         session = s
+        save()
+    }
+
+    func toggleTwoSides(_ exID: UUID) {
+        guard var s = session else { return }
+        s.toggleTwoSides(exID)
+        session = s
+        Haptics.light()
         save()
     }
 
@@ -1126,6 +1134,20 @@ final class AppModel: ObservableObject {
 
     /// Weekdag-nummer volgens Calendar: 1 = zondag ... 7 = zaterdag.
     func creaTime(forWeekday d: Int) -> Int { creaDayTime[String(d)] ?? creaTime }
+
+    static let weekdayNames = ["", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"]
+
+    var creaSummary: String {
+        if !crea { return "Uit" }
+        let days = [2, 3, 4, 5, 6, 7, 1].filter { !creaDayOff.contains($0) }
+        var t: String
+        if days.count == 7 { t = "Elke dag om " + clockText(creaTime) }
+        else if days.isEmpty { return "Aan, maar op geen enkele dag" }
+        else { t = days.map { String(AppModel.weekdayNames[$0].prefix(2)).lowercased() }.joined(separator: " ") + " om " + clockText(creaTime) }
+        if !creaDayTime.isEmpty { t += " (eigen tijden)" }
+        if creaLateOn && creaLateTime > creaTime { t += " \u{00B7} tweede om " + clockText(creaLateTime) }
+        return t
+    }
 
     func setCreaDay(_ d: Int, on: Bool) {
         if on { creaDayOff.removeAll { $0 == d } } else if !creaDayOff.contains(d) { creaDayOff.append(d) }

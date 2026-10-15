@@ -48,6 +48,7 @@ struct LaunchConfig {
         case "progress-empty": model.tab = .progress
         case "records": model.screen = .records
         case "allworkouts": model.screen = .allWorkouts
+        case "creatine": model.screen = .creatine; model.crea = true
         case "training-empty": model.tab = .training
         case "gym": model.tab = .gym
         case "profile": model.tab = .profile
