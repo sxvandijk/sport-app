@@ -1,0 +1,5 @@
+/Users/runner/work/sport-app/sport-app/SportAppWidgets/WorkoutLiveActivity.swift:19:34: error: cannot convert value of type 'some View' to expected argument type 'Color'
+/Users/runner/work/sport-app/sport-app/SportAppWidgets/WorkoutLiveActivity.swift:19:52: error: cannot convert value of type 'Int' to expected argument type 'Color'
+/Users/runner/work/sport-app/sport-app/SportAppWidgets/WorkoutLiveActivity.swift:45:18: error: instance method 'tint' requires that 'some View' conform to 'ShapeStyle'
+/Users/runner/work/sport-app/sport-app/SportAppWidgets/WorkoutLiveActivity.swift:45:41: error: cannot convert value of type 'Int' to expected argument type 'Color'
+** TEST FAILED **
