@@ -891,9 +891,11 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    func newProgram() {
+    func newProgram(name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { return }
         let id = "p\(Int(Date().timeIntervalSince1970))"
-        programs.append(PlanProgram(id: id, name: "Nieuw schema \(programs.count)", workouts: []))
+        programs.append(PlanProgram(id: id, name: n, workouts: []))
         progID = id
         sheet = nil
         save()

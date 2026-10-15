@@ -11,6 +11,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Volgende
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
 - [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
+- [ ] Instelling: bij een nieuwe week het schema opnieuw beginnen bij de eerste training (bv. weer Push op maandag)
 - [ ] Alle trainingen-pagina anders uitwerken en mooier maken
 - [ ] Leuker statistiekenscherm
 - [ ] Opzetstukken per oefening (touw, rechte stang, V-stang...): kiezen welke je gebruikt, gewicht/stap per opzetstuk apart; toevoegen via Gym > accessoires

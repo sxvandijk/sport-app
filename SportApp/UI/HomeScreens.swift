@@ -277,21 +277,28 @@ struct TrainingTab: View {
         let count = prog.workouts.count
         var sub = "\(count) \(count == 1 ? "training" : "trainingen")"
         if let next = next { sub += " · volgende: " + next }
-        return Button {
-            model.openSheet(.program)
-        } label: {
-            HStack(spacing: 8) {
+        return HStack(spacing: 4) {
+            Button {
+                model.openSheet(.program)
+            } label: {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(prog.name).sa(22, .bold, tracking: -0.3).foregroundColor(Tokens.text).lineLimit(1)
                     Text(sub).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
                 }
-                Spacer(minLength: 0)
+                .frame(minHeight: 52, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .frame(minHeight: 52)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("Huidig schema \(prog.name). Tik om te wisselen")
+            Button {
+                model.nameEdit = NameEdit(title: "Schema hernoemen", subtitle: prog.name, placeholder: "Nieuwe naam", text: prog.name, confirmTitle: "Bewaar") { model.renameProgram(prog.id, to: $0) }
+            } label: {
+                Icon.edit(18).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Hernoem schema \(prog.name)")
+            Spacer(minLength: 0)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Huidig schema \(prog.name). Tik om te wisselen")
     }
 
     private func templateRow(_ name: String) -> some View {
