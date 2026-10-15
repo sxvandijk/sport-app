@@ -55,3 +55,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Links/rechts-tekst alleen bij één-arm oefeningen (dumbbells, one arm, bayesian); bodyweight (muscle up) nooit.
 - Creatine: 2 standaardtijden, per dag aanpasbaar (tik op dag), afvinken + bel op startscherm.
 - Live Activity: appex zit correct in de IPA (gecontroleerd); leeg scherm ligt waarschijnlijk aan Sideloadly/ondertekenen. Profiel toont nu een statusblokje.
+
+## Ronde 6c (wacht op test)
+- Creatine-balkje op startscherm weggehaald. Idee: creatine-widget op het iPhone-beginscherm (later).
+- Creatine-instellingen: schakelaar tweede herinnering bij "Herinnering", tijden netjes onder elkaar, tweede herinnering per dag uit te zetten.
+- Live Activity: werkt in de simulator (Dynamic Island toont dumbbell + timer), dus code is goed; op Stans toestel blijft hij zwart. Profiel > Live Activity toont nu ook app-id en extensie-id om te vergelijken.

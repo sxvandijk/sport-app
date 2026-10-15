@@ -162,6 +162,7 @@ struct PersistedState: Codable {
     var creaDayOff: [Int]? = nil      // weekdagen (1 = zondag ... 7 = zaterdag) zonder herinnering
     var creaDayTime: [String: Int]? = nil  // eigen tijd per weekdag (minuten sinds middernacht)
     var creaDayLate: [String: Int]? = nil  // eigen tijd van de tweede herinnering per weekdag
+    var creaDayLateOff: [Int]? = nil       // weekdagen zonder tweede herinnering
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -205,6 +206,7 @@ final class AppModel: ObservableObject {
     @Published var creaDayOff: [Int]
     @Published var creaDayTime: [String: Int]
     @Published var creaDayLate: [String: Int]
+    @Published var creaDayLateOff: [Int]
     @Published var noteLog: [String: [NoteEntry]]
 
     // Werkscherm
@@ -275,6 +277,7 @@ final class AppModel: ObservableObject {
         creaDayOff = state.creaDayOff ?? []
         creaDayTime = state.creaDayTime ?? [:]
         creaDayLate = state.creaDayLate ?? [:]
+        creaDayLateOff = state.creaDayLateOff ?? []
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -285,11 +288,13 @@ final class AppModel: ObservableObject {
         Catalog.setCustom(customExercises)
         applyGym()
         // Live Activity (vergrendelscherm / Dynamic Island) volgt de lopende training. Niet bij screenshots en tests.
-        if fileURL != nil {
-            liveActivityLink = Publishers.CombineLatest($session, $restEnd)
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] _, _ in self?.syncLiveActivity() }
-        }
+        if fileURL != nil { startLiveActivityLink() }
+    }
+
+    func startLiveActivityLink() {
+        liveActivityLink = Publishers.CombineLatest($session, $restEnd)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _, _ in self?.syncLiveActivity() }
     }
 
     private var liveActivityLink: AnyCancellable?
@@ -357,7 +362,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -1171,7 +1176,10 @@ final class AppModel: ObservableObject {
     /// Weekdag-nummer volgens Calendar: 1 = zondag ... 7 = zaterdag.
     func creaTime(forWeekday d: Int) -> Int { creaDayTime[String(d)] ?? creaTime }
     func creaLateTime(forWeekday d: Int) -> Int { creaDayLate[String(d)] ?? creaLateTime }
-    func creaHasOwnTimes(_ d: Int) -> Bool { creaDayTime[String(d)] != nil || creaDayLate[String(d)] != nil }
+    func creaLateOn(forWeekday d: Int) -> Bool { creaLateOn && !creaDayLateOff.contains(d) }
+    func creaHasOwnTimes(_ d: Int) -> Bool {
+        creaDayTime[String(d)] != nil || creaDayLate[String(d)] != nil || creaDayLateOff.contains(d)
+    }
 
     static let weekdayNames = ["", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"]
 
@@ -1204,9 +1212,16 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    func setCreaDayLate(_ d: Int, on: Bool) {
+        if on { creaDayLateOff.removeAll { $0 == d } } else if !creaDayLateOff.contains(d) { creaDayLateOff.append(d) }
+        rescheduleCreatine()
+        save()
+    }
+
     func resetCreaDay(_ d: Int) {
         creaDayTime[String(d)] = nil
         creaDayLate[String(d)] = nil
+        creaDayLateOff.removeAll { $0 == d }
         rescheduleCreatine()
         save()
     }
@@ -1225,7 +1240,7 @@ final class AppModel: ObservableObject {
 
     /// Plant de komende 14 dagen. Een dag die je hebt afgevinkt krijgt geen herinnering meer.
     func rescheduleCreatine() {
-        Notifier.scheduleCreatine(on: crea, time: creaTime, lateOn: creaLateOn, lateTime: creaLateTime, doneDays: creaDone, offDays: creaDayOff, dayTimes: creaDayTime, dayLateTimes: creaDayLate)
+        Notifier.scheduleCreatine(on: crea, time: creaTime, lateOn: creaLateOn, lateTime: creaLateTime, doneDays: creaDone, offDays: creaDayOff, dayTimes: creaDayTime, dayLateTimes: creaDayLate, lateOffDays: creaDayLateOff)
     }
 }
 
@@ -1273,7 +1288,7 @@ enum Notifier {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["rest"])
     }
 
-    static func scheduleCreatine(on: Bool, time: Int, lateOn: Bool, lateTime: Int, doneDays: [String], offDays: [Int] = [], dayTimes: [String: Int] = [:], dayLateTimes: [String: Int] = [:]) {
+    static func scheduleCreatine(on: Bool, time: Int, lateOn: Bool, lateTime: Int, doneDays: [String], offDays: [Int] = [], dayTimes: [String: Int] = [:], dayLateTimes: [String: Int] = [:], lateOffDays: [Int] = []) {
         guard Bundle.main.bundleURL.pathExtension == "app" else { return }
         let center = UNUserNotificationCenter.current()
         var ids = ["creatine"]
@@ -1291,7 +1306,7 @@ enum Notifier {
             let first = dayTimes[String(weekday)] ?? time
             let late = dayLateTimes[String(weekday)] ?? lateTime
             add(center, id: "creatine-a-\(i)", day: day, minutes: first, body: "Tijd voor je creatine.", now: now)
-            if lateOn && late > first {
+            if lateOn && !lateOffDays.contains(weekday) && late > first {
                 add(center, id: "creatine-b-\(i)", day: day, minutes: late, body: "Creatine nog niet gehad? Pak hem bij het avondeten.", now: now)
             }
         }
