@@ -60,7 +60,14 @@ jobs:
             echo "--- extensies"; find Payload -name "*.appex"
             echo "--- Payload"; find Payload -maxdepth 3 | head -60
             echo "--- app Info.plist"; plutil -p Payload/SportApp.app/Info.plist
-            for A in $(find Payload -name "*.appex"); do echo "--- $A Info.plist"; plutil -p "$A/Info.plist"; done
+            for A in $(find Payload -name "*.appex"); do
+              echo "--- $A Info.plist"; plutil -p "$A/Info.plist"
+              B="$A/$(basename "$A" .appex)"
+              echo "--- $B header"; otool -hv "$B"
+              echo "--- $B load commands"; otool -l "$B" | grep -A4 -E "LC_MAIN|LC_UNIXTHREAD|LC_BUILD_VERSION"
+              echo "--- $B linked"; otool -L "$B"
+            done
+            echo "--- app header"; otool -hv Payload/SportApp.app/SportApp
           } > "$OUT" 2>&1
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
