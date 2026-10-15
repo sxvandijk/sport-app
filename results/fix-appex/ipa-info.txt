@@ -1,0 +1,153 @@
+commit: d531199dab68062f103605c65a8c6b64ae7f51ff
+runner: GitHub Actions 1000000171
+Xcode 16.4
+Build version 16F6
+--- extensies
+Payload/SportApp.app/PlugIns/SetWidgets.appex
+--- Payload
+Payload
+Payload/SportApp.app
+Payload/SportApp.app/PlugIns
+Payload/SportApp.app/PlugIns/SetWidgets.appex
+Payload/SportApp.app/AppIcon60x60@2x.png
+Payload/SportApp.app/Assets.car
+Payload/SportApp.app/AppIcon76x76@2x~ipad.png
+Payload/SportApp.app/SportApp
+Payload/SportApp.app/Info.plist
+Payload/SportApp.app/PkgInfo
+--- app Info.plist
+{
+  "BuildMachineOSBuild" => "24G830"
+  "CFBundleDevelopmentRegion" => "en"
+  "CFBundleDisplayName" => "Set"
+  "CFBundleExecutable" => "SportApp"
+  "CFBundleIcons" => {
+    "CFBundlePrimaryIcon" => {
+      "CFBundleIconFiles" => [
+        0 => "AppIcon60x60"
+      ]
+      "CFBundleIconName" => "AppIcon"
+    }
+  }
+  "CFBundleIcons~ipad" => {
+    "CFBundlePrimaryIcon" => {
+      "CFBundleIconFiles" => [
+        0 => "AppIcon60x60"
+        1 => "AppIcon76x76"
+      ]
+    }
+  }
+  "CFBundleIdentifier" => "com.sxvandijk.sportapp"
+  "CFBundleInfoDictionaryVersion" => "6.0"
+  "CFBundleName" => "SportApp"
+  "CFBundlePackageType" => "APPL"
+  "CFBundleShortVersionString" => "1.0"
+  "CFBundleSupportedPlatforms" => [
+    0 => "iPhoneOS"
+  ]
+  "CFBundleVersion" => "1"
+  "DTCompiler" => "com.apple.compilers.llvm.clang.1_0"
+  "DTPlatformBuild" => "22F76"
+  "DTPlatformName" => "iphoneos"
+  "DTPlatformVersion" => "18.5"
+  "DTSDKBuild" => "22F76"
+  "DTSDKName" => "iphoneos18.5"
+  "DTXcode" => "1640"
+  "DTXcodeBuild" => "16F6"
+  "ITSAppUsesNonExemptEncryption" => 0
+  "MinimumOSVersion" => "16.0"
+  "NSSupportsLiveActivities" => 1
+  "UIDeviceFamily" => [
+    0 => 1
+  ]
+  "UILaunchScreen" => {
+  }
+  "UIRequiredDeviceCapabilities" => [
+    0 => "arm64"
+  ]
+  "UISupportedInterfaceOrientations" => [
+    0 => "UIInterfaceOrientationPortrait"
+  ]
+}
+--- Payload/SportApp.app/PlugIns/SetWidgets.appex Info.plist
+{
+  "BuildMachineOSBuild" => "24G830"
+  "CFBundleDevelopmentRegion" => "en"
+  "CFBundleDisplayName" => "Set"
+  "CFBundleExecutable" => "SetWidgets"
+  "CFBundleIdentifier" => "com.sxvandijk.sportapp.widgets"
+  "CFBundleInfoDictionaryVersion" => "6.0"
+  "CFBundleName" => "SetWidgets"
+  "CFBundlePackageType" => "XPC!"
+  "CFBundleShortVersionString" => "1.0"
+  "CFBundleSupportedPlatforms" => [
+    0 => "iPhoneOS"
+  ]
+  "CFBundleVersion" => "1"
+  "DTCompiler" => "com.apple.compilers.llvm.clang.1_0"
+  "DTPlatformBuild" => "22F76"
+  "DTPlatformName" => "iphoneos"
+  "DTPlatformVersion" => "18.5"
+  "DTSDKBuild" => "22F76"
+  "DTSDKName" => "iphoneos18.5"
+  "DTXcode" => "1640"
+  "DTXcodeBuild" => "16F6"
+  "MinimumOSVersion" => "16.1"
+  "NSExtension" => {
+    "NSExtensionPointIdentifier" => "com.apple.widgetkit-extension"
+  }
+  "UIDeviceFamily" => [
+    0 => 1
+  ]
+  "UIRequiredDeviceCapabilities" => [
+    0 => "arm64"
+  ]
+}
+--- Payload/SportApp.app/PlugIns/SetWidgets.appex/SetWidgets header
+Payload/SportApp.app/PlugIns/SetWidgets.appex/SetWidgets:
+Mach header
+      magic  cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+MH_MAGIC_64    ARM64        ALL  0x00     EXECUTE    43       4008   NOUNDEFS DYLDLINK TWOLEVEL PIE
+--- Payload/SportApp.app/PlugIns/SetWidgets.appex/SetWidgets load commands
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform 2
+    minos 16.1
+      sdk 18.5
+--
+       cmd LC_MAIN
+   cmdsize 24
+  entryoff 48972
+ stacksize 0
+Load command 14
+--- Payload/SportApp.app/PlugIns/SetWidgets.appex/SetWidgets linked
+Payload/SportApp.app/PlugIns/SetWidgets.appex/SetWidgets:
+	/System/Library/Frameworks/Foundation.framework/Foundation (compatibility version 300.0.0, current version 3502.0.0)
+	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)
+	/System/Library/Frameworks/ActivityKit.framework/ActivityKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/SwiftUI.framework/SwiftUI (compatibility version 1.0.0, current version 6.5.4)
+	/System/Library/Frameworks/WidgetKit.framework/WidgetKit (compatibility version 1.0.0, current version 537.6.13)
+	/usr/lib/swift/libswiftCore.dylib (compatibility version 1.0.0, current version 0.0.0)
+	/usr/lib/swift/libswiftCoreFoundation.dylib (compatibility version 1.0.0, current version 120.100.0, weak)
+	/usr/lib/swift/libswiftCoreImage.dylib (compatibility version 1.0.0, current version 2.1.0, weak)
+	/usr/lib/swift/libswiftCoreLocation.dylib (compatibility version 1.0.0, current version 44.0.1, weak)
+	/usr/lib/swift/libswiftDarwin.dylib (compatibility version 1.0.0, current version 310.100.8, weak)
+	/usr/lib/swift/libswiftDataDetection.dylib (compatibility version 1.0.0, current version 801.2.0, weak)
+	/usr/lib/swift/libswiftDispatch.dylib (compatibility version 1.0.0, current version 54.0.0, weak)
+	/usr/lib/swift/libswiftIntents.dylib (compatibility version 1.0.0, current version 12.0.0, weak)
+	/usr/lib/swift/libswiftMetal.dylib (compatibility version 1.0.0, current version 368.12.0, weak)
+	/usr/lib/swift/libswiftOSLog.dylib (compatibility version 1.0.0, current version 8.0.0, weak)
+	/usr/lib/swift/libswiftObjectiveC.dylib (compatibility version 1.0.0, current version 940.4.0, weak)
+	/usr/lib/swift/libswiftQuartzCore.dylib (compatibility version 1.0.0, current version 4.0.0, weak)
+	/usr/lib/swift/libswiftSpatial.dylib (compatibility version 1.0.0, current version 1.0.0, weak)
+	/usr/lib/swift/libswiftUniformTypeIdentifiers.dylib (compatibility version 1.0.0, current version 841.8.0, weak)
+	/usr/lib/swift/libswiftXPC.dylib (compatibility version 1.0.0, current version 69.120.3, weak)
+	/usr/lib/swift/libswiftos.dylib (compatibility version 1.0.0, current version 1062.100.1)
+	/usr/lib/swift/libswiftsimd.dylib (compatibility version 1.0.0, current version 21.0.0, weak)
+	/usr/lib/swift/libswiftUIKit.dylib (compatibility version 1.0.0, current version 1.0.0, weak)
+--- app header
+Payload/SportApp.app/SportApp:
+Mach header
+      magic  cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+MH_MAGIC_64    ARM64        ALL  0x00     EXECUTE    47       5528   NOUNDEFS DYLDLINK TWOLEVEL PIE
