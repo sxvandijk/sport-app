@@ -1259,7 +1259,10 @@ private struct ProgramSheet: View {
             }
             if menuFor == p.id { optionsPanel(p) }
         }
-        FlatButton(title: "+ Nieuw schema", color: ac.accentText) { model.newProgram() }.padding(.top, 6)
+        FlatButton(title: "+ Nieuw schema", color: ac.accentText) {
+            model.sheet = nil
+            model.nameEdit = NameEdit(title: "Nieuw schema", subtitle: "Geef je schema een naam", placeholder: "Naam van het schema", text: "", confirmTitle: "Maak aan") { model.newProgram(name: $0) }
+        }.padding(.top, 6)
     }
 
     private func optionsPanel(_ p: PlanProgram) -> some View {

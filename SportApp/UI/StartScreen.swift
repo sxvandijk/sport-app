@@ -43,14 +43,12 @@ struct StartTab: View {
                 Text(info.sub).sa(15, .medium).foregroundColor(Tokens.text2)
                 Text(info.muscles).sa(14).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
                 PrimaryButton(title: "Start \(name)", height: 64, fontSize: 19, icon: Icon.play(18)) {
-                    model.askStart(name)
+                    model.ovName = name
+                    model.screen = .overview
                 }
                 .padding(.top, 20)
-                HStack(spacing: 10) {
-                    secondary("Oefeningen bekijken") { model.ovName = name; model.screen = .overview }
-                    secondary("Andere training kiezen") { model.tab = .training }
-                }
-                .padding(.top, 4)
+                secondary("Andere training kiezen") { model.tab = .training }
+                    .padding(.top, 4)
                 secondary("Vrije training zonder schema") { model.askStart("") }
             }
             .frame(maxWidth: .infinity)
@@ -59,8 +57,9 @@ struct StartTab: View {
                 Text("Nog geen schema").sa(30, .bold).foregroundColor(Tokens.text)
                 Text("Kies een schema bij Training om hier je volgende training te zien.")
                     .sa(15).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
-                PrimaryButton(title: "Naar Training", height: 56, fontSize: 17) { model.tab = .training }
+                PrimaryButton(title: "Training toevoegen", height: 56, fontSize: 17) { model.newTemplate() }
                     .padding(.top, 12)
+                secondary("Naar Training") { withAnimation(.easeOut(duration: 0.2)) { model.tab = .training } }
             }
             .frame(maxWidth: .infinity)
         }
