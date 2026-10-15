@@ -65,3 +65,9 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Opzetstukken: Gym > Opzetstukken (standaard Touw, Rechte stang, V-stang, EZ-stang, Losse handgreep; toevoegen, hernoemen, eigen stap per tik, verwijderen). Per oefening kiezen via oefeningmenu > Opzetstukken kiezen; in de workout een knopje onder de naam om te wisselen. Gewicht wordt per opzetstuk onthouden (opgeslagen in de geschiedenis).
 - Instelling Profiel > Training: "Elke week opnieuw beginnen" (maandag weer eerste training van je schema).
 - Nog open: opzetstuk per oefening in Progressie tonen; creatine-widget (idee, later).
+
+## Ronde 7b (wacht op test)
+- Opzetstukken staan standaard klaar bij kabeloefeningen (bij losse gewichten/andere oefeningen zelf koppelen). Houd een opzetstuk ingedrukt bij het wisselen: bij deze oefening weghalen of uit je gym verwijderen. Sheet toont "Nu: Touw".
+- Oefeningmenu: "Hoe vul je dit in?" alleen bij oefeningen waar dat onduidelijk is (kabels, dumbbells, een-arm): Eén gewicht in totaal / Gewicht per arm of been / Links en rechts apart, met uitleg. Ook via het i-tje onder het gewicht in de workout. Niet meer bij o.a. hanging leg raise.
+- Gym: bovenaan knoppen "+ Apparaat" en "Opzetstukken".
+- Open vraag: heeft de Gym-tab zelf echt nut? (apparaten uit/aan zetten, stappen per apparaat) -- na test bij Basic-Fit beslissen.
