@@ -43,6 +43,7 @@ jobs:
           echo "App: $APP"
           mkdir -p Payload
           cp -R "$APP" Payload/
+          echo "Extensies in de app:"; find Payload -name "*.appex"
           zip -qry Set.ipa Payload
           ls -la Set.ipa
 

@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import UserNotifications
 import AudioToolbox
+import Combine
 
 enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine }
 enum HomeTab: Int, CaseIterable, Identifiable {
@@ -280,6 +281,38 @@ final class AppModel: ObservableObject {
         if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
         applyGym()
+        // Live Activity (vergrendelscherm / Dynamic Island) volgt de lopende training. Niet bij screenshots en tests.
+        if fileURL != nil {
+            liveActivityLink = Publishers.CombineLatest($session, $restEnd)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _, _ in self?.syncLiveActivity() }
+        }
+    }
+
+    private var liveActivityLink: AnyCancellable?
+
+    /// De huidige toestand voor de Live Activity.
+    func liveState() -> WorkoutLiveState? {
+        guard let s = session else { return nil }
+        let works = s.exercises.flatMap { $0.workSets }
+        let done = works.filter { $0.done }.count
+        var exercise = "Alle sets gedaan"
+        var setText = "Rond je workout af"
+        if let c = current().cur, let ex = s.exercise(c.exID) {
+            exercise = ex.name
+            let sets = ex.workSets
+            if let i = sets.firstIndex(where: { $0.id == c.setID }) {
+                setText = "Set \(i + 1) van \(sets.count)"
+            } else {
+                setText = "Opwarmen"
+            }
+        }
+        return WorkoutLiveState(exercise: exercise, setText: setText, done: done, total: works.count,
+                                restEnd: restEnd, accent: Int(accent.hex))
+    }
+
+    func syncLiveActivity() {
+        LiveActivityManager.sync(name: session?.name, startAt: session?.startAt, state: liveState())
     }
 
     static let dataVersion = 2

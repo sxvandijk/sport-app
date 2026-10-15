@@ -22,10 +22,14 @@ targets:
     platform: iOS
     sources:
       - path: SportApp
+      - path: Shared
+    dependencies:
+      - target: SetWidgets
     info:
       path: SportApp/Info.plist
       properties:
         CFBundleDisplayName: Set
+        NSSupportsLiveActivities: true
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -35,6 +39,26 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.sxvandijk.sportapp
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: "NO"
+
+  SetWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.1"
+    sources:
+      - path: SportAppWidgets
+      - path: Shared
+    info:
+      path: SportAppWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Set
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sxvandijk.sportapp.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.1"
+        SKIP_INSTALL: "YES"
 
   SportAppTests:
     type: bundle.unit-test
