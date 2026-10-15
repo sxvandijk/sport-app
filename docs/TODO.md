@@ -5,12 +5,14 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Klaar (wacht op test)
 - [x] Ronde 2a/2b: gym-tab met machine-database, eigen gyms, stappen per machine, apparaat in oefening, wisselen in schema
 
+- [x] Ronde 5a: vrije training wisselt direct, toetsenbord weg bij scrollen, links/rechts apart invullen, creatine per weekdag, glas-knoppen overal
 - [x] Ronde 3e: Alle trainingen eigen scherm, sheet omlaag vegen, Liquid Glass door de hele app, tabbalk-slepen gefixt
 - [x] Ronde 3c: "Alle trainingen" met filter in Progressie, tabbalk lager + glijdende markering + swipen tussen schermen, lichte achtergrond in light mode
 
 ## Volgende
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
 - [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
+- [ ] Creatine-melding koppelen aan weekplanning (geen melding op dagen dat je een shake na het sporten neemt)
 - [ ] Instelling: bij een nieuwe week het schema opnieuw beginnen bij de eerste training (bv. weer Push op maandag)
 - [ ] Alle trainingen-pagina anders uitwerken en mooier maken
 - [ ] Leuker statistiekenscherm

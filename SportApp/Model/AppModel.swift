@@ -158,6 +158,8 @@ struct PersistedState: Codable {
     var creaLateOn: Bool? = nil
     var creaLateTime: Int? = nil
     var creaDone: [String]? = nil     // dagen (yyyy-MM-dd) waarop je hem hebt afgevinkt
+    var creaDayOff: [Int]? = nil      // weekdagen (1 = zondag ... 7 = zaterdag) zonder herinnering
+    var creaDayTime: [String: Int]? = nil  // eigen tijd per weekdag (minuten sinds middernacht)
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -198,6 +200,8 @@ final class AppModel: ObservableObject {
     @Published var creaLateOn: Bool
     @Published var creaLateTime: Int
     @Published var creaDone: [String]
+    @Published var creaDayOff: [Int]
+    @Published var creaDayTime: [String: Int]
     @Published var noteLog: [String: [NoteEntry]]
 
     // Werkscherm
@@ -265,6 +269,8 @@ final class AppModel: ObservableObject {
         creaLateOn = state.creaLateOn ?? true
         creaLateTime = state.creaLateTime ?? 18 * 60
         creaDone = state.creaDone ?? []
+        creaDayOff = state.creaDayOff ?? []
+        creaDayTime = state.creaDayTime ?? [:]
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -315,7 +321,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -1118,6 +1124,27 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    /// Weekdag-nummer volgens Calendar: 1 = zondag ... 7 = zaterdag.
+    func creaTime(forWeekday d: Int) -> Int { creaDayTime[String(d)] ?? creaTime }
+
+    func setCreaDay(_ d: Int, on: Bool) {
+        if on { creaDayOff.removeAll { $0 == d } } else if !creaDayOff.contains(d) { creaDayOff.append(d) }
+        rescheduleCreatine()
+        save()
+    }
+
+    func setCreaDayTime(_ d: Int, minutes: Int) {
+        creaDayTime[String(d)] = min(1439, max(0, minutes))
+        rescheduleCreatine()
+        save()
+    }
+
+    func resetCreaDayTimes() {
+        creaDayTime = [:]
+        rescheduleCreatine()
+        save()
+    }
+
     func setCreaLate(on: Bool) {
         creaLateOn = on
         rescheduleCreatine()
@@ -1132,7 +1159,7 @@ final class AppModel: ObservableObject {
 
     /// Plant de komende 14 dagen. Een dag die je hebt afgevinkt krijgt geen herinnering meer.
     func rescheduleCreatine() {
-        Notifier.scheduleCreatine(on: crea, time: creaTime, lateOn: creaLateOn, lateTime: creaLateTime, doneDays: creaDone)
+        Notifier.scheduleCreatine(on: crea, time: creaTime, lateOn: creaLateOn, lateTime: creaLateTime, doneDays: creaDone, offDays: creaDayOff, dayTimes: creaDayTime)
     }
 }
 
@@ -1180,7 +1207,7 @@ enum Notifier {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["rest"])
     }
 
-    static func scheduleCreatine(on: Bool, time: Int, lateOn: Bool, lateTime: Int, doneDays: [String]) {
+    static func scheduleCreatine(on: Bool, time: Int, lateOn: Bool, lateTime: Int, doneDays: [String], offDays: [Int] = [], dayTimes: [String: Int] = [:]) {
         guard Bundle.main.bundleURL.pathExtension == "app" else { return }
         let center = UNUserNotificationCenter.current()
         var ids = ["creatine"]
@@ -1193,6 +1220,9 @@ enum Notifier {
         for i in 0..<14 {
             guard let day = cal.date(byAdding: .day, value: i, to: start) else { continue }
             if doneDays.contains(AppModel.dayKey(day)) { continue }
+            let weekday = cal.component(.weekday, from: day)
+            if offDays.contains(weekday) { continue }
+            let time = dayTimes[String(weekday)] ?? time
             add(center, id: "creatine-a-\(i)", day: day, minutes: time, body: "Tijd voor je creatine.", now: now)
             if lateOn && lateTime > time {
                 add(center, id: "creatine-b-\(i)", day: day, minutes: lateTime, body: "Creatine nog niet gehad? Pak hem bij het avondeten.", now: now)
