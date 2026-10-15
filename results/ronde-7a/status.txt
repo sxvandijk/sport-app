@@ -1,4 +1,4 @@
 branch: ronde-7a
-commit: 76f5d065de778bd908062f8aefcfb6e3a4ff22ba
+commit: b0525c6cabd34e88f19774defa3840c8fb57b14a
 status: success
-run: https://github.com/sxvandijk/sport-app/actions/runs/38792108883
+run: https://github.com/sxvandijk/sport-app/actions/runs/38793700951
