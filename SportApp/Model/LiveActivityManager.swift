@@ -6,6 +6,27 @@ import ActivityKit
 /// Start, ververst en beëindigt de Live Activity van de lopende training.
 /// Op iOS 16.2 en nieuwer; op oudere versies gebeurt er niets.
 enum LiveActivityManager {
+    /// Laatste melding van het systeem, om te kunnen zien waarom er niets verschijnt.
+    static var lastError: String?
+
+    /// Korte regels voor het statusblokje in het profiel.
+    static func diagnose() -> [String] {
+        var lines: [String] = []
+        let dir = Bundle.main.builtInPlugInsPath
+        let names = dir.flatMap { try? FileManager.default.contentsOfDirectory(atPath: $0) } ?? []
+        lines.append(names.isEmpty ? "Widget-extensie: niet in de app gevonden" : "Widget-extensie: \(names.joined(separator: ", "))")
+        #if canImport(ActivityKit)
+        if #available(iOS 16.2, *) {
+            lines.append("Live Activities in Instellingen: " + (ActivityAuthorizationInfo().areActivitiesEnabled ? "aan" : "uit"))
+            lines.append("Actieve activiteiten: \(Activity<WorkoutActivityAttributes>.activities.count)")
+        } else {
+            lines.append("Live Activities vragen iOS 16.2 of nieuwer")
+        }
+        #endif
+        lines.append("Laatste melding: " + (lastError ?? "geen"))
+        return lines
+    }
+
     static func sync(name: String?, startAt: Date?, state: WorkoutLiveState?) {
         #if canImport(ActivityKit)
         if #available(iOS 16.2, *) {
@@ -24,7 +45,10 @@ enum LiveActivityManager {
                 endAll()
                 return
             }
-            guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+            guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+                LiveActivityManager.lastError = "Live Activities staan uit voor deze app"
+                return
+            }
             let content = ActivityContent(state: state, staleDate: nil)
             let running = Activity<WorkoutActivityAttributes>.activities
             if let current = running.first(where: { abs($0.attributes.startAt.timeIntervalSince(startAt)) < 1 }) {
@@ -34,8 +58,13 @@ enum LiveActivityManager {
             } else {
                 endAll()
                 last = state
-                _ = try? Activity.request(attributes: WorkoutActivityAttributes(name: name, startAt: startAt),
-                                          content: content, pushType: nil)
+                do {
+                    _ = try Activity.request(attributes: WorkoutActivityAttributes(name: name, startAt: startAt),
+                                             content: content, pushType: nil)
+                    LiveActivityManager.lastError = nil
+                } catch {
+                    LiveActivityManager.lastError = String(describing: error)
+                }
             }
         }
 
