@@ -160,9 +160,8 @@ struct LiveSession: Codable, Hashable {
             sets.append(LiveSet(type: workType, w: w, r: r, pw: prev?.w, pr: prev?.r, rmax: base?.rmax, rmin: base?.r))
         }
         var ex = LiveExercise(name: name, group: group, from: nil, sets: sets)
-        if !isWarmupBlock, kind == .weights || kind == .bodyweight {
-            let twoDefault = Catalog.info(name).equipment == "Dumbbells"
-            if last?.two ?? twoDefault { ex.two = true }
+        if !isWarmupBlock, kind == .weights {
+            if last?.two ?? Catalog.isOneSided(name) { ex.two = true }
         }
         if last?.uni == true && !isWarmupBlock {
             ex.uni = true

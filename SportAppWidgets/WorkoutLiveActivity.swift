@@ -13,8 +13,9 @@ private struct TimerText: View {
     let state: WorkoutLiveState
 
     var body: some View {
-        if let end = state.restEnd, end > Date() {
-            Text(timerInterval: Date()...end, pauseTime: nil, countsDown: true, showsHours: false)
+        let now = Date()
+        if let end = state.restEnd, end > now.addingTimeInterval(0.5) {
+            Text(timerInterval: now...end, pauseTime: nil, countsDown: true, showsHours: false)
                 .monospacedDigit()
                 .foregroundColor(liveAccent(state.accent))
         } else {

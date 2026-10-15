@@ -6,6 +6,7 @@ struct CreatineScreen: View {
     @Environment(\.accentColors) private var ac
 
     private let weekOrder = [2, 3, 4, 5, 6, 7, 1]
+    @State private var openDay: Int? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -49,59 +50,41 @@ struct CreatineScreen: View {
                     .padding(.top, 20)
 
                     if model.crea {
-                        sectionLabel("Tijden")
+                        sectionLabel("Standaardtijden")
                         card {
                             HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Eerste herinnering").sa(16).foregroundColor(Tokens.text)
-                                    Text("Standaardtijd voor alle dagen").sa(12).foregroundColor(Tokens.text2)
-                                }
+                                Text("Eerste herinnering").sa(16).foregroundColor(Tokens.text)
                                 Spacer(minLength: 0)
                                 DatePicker("", selection: timeBinding(model.creaTime) { model.setCreaTime($0) }, displayedComponents: .hourAndMinute)
                                     .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
                             }
-                            .frame(minHeight: 60)
+                            .frame(minHeight: 56)
                             Divider().background(Tokens.line)
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Tweede herinnering").sa(16).foregroundColor(Tokens.text)
-                                    Text("Alleen als je hem nog niet had. Tik in de melding op \u{2018}Gehad\u{2019} of vink hem af, dan komt hij niet.")
-                                        .sa(12).foregroundColor(Tokens.text2)
+                                    Text("Alleen als je hem nog niet had").sa(12).foregroundColor(Tokens.text2)
                                 }
                                 Spacer(minLength: 0)
+                                if model.creaLateOn {
+                                    DatePicker("", selection: timeBinding(model.creaLateTime) { model.setCreaLateTime($0) }, displayedComponents: .hourAndMinute)
+                                        .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
+                                }
                                 SAToggle(isOn: model.creaLateOn, onColor: ac.accentLine, label: "Tweede herinnering") {
                                     model.setCreaLate(on: !model.creaLateOn)
                                 }
                             }
-                            .frame(minHeight: 64)
-                            if model.creaLateOn {
-                                Divider().background(Tokens.line)
-                                HStack {
-                                    Text("Tweede herinnering om").sa(16).foregroundColor(Tokens.text)
-                                    Spacer(minLength: 0)
-                                    DatePicker("", selection: timeBinding(model.creaLateTime) { model.setCreaLateTime($0) }, displayedComponents: .hourAndMinute)
-                                        .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
-                                }
-                                .frame(minHeight: 56)
-                            }
+                            .frame(minHeight: 60)
                         }
 
-                        sectionLabel("Dagen")
-                        Text("Zet een dag uit als je geen melding wilt, bijvoorbeeld als je dan na het sporten een shake met creatine neemt. Een dag kan ook een eigen tijd krijgen.")
-                            .sa(13).foregroundColor(Tokens.text2).lineSpacing(3).padding(.bottom, 8)
+                        sectionLabel("Per dag")
                         card {
                             ForEach(weekOrder, id: \.self) { d in
                                 dayRow(d)
                                 if d != weekOrder.last { Divider().background(Tokens.line) }
                             }
                         }
-                        if !model.creaDayTime.isEmpty {
-                            Button { model.resetCreaDayTimes() } label: {
-                                Text("Alle dagen weer op de standaardtijd").sa(14, .semibold).foregroundColor(ac.accentText)
-                                    .frame(maxWidth: .infinity, minHeight: 48).contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
+                        Text("Tik op een dag voor eigen tijden.").sa(12).foregroundColor(Tokens.text3).padding(.top, 8)
 
                         sectionLabel("Vandaag")
                         card {
@@ -145,20 +128,56 @@ struct CreatineScreen: View {
 
     private func dayRow(_ d: Int) -> some View {
         let on = !model.creaDayOff.contains(d)
-        let own = model.creaDayTime[String(d)] != nil
-        return HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(AppModel.weekdayNames[d]).sa(16).foregroundColor(on ? Tokens.text : Tokens.text3)
-                Text(!on ? "Geen melding" : (own ? "Eigen tijd" : "Standaardtijd"))
-                    .sa(12).foregroundColor(own && on ? ac.accentText : Tokens.text2)
-            }
-            Spacer(minLength: 0)
-            if on {
-                DatePicker("", selection: timeBinding(model.creaTime(forWeekday: d)) { model.setCreaDayTime(d, minutes: $0) }, displayedComponents: .hourAndMinute)
-                    .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
-            }
-            SAToggle(isOn: on, onColor: ac.accentLine, label: "Herinnering op \(AppModel.weekdayNames[d])") { model.setCreaDay(d, on: !on) }
+        let own = model.creaHasOwnTimes(d)
+        let open = openDay == d && on
+        var sub = "Geen melding"
+        if on {
+            sub = clockText(model.creaTime(forWeekday: d))
+            if model.creaLateOn { sub += " \u{00B7} " + clockText(model.creaLateTime(forWeekday: d)) }
         }
-        .frame(minHeight: 60)
+        return VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Button {
+                    if on { openDay = open ? nil : d }
+                } label: {
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(AppModel.weekdayNames[d]).sa(16).foregroundColor(on ? Tokens.text : Tokens.text3)
+                            Text(sub).sa(12, .regular, mono: true).foregroundColor(own && on ? ac.accentText : Tokens.text2)
+                        }
+                        Spacer(minLength: 0)
+                        if on { Icon.chevronRight(14).foregroundColor(Tokens.text3).rotationEffect(.degrees(open ? 90 : 0)) }
+                    }
+                    .frame(minHeight: 60)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                SAToggle(isOn: on, onColor: ac.accentLine, label: "Herinnering op \(AppModel.weekdayNames[d])") {
+                    model.setCreaDay(d, on: !on)
+                    if on && openDay == d { openDay = nil }
+                }
+            }
+            if open {
+                HStack {
+                    Text("Eerste").sa(14).foregroundColor(Tokens.text2)
+                    DatePicker("", selection: timeBinding(model.creaTime(forWeekday: d)) { model.setCreaDayTime(d, minutes: $0) }, displayedComponents: .hourAndMinute)
+                        .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
+                    Spacer(minLength: 0)
+                    if model.creaLateOn {
+                        Text("Tweede").sa(14).foregroundColor(Tokens.text2)
+                        DatePicker("", selection: timeBinding(model.creaLateTime(forWeekday: d)) { model.setCreaDayLate(d, minutes: $0) }, displayedComponents: .hourAndMinute)
+                            .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
+                    }
+                }
+                .padding(.bottom, own ? 0 : 12)
+                if own {
+                    Button { model.resetCreaDay(d) } label: {
+                        Text("Terug naar standaard").sa(13, .semibold).foregroundColor(ac.accentText)
+                            .frame(maxWidth: .infinity, minHeight: 40).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 }

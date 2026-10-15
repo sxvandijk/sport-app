@@ -37,6 +37,13 @@ struct ExerciseInfo {
 
 /// De oefeningenbibliotheek (Engelse namen, zoals in de sportschool). De volgorde is de volgorde in zoekresultaten.
 enum Catalog {
+    /// Oefeningen waarbij je het gewicht van één arm of been invult (dumbbells, one-arm, bayesian).
+    static func isOneSided(_ name: String) -> Bool {
+        if info(name).equipment == "Dumbbells" { return true }
+        let n = name.lowercased()
+        return ["one arm", "one-arm", "single arm", "single-arm", "one leg", "single leg", "bayesian", "concentration"].contains { n.contains($0) }
+    }
+
     static let all: [(name: String, info: ExerciseInfo)] = [
         ("Incline dumbbell press", ExerciseInfo("Borst", "Dumbbells", step: 2, d: 20)),
         ("Dumbbell bench press", ExerciseInfo("Borst", "Dumbbells", step: 2, d: 24)),

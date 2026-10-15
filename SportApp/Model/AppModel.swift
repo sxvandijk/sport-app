@@ -161,6 +161,7 @@ struct PersistedState: Codable {
     var creaDone: [String]? = nil     // dagen (yyyy-MM-dd) waarop je hem hebt afgevinkt
     var creaDayOff: [Int]? = nil      // weekdagen (1 = zondag ... 7 = zaterdag) zonder herinnering
     var creaDayTime: [String: Int]? = nil  // eigen tijd per weekdag (minuten sinds middernacht)
+    var creaDayLate: [String: Int]? = nil  // eigen tijd van de tweede herinnering per weekdag
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -203,6 +204,7 @@ final class AppModel: ObservableObject {
     @Published var creaDone: [String]
     @Published var creaDayOff: [Int]
     @Published var creaDayTime: [String: Int]
+    @Published var creaDayLate: [String: Int]
     @Published var noteLog: [String: [NoteEntry]]
 
     // Werkscherm
@@ -272,6 +274,7 @@ final class AppModel: ObservableObject {
         creaDone = state.creaDone ?? []
         creaDayOff = state.creaDayOff ?? []
         creaDayTime = state.creaDayTime ?? [:]
+        creaDayLate = state.creaDayLate ?? [:]
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -354,7 +357,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -1167,18 +1170,19 @@ final class AppModel: ObservableObject {
 
     /// Weekdag-nummer volgens Calendar: 1 = zondag ... 7 = zaterdag.
     func creaTime(forWeekday d: Int) -> Int { creaDayTime[String(d)] ?? creaTime }
+    func creaLateTime(forWeekday d: Int) -> Int { creaDayLate[String(d)] ?? creaLateTime }
+    func creaHasOwnTimes(_ d: Int) -> Bool { creaDayTime[String(d)] != nil || creaDayLate[String(d)] != nil }
 
     static let weekdayNames = ["", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"]
 
     var creaSummary: String {
         if !crea { return "Uit" }
-        let days = [2, 3, 4, 5, 6, 7, 1].filter { !creaDayOff.contains($0) }
-        var t: String
-        if days.count == 7 { t = "Elke dag om " + clockText(creaTime) }
-        else if days.isEmpty { return "Aan, maar op geen enkele dag" }
-        else { t = days.map { String(AppModel.weekdayNames[$0].prefix(2)).lowercased() }.joined(separator: " ") + " om " + clockText(creaTime) }
-        if !creaDayTime.isEmpty { t += " (eigen tijden)" }
-        if creaLateOn && creaLateTime > creaTime { t += " \u{00B7} tweede om " + clockText(creaLateTime) }
+        var t = clockText(creaTime)
+        if creaLateOn { t += " en " + clockText(creaLateTime) }
+        let off = creaDayOff.count
+        if off >= 7 { return "Aan, maar op geen enkele dag" }
+        if off > 0 { t += " \u{00B7} \(7 - off) dagen" }
+        if creaDayTime.count + creaDayLate.count > 0 { t += " \u{00B7} eigen tijden" }
         return t
     }
 
@@ -1194,8 +1198,15 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    func resetCreaDayTimes() {
-        creaDayTime = [:]
+    func setCreaDayLate(_ d: Int, minutes: Int) {
+        creaDayLate[String(d)] = min(1439, max(0, minutes))
+        rescheduleCreatine()
+        save()
+    }
+
+    func resetCreaDay(_ d: Int) {
+        creaDayTime[String(d)] = nil
+        creaDayLate[String(d)] = nil
         rescheduleCreatine()
         save()
     }
@@ -1214,7 +1225,7 @@ final class AppModel: ObservableObject {
 
     /// Plant de komende 14 dagen. Een dag die je hebt afgevinkt krijgt geen herinnering meer.
     func rescheduleCreatine() {
-        Notifier.scheduleCreatine(on: crea, time: creaTime, lateOn: creaLateOn, lateTime: creaLateTime, doneDays: creaDone, offDays: creaDayOff, dayTimes: creaDayTime)
+        Notifier.scheduleCreatine(on: crea, time: creaTime, lateOn: creaLateOn, lateTime: creaLateTime, doneDays: creaDone, offDays: creaDayOff, dayTimes: creaDayTime, dayLateTimes: creaDayLate)
     }
 }
 
@@ -1262,7 +1273,7 @@ enum Notifier {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["rest"])
     }
 
-    static func scheduleCreatine(on: Bool, time: Int, lateOn: Bool, lateTime: Int, doneDays: [String], offDays: [Int] = [], dayTimes: [String: Int] = [:]) {
+    static func scheduleCreatine(on: Bool, time: Int, lateOn: Bool, lateTime: Int, doneDays: [String], offDays: [Int] = [], dayTimes: [String: Int] = [:], dayLateTimes: [String: Int] = [:]) {
         guard Bundle.main.bundleURL.pathExtension == "app" else { return }
         let center = UNUserNotificationCenter.current()
         var ids = ["creatine"]
@@ -1277,10 +1288,11 @@ enum Notifier {
             if doneDays.contains(AppModel.dayKey(day)) { continue }
             let weekday = cal.component(.weekday, from: day)
             if offDays.contains(weekday) { continue }
-            let time = dayTimes[String(weekday)] ?? time
-            add(center, id: "creatine-a-\(i)", day: day, minutes: time, body: "Tijd voor je creatine.", now: now)
-            if lateOn && lateTime > time {
-                add(center, id: "creatine-b-\(i)", day: day, minutes: lateTime, body: "Creatine nog niet gehad? Pak hem bij het avondeten.", now: now)
+            let first = dayTimes[String(weekday)] ?? time
+            let late = dayLateTimes[String(weekday)] ?? lateTime
+            add(center, id: "creatine-a-\(i)", day: day, minutes: first, body: "Tijd voor je creatine.", now: now)
+            if lateOn && late > first {
+                add(center, id: "creatine-b-\(i)", day: day, minutes: late, body: "Creatine nog niet gehad? Pak hem bij het avondeten.", now: now)
             }
         }
     }

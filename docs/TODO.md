@@ -50,3 +50,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 
 ## Onbevestigd / opletten
 - [ ] Numpad: tikken op naam/kg/reps — controleren of de vertraging echt weg is
+
+## Ronde 6b (wacht op test)
+- Links/rechts-tekst alleen bij één-arm oefeningen (dumbbells, one arm, bayesian); bodyweight (muscle up) nooit.
+- Creatine: 2 standaardtijden, per dag aanpasbaar (tik op dag), afvinken + bel op startscherm.
+- Live Activity: appex zit correct in de IPA (gecontroleerd); leeg scherm ligt waarschijnlijk aan Sideloadly/ondertekenen. Profiel toont nu een statusblokje.
