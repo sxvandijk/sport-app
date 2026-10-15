@@ -480,6 +480,20 @@ private struct OpenExerciseCard: View {
                     Text(exercise.name).sa(22, .semibold, tracking: -0.3).foregroundColor(Tokens.text)
                     Text(Catalog.meta(exercise.name) + (exercise.from.map { " · vervangt " + $0 } ?? ""))
                         .sa(13).foregroundColor(Tokens.text2)
+                    if let acc = exercise.acc {
+                        Button { model.openSheet(.accuse, exID: exercise.id) } label: {
+                            HStack(spacing: 6) {
+                                Text(acc).sa(13, .semibold)
+                                Icon.chevronDown(11, 2.4)
+                            }
+                            .foregroundColor(ac.accentText)
+                            .padding(.horizontal, 12).frame(height: 30)
+                            .background(Capsule().fill(ac.accentSoft))
+                            .frame(minHeight: 40).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Opzetstuk \(acc), tik om te wisselen")
+                    }
                 }
                 Spacer(minLength: 0)
                 Button { model.openSheet(.exmenu, exID: exercise.id) } label: {
@@ -785,7 +799,7 @@ private struct Dock: View {
         let kind = Catalog.kind(exercise.name)
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(exercise.name).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                Text(exercise.name + (exercise.acc.map { " \u{00B7} " + $0 } ?? "")).sa(15, .semibold).foregroundColor(Tokens.text).lineLimit(1)
                     .frame(minHeight: 32, alignment: .leading).contentShape(Rectangle())
                     .onTapGesture { if model.editField == nil { model.editField = (kind == .timed) ? .reps : .weight } }
                     .accessibilityAddTraits(.isButton)

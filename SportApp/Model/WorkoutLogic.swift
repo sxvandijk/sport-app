@@ -69,6 +69,9 @@ struct LiveExercise: Identifiable, Codable, Hashable {
     var uni: Bool? = nil
     /// Gewicht per arm of been (twee losse armen met hetzelfde aantal): het volume telt dubbel.
     var two: Bool? = nil
+    /// Gekozen opzetstuk (touw, rechte stang...) en de eigen stap daarvan.
+    var acc: String? = nil
+    var accStep: Double? = nil
 
     var workSets: [LiveSet] { sets.filter { $0.type != .warmup } }
 }
@@ -127,6 +130,14 @@ struct LiveSession: Codable, Hashable {
         return nil
     }
 
+    /// Laatste keer dat je deze oefening met dit opzetstuk deed.
+    static func lastLogged(_ name: String, acc: String, in history: [HistoryEntry]) -> LoggedExercise? {
+        for h in history.sorted(by: { $0.date > $1.date }) {
+            if let e = h.exercises?.first(where: { $0.name == name && $0.acc == acc && $0.sets.contains(where: { $0.type != .warmup }) }) { return e }
+        }
+        return nil
+    }
+
     /// Laatste keer dat deze oefening als warming-upblok is gedaan.
     static func lastLoggedWarmup(_ name: String, in history: [HistoryEntry]) -> LoggedExercise? {
         for h in history.sorted(by: { $0.date > $1.date }) {
@@ -160,6 +171,13 @@ struct LiveSession: Codable, Hashable {
             sets.append(LiveSet(type: workType, w: w, r: r, pw: prev?.w, pr: prev?.r, rmax: base?.rmax, rmin: base?.r))
         }
         var ex = LiveExercise(name: name, group: group, from: nil, sets: sets)
+        if !isWarmupBlock {
+            let accs = Catalog.accessories(for: name)
+            if let a = accs.first(where: { $0.name == last?.acc }) ?? accs.first {
+                ex.acc = a.name
+                ex.accStep = a.step > 0 ? a.step : nil
+            }
+        }
         if !isWarmupBlock, kind == .weights {
             if last?.two ?? Catalog.isOneSided(name) { ex.two = true }
         }
@@ -308,7 +326,7 @@ struct LiveSession: Codable, Hashable {
 
     mutating func stepWeight(set setID: UUID, exID: UUID, dir: Int) {
         guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
-        exercises[e].sets[s].w = Catalog.step(exercises[e].name, weight: exercises[e].sets[s].w, dir: dir)
+        exercises[e].sets[s].w = Catalog.step(exercises[e].name, weight: exercises[e].sets[s].w, dir: dir, fixed: exercises[e].accStep)
     }
 
     mutating func setValues(set setID: UUID, exID: UUID, w: Double?, r: Int?, r2: Int? = nil) {
@@ -370,6 +388,25 @@ struct LiveSession: Codable, Hashable {
     }
 
     /// Links en rechts apart invullen aan of uit. Aan: de rechterkant start gelijk aan links.
+    /// Wisselt van opzetstuk. Sets die nog open staan krijgen het gewicht dat je er de vorige keer mee deed.
+    mutating func setAccessory(_ exID: UUID, to acc: GymAccessory, history: [HistoryEntry]) {
+        guard let e = exercises.firstIndex(where: { $0.id == exID }) else { return }
+        exercises[e].acc = acc.name
+        exercises[e].accStep = acc.step > 0 ? acc.step : nil
+        let lastWork = (LiveSession.lastLogged(exercises[e].name, acc: acc.name, in: history)?.sets ?? []).filter { $0.type != .warmup }
+        guard !lastWork.isEmpty else { return }
+        var i = 0
+        for s in exercises[e].sets.indices where exercises[e].sets[s].type != .warmup {
+            if !exercises[e].sets[s].done {
+                let prev = lastWork[min(i, lastWork.count - 1)]
+                exercises[e].sets[s].w = prev.w
+                exercises[e].sets[s].pw = prev.w
+                exercises[e].sets[s].pr = prev.r
+            }
+            i += 1
+        }
+    }
+
     mutating func toggleTwoSides(_ exID: UUID) {
         guard let e = index(of: exID) else { return }
         exercises[e].two = exercises[e].two == true ? nil : true

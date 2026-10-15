@@ -60,3 +60,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Creatine-balkje op startscherm weggehaald. Idee: creatine-widget op het iPhone-beginscherm (later).
 - Creatine-instellingen: schakelaar tweede herinnering bij "Herinnering", tijden netjes onder elkaar, tweede herinnering per dag uit te zetten.
 - Live Activity: werkt in de simulator en op iPhone 8 (iOS 16.7, vergrendelscherm). Op iPhone 16 Pro/iOS 27 killt iOS de extensie door Sideloadly-ondertekening (AMFI). Testblokjes weer weggehaald. Later opnieuw proberen na Sideloadly-update. Widget-uiterlijk mooier maken staat open.
+
+## Ronde 7a (wacht op test)
+- Opzetstukken: Gym > Opzetstukken (standaard Touw, Rechte stang, V-stang, EZ-stang, Losse handgreep; toevoegen, hernoemen, eigen stap per tik, verwijderen). Per oefening kiezen via oefeningmenu > Opzetstukken kiezen; in de workout een knopje onder de naam om te wisselen. Gewicht wordt per opzetstuk onthouden (opgeslagen in de geschiedenis).
+- Instelling Profiel > Training: "Elke week opnieuw beginnen" (maandag weer eerste training van je schema).
+- Nog open: opzetstuk per oefening in Progressie tonen; creatine-widget (idee, later).

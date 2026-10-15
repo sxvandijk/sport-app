@@ -20,7 +20,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -163,6 +163,8 @@ struct PersistedState: Codable {
     var creaDayTime: [String: Int]? = nil  // eigen tijd per weekdag (minuten sinds middernacht)
     var creaDayLate: [String: Int]? = nil  // eigen tijd van de tweede herinnering per weekdag
     var creaDayLateOff: [Int]? = nil       // weekdagen zonder tweede herinnering
+    var exAcc: [String: [String]]? = nil   // per oefening: namen van de opzetstukken die je gebruikt
+    var weekReset: Bool? = nil             // nieuwe week: schema begint weer bij de eerste training
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -207,6 +209,9 @@ final class AppModel: ObservableObject {
     @Published var creaDayTime: [String: Int]
     @Published var creaDayLate: [String: Int]
     @Published var creaDayLateOff: [Int]
+    @Published var exAcc: [String: [String]]
+    @Published var weekReset: Bool
+    @Published var accEditID: String?
     @Published var noteLog: [String: [NoteEntry]]
 
     // Werkscherm
@@ -278,6 +283,8 @@ final class AppModel: ObservableObject {
         creaDayTime = state.creaDayTime ?? [:]
         creaDayLate = state.creaDayLate ?? [:]
         creaDayLateOff = state.creaDayLateOff ?? []
+        exAcc = state.exAcc ?? [:]
+        weekReset = state.weekReset ?? false
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -362,7 +369,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -416,6 +423,11 @@ final class AppModel: ObservableObject {
         if names.isEmpty { return nil }
         let sorted = history.sorted { $0.date > $1.date }
         if let last = sorted.first(where: { names.contains($0.name) }), let i = names.firstIndex(of: last.name) {
+            if weekReset {
+                var cal = Calendar.current
+                cal.firstWeekday = 2
+                if !cal.isDate(last.date, equalTo: now, toGranularity: .weekOfYear) { return names[0] }
+            }
             return names[(i + 1) % names.count]
         }
         return names[0]
@@ -454,7 +466,7 @@ final class AppModel: ObservableObject {
             var logged: [LoggedExercise] = []
             for e in s.exercises {
                 let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.two == true && $0.type != .warmup ? 2 : nil) }
-                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two)) }
+                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two, acc: e.acc)) }
             }
             history.insert(HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged), at: 0)
         }
@@ -1004,6 +1016,13 @@ final class AppModel: ObservableObject {
         }
         Catalog.gymScales = map
         Catalog.gymLabels = labels
+        var acc: [String: [GymAccessory]] = [:]
+        let all = gym.accessoryList
+        for (ex, names) in exAcc {
+            let list = all.filter { names.contains($0.name) }
+            if !list.isEmpty { acc[ex] = list }
+        }
+        Catalog.exAccessories = acc
     }
 
     private func mutateGym(_ body: (inout GymSetup) -> Void) {
@@ -1040,6 +1059,74 @@ final class AppModel: ObservableObject {
         let m = GymMachine(brand: "Eigen", name: n.isEmpty ? "Eigen apparaat" : n)
         mutateGym { $0.equipment.append(m) }
         return m.id
+    }
+
+    // MARK: Opzetstukken
+
+    private func mutateAccessories(_ body: (inout [GymAccessory]) -> Void) {
+        mutateGym { g in
+            var list = g.accessoryList
+            body(&list)
+            g.accessories = list
+        }
+    }
+
+    func addAccessory(name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty, !gym.accessoryList.contains(where: { $0.name.lowercased() == n.lowercased() }) else { return }
+        mutateAccessories { $0.append(GymAccessory(name: n)) }
+    }
+
+    func renameAccessory(_ id: String, to name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty, let old = gym.accessoryList.first(where: { $0.id == id })?.name, old != n else { return }
+        mutateAccessories { list in if let i = list.firstIndex(where: { $0.id == id }) { list[i].name = n } }
+        for (ex, names) in exAcc where names.contains(old) { exAcc[ex] = names.map { $0 == old ? n : $0 } }
+        applyGym()
+    }
+
+    func setAccessoryStep(_ id: String, _ step: Double) {
+        mutateAccessories { list in if let i = list.firstIndex(where: { $0.id == id }) { list[i].step = step } }
+    }
+
+    func deleteAccessory(_ id: String) {
+        guard let old = gym.accessoryList.first(where: { $0.id == id })?.name else { return }
+        mutateAccessories { $0.removeAll { $0.id == id } }
+        for (ex, names) in exAcc where names.contains(old) { exAcc[ex] = names.filter { $0 != old } }
+        applyGym()
+        save()
+    }
+
+    func accessory(_ id: String?) -> GymAccessory? { gym.accessoryList.first { $0.id == id } }
+
+    func exerciseUsesAccessory(_ exercise: String, _ acc: String) -> Bool { exAcc[exercise]?.contains(acc) == true }
+
+    func toggleExerciseAccessory(_ exercise: String, _ acc: String) {
+        var names = exAcc[exercise] ?? []
+        if let i = names.firstIndex(of: acc) { names.remove(at: i) } else { names.append(acc) }
+        exAcc[exercise] = names.isEmpty ? nil : names
+        applyGym()
+        // Een lopende oefening pakt het eerste opzetstuk meteen op.
+        if var s = session {
+            var changed = false
+            for i in s.exercises.indices where s.exercises[i].name == exercise {
+                let list = Catalog.accessories(for: exercise)
+                if let cur = s.exercises[i].acc, list.contains(where: { $0.name == cur }) { continue }
+                s.exercises[i].acc = list.first?.name
+                s.exercises[i].accStep = (list.first?.step ?? 0) > 0 ? list.first?.step : nil
+                changed = true
+            }
+            if changed { session = s }
+        }
+        save()
+    }
+
+    func chooseAccessory(_ exID: UUID, _ acc: GymAccessory) {
+        guard var s = session else { return }
+        s.setAccessory(exID, to: acc, history: history)
+        session = s
+        Haptics.light()
+        save()
     }
 
     func updateMachine(_ id: String, _ body: (inout GymMachine) -> Void) {

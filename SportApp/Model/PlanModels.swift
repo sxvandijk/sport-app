@@ -146,10 +146,26 @@ struct GymMachine: Codable, Hashable, Identifiable {
     }
 }
 
+/// Opzetstuk voor een kabel of ander apparaat (touw, rechte stang, V-stang...).
+struct GymAccessory: Codable, Hashable, Identifiable {
+    var id: String = UUID().uuidString
+    var name: String
+    /// Eigen stap van de plus/min-knop in kg. 0 = de stap van de oefening zelf.
+    var step: Double = 0
+
+    static let defaults: [GymAccessory] = ["Touw", "Rechte stang", "V-stang", "EZ-stang", "Losse handgreep"].map {
+        GymAccessory(id: "std-" + $0.lowercased().replacingOccurrences(of: " ", with: "-"), name: $0)
+    }
+}
+
 struct GymSetup: Codable, Hashable, Identifiable {
     var id: String
     var name: String
     var equipment: [GymMachine]
+    /// Opzetstukken van deze gym. nil = nog niet aangepast, dan gelden de standaarden.
+    var accessories: [GymAccessory]? = nil
+
+    var accessoryList: [GymAccessory] { accessories ?? GymAccessory.defaults }
 
     var summary: String {
         equipment.isEmpty ? "Nog geen apparaten" : "\(equipment.filter { $0.on }.count) van \(equipment.count) apparaten"
@@ -174,6 +190,8 @@ struct LoggedExercise: Codable, Hashable {
     var sets: [LoggedSet]
     var uni: Bool? = nil
     var two: Bool? = nil
+    /// Opzetstuk dat je gebruikte (bijvoorbeeld "Touw").
+    var acc: String? = nil
 }
 
 struct HistoryEntry: Codable, Hashable, Identifiable {

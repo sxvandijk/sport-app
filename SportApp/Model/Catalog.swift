@@ -170,7 +170,15 @@ enum Catalog {
     }
 
     /// Eén stap omhoog (`dir` = 1) of omlaag (`dir` = -1) op het gewicht, volgens de stappen van het apparaat.
-    static func step(_ name: String, weight: Double, dir: Int) -> Double {
+    /// Opzetstukken per oefening (afgeleid van de gym en je keuzes), zie `AppModel.applyGym`.
+    static var exAccessories: [String: [GymAccessory]] = [:]
+    static func accessories(for name: String) -> [GymAccessory] { exAccessories[name] ?? [] }
+
+    static func step(_ name: String, weight: Double, dir: Int, fixed: Double? = nil) -> Double {
+        if let f = fixed, f > 0 {
+            let n = ((weight + Double(dir) * f) * 100).rounded() / 100
+            return n < 0 ? 0 : n
+        }
         if let scale = gymScales[name] {
             let n = scale.step(from: weight, up: dir > 0)
             return n < 0 ? 0 : n
