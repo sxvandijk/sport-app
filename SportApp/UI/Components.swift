@@ -97,6 +97,7 @@ struct PrimaryButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: height)
             .glassSurface(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), tint: ac.accent, interactive: true, fallback: ac.accent)
+            .contentShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
             .opacity(enabled ? 1 : 0.45)
         }
         .buttonStyle(.plain)

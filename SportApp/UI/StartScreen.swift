@@ -59,7 +59,6 @@ struct StartTab: View {
                     .sa(15).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
                 PrimaryButton(title: "Training toevoegen", height: 56, fontSize: 17) { model.newTemplate() }
                     .padding(.top, 12)
-                secondary("Naar Training") { withAnimation(.easeOut(duration: 0.2)) { model.tab = .training } }
             }
             .frame(maxWidth: .infinity)
         }
@@ -70,6 +69,7 @@ struct StartTab: View {
             Text(title).sa(14, .semibold).foregroundColor(Tokens.text).lineLimit(1)
                 .frame(maxWidth: .infinity).frame(height: 44)
                 .glassSurface(Capsule(), interactive: true, fallback: Tokens.raised)
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }
