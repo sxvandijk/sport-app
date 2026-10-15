@@ -15,7 +15,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
 - [ ] Creatine-melding koppelen aan weekplanning (geen melding op dagen dat je een shake na het sporten neemt)
 - [ ] Instelling: bij een nieuwe week het schema opnieuw beginnen bij de eerste training (bv. weer Push op maandag)
-- [ ] Live Activity: rusttimer en huidige set op het vergrendelscherm en in het Dynamic Island (vraagt een widget-extensie; testen met Sideloadly: een extensie telt als extra app-ID bij een gratis account)
+- [x] Live Activity en Dynamic Island (Ronde 6a, wacht op test met Sideloadly)
 - [ ] Alle trainingen-pagina anders uitwerken en mooier maken
 - [ ] Leuker statistiekenscherm
 - [ ] Opzetstukken per oefening (touw, rechte stang, V-stang...): kiezen welke je gebruikt, gewicht/stap per opzetstuk apart; toevoegen via Gym > accessoires
