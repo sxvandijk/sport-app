@@ -101,6 +101,11 @@ extension View {
         glassSurface(RoundedRectangle(cornerRadius: radius, style: .continuous), fallback: Tokens.surface)
     }
 
+    /// Zelfde als glassCard maar voor lichtere vlakken binnen een blad.
+    func glassRaised(radius: CGFloat) -> some View {
+        glassSurface(RoundedRectangle(cornerRadius: radius, style: .continuous), fallback: Tokens.raised)
+    }
+
     func card(_ fill: Color, radius: CGFloat) -> some View {
         background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
     }

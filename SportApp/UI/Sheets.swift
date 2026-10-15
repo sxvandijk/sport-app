@@ -143,6 +143,7 @@ private struct SheetBody: View {
 
             if scrolls {
                 ScrollView { padded }
+                    .scrollDismissesKeyboard(.immediately)
             } else {
                 padded.fixedSize(horizontal: false, vertical: true)
             }
@@ -261,16 +262,10 @@ private struct MenuSheet: View {
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .card(Tokens.raised, radius: Radius.row)
+        .glassRaised(radius: Radius.row)
 
-        Button { model.openSheet(.stop) } label: {
-            Text("Workout stoppen").sa(17, .semibold).foregroundColor(Tokens.danger)
-                .frame(maxWidth: .infinity).frame(height: 54)
-                .glassSurface(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), tint: Tokens.danger.opacity(0.28), interactive: true, fallback: Tokens.raised)
-                .contentShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 22).padding(.bottom, 20)
+        GlassButton(title: "Workout stoppen", role: .danger) { model.openSheet(.stop) }
+            .padding(.top, 22).padding(.bottom, 20)
     }
 }
 
@@ -312,13 +307,19 @@ private struct ExerciseMenuSheet: View {
 
         SheetRowButton(action: {
             let id = model.sheetEx
-            model.openSheet(.swapscope, exID: id)
+            // Een vrije training heeft geen schema: wisselen is dan altijd alleen voor nu.
+            if model.templates[model.session?.name ?? ""] == nil {
+                model.openSheet(.change, exID: id)
+                model.swapScope = .now
+            } else {
+                model.openSheet(.swapscope, exID: id)
+            }
         }) {
             HStack(spacing: 12) {
                 Icon.swap(20).foregroundColor(Tokens.text)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Oefening wisselen").sa(17, .medium).foregroundColor(Tokens.text)
-                    Text("Voor vandaag of vast in je schema").sa(13).foregroundColor(Tokens.text2)
+                    Text(model.templates[model.session?.name ?? ""] == nil ? "Voor deze workout" : "Voor vandaag of vast in je schema").sa(13).foregroundColor(Tokens.text2)
                 }
                 Spacer(minLength: 0)
                 Icon.chevronRight(16).foregroundColor(Tokens.text3)
@@ -326,6 +327,15 @@ private struct ExerciseMenuSheet: View {
             .padding(.horizontal, 16).frame(minHeight: 60)
         }
         .padding(.bottom, 6)
+
+        if let ex = exercise, Catalog.kind(ex.name) == .weights || Catalog.kind(ex.name) == .bodyweight {
+            let on = ex.uni == true
+            plainRow(Icon.swap(20), Tokens.text, on ? "Links en rechts samen invullen" : "Links en rechts apart invullen",
+                     on ? "Eén aantal reps voor beide kanten." : "Voor armen of benen los, bijvoorbeeld 10 links en 9 rechts. Het volume telt beide kanten.") {
+                if let id = model.sheetEx { model.toggleUnilateral(id) }
+                model.closeSheet()
+            }
+        }
 
         let skip = skipTexts
         plainRow(Icon.skip(20), Tokens.text, skip.title, skip.sub) {
@@ -374,20 +384,13 @@ private struct StopSheet: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        Button { model.finish(note: "Eerder gestopt. Je gedane sets zijn opgeslagen.") } label: {
-            Text("Stoppen en opslaan").sa(17, .bold).foregroundColor(Tokens.onDanger)
-                .frame(maxWidth: .infinity).frame(height: 56)
-                .card(Tokens.danger, radius: Radius.button)
+        GlassButton(title: "Stoppen en opslaan", role: .destructive, height: 56) {
+            model.finish(note: "Eerder gestopt. Je gedane sets zijn opgeslagen.")
         }
-        .buttonStyle(.plain)
-        FlatButton(title: "Workout verwijderen", color: Tokens.danger) { model.discardWorkout() }.padding(.top, 8)
-        Button { model.closeSheet() } label: {
-            Text("Verder trainen").sa(17, .semibold).foregroundColor(Tokens.text)
-                .frame(maxWidth: .infinity).frame(height: 56)
-                .card(Tokens.raised, radius: Radius.button)
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 8)
+        GlassButton(title: "Workout verwijderen", role: .danger, height: 56) { model.discardWorkout() }
+            .padding(.top, 8)
+        GlassButton(title: "Verder trainen", role: .secondary, height: 56) { model.closeSheet() }
+            .padding(.top, 8)
     }
 }
 
@@ -401,13 +404,8 @@ private struct StartSheet: View {
             model.sheet = nil
             model.screen = .workout
         }
-        Button { model.doStart(model.pending ?? "") } label: {
-            Text("Stop \(name) en start \(pending)").sa(17, .semibold).foregroundColor(Tokens.danger)
-                .frame(maxWidth: .infinity).frame(height: 56)
-                .card(Tokens.raised, radius: Radius.button)
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 8)
+        GlassButton(title: "Stop \(name) en start \(pending)", role: .danger, height: 56) { model.doStart(model.pending ?? "") }
+            .padding(.top, 8)
     }
 }
 
@@ -433,7 +431,7 @@ private struct ExplainSheet: View {
                 }
                 .foregroundColor(Tokens.text)
                 .padding(.horizontal, 16).frame(minHeight: 56)
-                .card(Tokens.raised, radius: Radius.row)
+                .glassRaised(radius: Radius.row)
             }
         }
         if let saved = saved {
@@ -1315,7 +1313,7 @@ private struct ProgramSheet: View {
             }
         }
         .padding(12)
-        .card(Tokens.raised, radius: Radius.row)
+        .glassRaised(radius: Radius.row)
         .padding(.bottom, 8)
     }
 }

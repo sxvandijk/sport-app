@@ -602,7 +602,7 @@ private struct SetRow: View {
 
                 Text(firstColumn).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(String(set.r)).sa(17, .medium, mono: true).foregroundColor(valueColor)
+                Text(set.repsText).sa(17, .medium, mono: true).foregroundColor(valueColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Group {
                     if set.done {
@@ -811,22 +811,28 @@ private struct Dock: View {
                 RestInline(since: since).padding(.top, 8)
             }
 
-            HStack(spacing: 10) {
-                if kind != .timed { weightBox(kind) }
-                repsBox(kind)
+            if exercise.uni == true && set.r2 != nil && set.type != .warmup {
+                VStack(spacing: 8) {
+                    if kind != .timed { weightBox(kind) }
+                    HStack(spacing: 10) {
+                        repsBox(kind, left: true)
+                        repsBox(kind, left: false)
+                    }
+                }
+                .padding(.top, 10)
+            } else {
+                HStack(spacing: 10) {
+                    if kind != .timed { weightBox(kind) }
+                    repsBox(kind)
+                }
+                .padding(.top, 10)
             }
-            .padding(.top, 10)
 
             if model.editField != nil {
                 Numpad(onKey: { key($0, kind) })
                     .padding(.top, 10)
                 HStack(spacing: 10) {
-                    Button { model.editField = nil } label: {
-                        Text("Klaar met invullen").sa(16, .semibold).foregroundColor(Tokens.text)
-                            .frame(maxWidth: .infinity).frame(height: 52)
-                            .card(Tokens.raised, radius: Radius.button)
-                    }
-                    .buttonStyle(.plain)
+                    GlassButton(title: "Klaar met invullen", role: .secondary, height: 52) { model.editField = nil }
                     PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: 52, icon: Icon.check(22)) { model.complete() }
                 }
                 .padding(.top, 10)
@@ -867,6 +873,8 @@ private struct Dock: View {
         let parsed = text.replacingOccurrences(of: ",", with: ".")
         if field == .weight {
             if let v = Double(parsed) { model.setCurrentValues(w: v, r: nil) } else if text.isEmpty { model.setCurrentValues(w: 0, r: nil) }
+        } else if field == .reps2 {
+            if let v = Int(parsed) { model.setCurrentValues(w: nil, r: nil, r2: v) } else if text.isEmpty { model.setCurrentValues(w: nil, r: nil, r2: 0) }
         } else if let v = Int(parsed) {
             model.setCurrentValues(w: nil, r: v)
         } else if text.isEmpty {
@@ -885,8 +893,15 @@ private struct Dock: View {
                  onMinus: { buffer = nil; model.stepWeight(-1) }, onPlus: { buffer = nil; model.stepWeight(1) })
     }
 
-    private func repsBox(_ kind: ExerciseKind) -> some View {
-        valueBox(field: .reps, text: shown(.reps, String(set.r)), unit: (kind == .cardio || kind == .timed) ? " min" : " reps",
+    private func repsBox(_ kind: ExerciseKind, left: Bool? = nil) -> some View {
+        if let left = left {
+            let side = left ? "links" : "rechts"
+            return valueBox(field: left ? .reps : .reps2,
+                            text: shown(left ? .reps : .reps2, String(left ? set.r : (set.r2 ?? set.r))), unit: left ? " L" : " R",
+                            minus: "Minder reps \(side)", plus: "Meer reps \(side)",
+                            onMinus: { buffer = nil; model.stepReps(-1, second: !left) }, onPlus: { buffer = nil; model.stepReps(1, second: !left) })
+        }
+        return valueBox(field: .reps, text: shown(.reps, String(set.r)), unit: (kind == .cardio || kind == .timed) ? " min" : " reps",
                  minus: "Minder reps", plus: "Meer reps",
                  onMinus: { buffer = nil; model.stepReps(-1) }, onPlus: { buffer = nil; model.stepReps(1) })
     }

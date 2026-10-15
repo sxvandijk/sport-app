@@ -480,7 +480,7 @@ struct ProgressTab: View {
                         HStack(alignment: .firstTextBaseline) {
                             Text(e.name).sa(14, .medium).foregroundColor(Tokens.text).lineLimit(1)
                             Spacer(minLength: 8)
-                            Text(sets.map { Format.weight($0.w) + "\u{00D7}" + String($0.r) }.joined(separator: ", "))
+                            Text(sets.map { Format.weight($0.w) + "\u{00D7}" + $0.repsText }.joined(separator: ", "))
                                 .sa(12, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
                         }
                     }
@@ -881,9 +881,11 @@ private struct CreatineSettings: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
+    @State private var perDay = false
+
     private var subtitle: String {
         if !model.crea { return "Uit" }
-        var t = "Elke dag om " + clockText(model.creaTime)
+        var t = (model.creaDayOff.isEmpty && model.creaDayTime.isEmpty ? "Elke dag om " : "Om ") + clockText(model.creaTime)
         if model.creaLateOn && model.creaLateTime > model.creaTime { t += ", anders om " + clockText(model.creaLateTime) }
         return t
     }
@@ -911,6 +913,47 @@ private struct CreatineSettings: View {
                         .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
                 }
                 .frame(minHeight: 52)
+                Divider().background(Tokens.line)
+                Button { withAnimation(.easeOut(duration: 0.2)) { perDay.toggle() } } label: {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Per dag aanpassen").sa(15).foregroundColor(Tokens.text)
+                            Text(model.creaDayOff.isEmpty && model.creaDayTime.isEmpty ? "Bijvoorbeeld geen melding op zondag" : "Aangepast voor sommige dagen")
+                                .sa(12).foregroundColor(Tokens.text2)
+                        }
+                        Spacer(minLength: 0)
+                        (perDay ? Icon.chevronUp(16) : Icon.chevronDown(16)).foregroundColor(Tokens.text2)
+                    }
+                    .frame(minHeight: 56)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                if perDay {
+                    // Maandag eerst; Calendar telt 1 = zondag.
+                    ForEach([2, 3, 4, 5, 6, 7, 1], id: \.self) { d in
+                        let on = !model.creaDayOff.contains(d)
+                        HStack(spacing: 10) {
+                            Text(["", "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"][d]).sa(15)
+                                .foregroundColor(on ? Tokens.text : Tokens.text3)
+                            Spacer(minLength: 0)
+                            if on {
+                                DatePicker("", selection: timeBinding(model.creaTime(forWeekday: d)) { model.setCreaDayTime(d, minutes: $0) }, displayedComponents: .hourAndMinute)
+                                    .labelsHidden().environment(\.locale, Locale(identifier: "nl_NL"))
+                            }
+                            SAToggle(isOn: on, onColor: ac.accentLine, label: "Herinnering op dag \(d)") { model.setCreaDay(d, on: !on) }
+                        }
+                        .frame(minHeight: 48)
+                    }
+                    if !model.creaDayTime.isEmpty {
+                        Button { model.resetCreaDayTimes() } label: {
+                            Text("Alle dagen weer op de eerste tijd").sa(14, .semibold).foregroundColor(ac.accentText)
+                                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Text("Later: koppelen aan je weekplanning, zodat je geen melding krijgt op de dagen dat je een shake na het sporten neemt.")
+                        .sa(12).foregroundColor(Tokens.text3).padding(.bottom, 8)
+                }
                 Divider().background(Tokens.line)
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {

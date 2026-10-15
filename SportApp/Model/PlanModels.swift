@@ -160,11 +160,17 @@ struct LoggedSet: Codable, Hashable {
     var w: Double
     var r: Int
     var type: SetType
+    /// Rechterkant bij los trainen (`r` is dan links).
+    var r2: Int? = nil
+
+    var totalReps: Int { r + (r2 ?? 0) }
+    var repsText: String { r2 == nil ? String(r) : "\(r)/\(r2 ?? 0)" }
 }
 
 struct LoggedExercise: Codable, Hashable {
     var name: String
     var sets: [LoggedSet]
+    var uni: Bool? = nil
 }
 
 struct HistoryEntry: Codable, Hashable, Identifiable {

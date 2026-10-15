@@ -43,7 +43,7 @@ struct ProgressStats {
                 let kind = Catalog.kind(e.name)
                 for s in e.sets where s.type != .warmup {
                     if kind == .cardio || kind == .timed { continue }
-                    let vol = s.w * Double(s.r)
+                    let vol = s.w * Double(s.totalReps)
                     if inMonth { out.volume += vol }
                     if weeksAgo >= 0 && weeksAgo < 8 { weekVol[7 - weeksAgo] += vol }
                     if h.date >= weekStart { muscles[Catalog.info(e.name).muscle, default: 0] += 1 }
@@ -92,7 +92,7 @@ struct ProgressStats {
         for e in entry.exercises ?? [] {
             let kind = Catalog.kind(e.name)
             if kind == .cardio || kind == .timed { continue }
-            for s in e.sets where s.type != .warmup { total += s.w * Double(s.r) }
+            for s in e.sets where s.type != .warmup { total += s.w * Double(s.totalReps) }
         }
         return total
     }
