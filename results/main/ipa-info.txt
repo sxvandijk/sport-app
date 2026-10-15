@@ -1,7 +1,7 @@
 commit: 7f1079af4ab0183c6a54d2c69129399cd7acd135
-runner: GitHub Actions 1000000164
-Xcode 16.4
-Build version 16F6
+runner: GitHub Actions 1000000173
+Xcode 26.6
+Build version 17F113
 --- extensies
 Payload/SportApp.app/PlugIns/SetWidgets.appex
 --- Payload
@@ -17,7 +17,7 @@ Payload/SportApp.app/Info.plist
 Payload/SportApp.app/PkgInfo
 --- app Info.plist
 {
-  "BuildMachineOSBuild" => "24G830"
+  "BuildMachineOSBuild" => "25G83"
   "CFBundleDevelopmentRegion" => "en"
   "CFBundleDisplayName" => "Set"
   "CFBundleExecutable" => "SportApp"
@@ -47,16 +47,16 @@ Payload/SportApp.app/PkgInfo
   ]
   "CFBundleVersion" => "1"
   "DTCompiler" => "com.apple.compilers.llvm.clang.1_0"
-  "DTPlatformBuild" => "22F76"
+  "DTPlatformBuild" => "23F81a"
   "DTPlatformName" => "iphoneos"
-  "DTPlatformVersion" => "18.5"
-  "DTSDKBuild" => "22F76"
-  "DTSDKName" => "iphoneos18.5"
-  "DTXcode" => "1640"
-  "DTXcodeBuild" => "16F6"
-  "ITSAppUsesNonExemptEncryption" => 0
+  "DTPlatformVersion" => "26.5"
+  "DTSDKBuild" => "23F81a"
+  "DTSDKName" => "iphoneos26.5"
+  "DTXcode" => "2660"
+  "DTXcodeBuild" => "17F113"
+  "ITSAppUsesNonExemptEncryption" => false
   "MinimumOSVersion" => "16.0"
-  "NSSupportsLiveActivities" => 1
+  "NSSupportsLiveActivities" => true
   "UIDeviceFamily" => [
     0 => 1
   ]
@@ -71,7 +71,7 @@ Payload/SportApp.app/PkgInfo
 }
 --- Payload/SportApp.app/PlugIns/SetWidgets.appex Info.plist
 {
-  "BuildMachineOSBuild" => "24G830"
+  "BuildMachineOSBuild" => "25G83"
   "CFBundleDevelopmentRegion" => "en"
   "CFBundleDisplayName" => "Set"
   "CFBundleExecutable" => "SetWidgets"
@@ -85,13 +85,13 @@ Payload/SportApp.app/PkgInfo
   ]
   "CFBundleVersion" => "1"
   "DTCompiler" => "com.apple.compilers.llvm.clang.1_0"
-  "DTPlatformBuild" => "22F76"
+  "DTPlatformBuild" => "23F81a"
   "DTPlatformName" => "iphoneos"
-  "DTPlatformVersion" => "18.5"
-  "DTSDKBuild" => "22F76"
-  "DTSDKName" => "iphoneos18.5"
-  "DTXcode" => "1640"
-  "DTXcodeBuild" => "16F6"
+  "DTPlatformVersion" => "26.5"
+  "DTSDKBuild" => "23F81a"
+  "DTSDKName" => "iphoneos26.5"
+  "DTXcode" => "2660"
+  "DTXcodeBuild" => "17F113"
   "MinimumOSVersion" => "16.1"
   "NSExtension" => {
     "NSExtensionPointIdentifier" => "com.apple.widgetkit-extension"
