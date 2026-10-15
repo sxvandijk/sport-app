@@ -82,6 +82,7 @@ struct AllWorkoutsScreen: View {
                 .foregroundColor(on ? ac.onAccent : Tokens.text)
                 .padding(.horizontal, 16).frame(height: 40)
                 .glassSurface(Capsule(), tint: on ? ac.accent : nil, interactive: true, fallback: on ? ac.accentLine : Tokens.raised)
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }

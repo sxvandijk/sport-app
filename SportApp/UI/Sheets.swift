@@ -146,7 +146,7 @@ private struct SheetBody: View {
             } else {
                 padded.fixedSize(horizontal: false, vertical: true)
             }
-            Color.clear.frame(height: inset)
+            Color.clear.frame(height: inset + 8)
         }
         .frame(maxWidth: .infinity)
         .glassSurface(TopRounded(radius: 28), fallback: Tokens.surface)
@@ -263,11 +263,14 @@ private struct MenuSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .card(Tokens.raised, radius: Radius.row)
 
-        SheetRowButton(action: { model.openSheet(.stop) }) {
+        Button { model.openSheet(.stop) } label: {
             Text("Workout stoppen").sa(17, .semibold).foregroundColor(Tokens.danger)
-                .padding(.horizontal, 16).frame(minHeight: 52, alignment: .leading)
+                .frame(maxWidth: .infinity).frame(height: 54)
+                .glassSurface(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), tint: Tokens.danger.opacity(0.28), interactive: true, fallback: Tokens.raised)
+                .contentShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
         }
-        .padding(.top, 22)
+        .buttonStyle(.plain)
+        .padding(.top, 22).padding(.bottom, 20)
     }
 }
 

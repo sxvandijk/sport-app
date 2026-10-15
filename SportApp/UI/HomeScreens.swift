@@ -277,28 +277,26 @@ struct TrainingTab: View {
         let count = prog.workouts.count
         var sub = "\(count) \(count == 1 ? "training" : "trainingen")"
         if let next = next { sub += " · volgende: " + next }
-        return HStack(spacing: 4) {
-            Button {
-                model.openSheet(.program)
-            } label: {
-                VStack(alignment: .leading, spacing: 1) {
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 0) {
+                Button { model.openSheet(.program) } label: {
                     Text(prog.name).sa(22, .bold, tracking: -0.3).foregroundColor(Tokens.text).lineLimit(1)
-                    Text(sub).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
+                        .frame(minHeight: 36).contentShape(Rectangle())
                 }
-                .frame(minHeight: 52, alignment: .leading)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .accessibilityLabel("Huidig schema \(prog.name). Tik om te wisselen")
+                Button {
+                    model.nameEdit = NameEdit(title: "Schema hernoemen", subtitle: prog.name, placeholder: "Nieuwe naam", text: prog.name, confirmTitle: "Bewaar") { model.renameProgram(prog.id, to: $0) }
+                } label: {
+                    Icon.edit(17).foregroundColor(Tokens.text2).frame(width: 40, height: 36).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Hernoem schema \(prog.name)")
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Huidig schema \(prog.name). Tik om te wisselen")
-            Button {
-                model.nameEdit = NameEdit(title: "Schema hernoemen", subtitle: prog.name, placeholder: "Nieuwe naam", text: prog.name, confirmTitle: "Bewaar") { model.renameProgram(prog.id, to: $0) }
-            } label: {
-                Icon.edit(18).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Hernoem schema \(prog.name)")
-            Spacer(minLength: 0)
+            Text(sub).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
         }
+        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
     }
 
     private func templateRow(_ name: String) -> some View {
