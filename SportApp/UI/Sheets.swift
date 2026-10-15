@@ -344,7 +344,8 @@ private struct ExerciseMenuSheet: View {
             }
         }
 
-        if let ex = exercise, Catalog.kind(ex.name) == .weights {
+        if let ex = exercise, Catalog.kind(ex.name) == .weights,
+           ex.acc != nil || Catalog.info(ex.name).equipment == "Kabel" || Catalog.info(ex.name).equipment == "Dumbbells" {
             if let acc = ex.acc {
                 plainRow(Icon.swap(20), Tokens.text, "Opzetstuk: \(acc)", "Tik om te wisselen, bijvoorbeeld naar touw of rechte stang.") {
                     model.openSheet(.accuse, exID: model.sheetEx)
