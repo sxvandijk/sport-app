@@ -767,9 +767,6 @@ struct ProfileTab: View {
             SectionLabel(text: "Herinneringen").padding(.top, 24).padding(.bottom, 10)
             CreatineRow()
 
-            SectionLabel(text: "Live Activity").padding(.top, 24).padding(.bottom, 10)
-            LiveActivityStatus()
-
             Text("Later hier ook: kg of lb, gegevens exporteren en een back-up.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 16)
         }
@@ -903,21 +900,5 @@ private struct CreatineRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-    }
-}
-
-
-/// Laat zien of de Live Activity kan werken; handig als er op het vergrendelscherm niets verschijnt.
-private struct LiveActivityStatus: View {
-    @State private var lines: [String] = []
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(lines, id: \.self) { Text($0).sa(13).foregroundColor(Tokens.text2) }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard(radius: Radius.button)
-        .onAppear { lines = LiveActivityManager.diagnose() }
     }
 }

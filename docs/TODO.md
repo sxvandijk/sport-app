@@ -59,4 +59,4 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Ronde 6c (wacht op test)
 - Creatine-balkje op startscherm weggehaald. Idee: creatine-widget op het iPhone-beginscherm (later).
 - Creatine-instellingen: schakelaar tweede herinnering bij "Herinnering", tijden netjes onder elkaar, tweede herinnering per dag uit te zetten.
-- Live Activity: werkt in de simulator (Dynamic Island toont dumbbell + timer), dus code is goed; op Stans toestel blijft hij zwart. Profiel > Live Activity toont nu ook app-id en extensie-id om te vergelijken.
+- Live Activity: werkt in de simulator en op iPhone 8 (iOS 16.7, vergrendelscherm). Op iPhone 16 Pro/iOS 27 killt iOS de extensie door Sideloadly-ondertekening (AMFI). Testblokjes weer weggehaald. Later opnieuw proberen na Sideloadly-update. Widget-uiterlijk mooier maken staat open.

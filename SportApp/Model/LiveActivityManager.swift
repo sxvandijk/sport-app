@@ -9,30 +9,6 @@ enum LiveActivityManager {
     /// Laatste melding van het systeem, om te kunnen zien waarom er niets verschijnt.
     static var lastError: String?
 
-    /// Korte regels voor het statusblokje in het profiel.
-    static func diagnose() -> [String] {
-        var lines: [String] = []
-        let dir = Bundle.main.builtInPlugInsPath
-        let names = dir.flatMap { try? FileManager.default.contentsOfDirectory(atPath: $0) } ?? []
-        lines.append("App-id: " + (Bundle.main.bundleIdentifier ?? "onbekend"))
-        for n in names {
-            let plist = (dir ?? "") + "/" + n + "/Info.plist"
-            let id = (NSDictionary(contentsOfFile: plist)?["CFBundleIdentifier"] as? String) ?? "onbekend"
-            lines.append("Extensie-id: " + id)
-        }
-        lines.append(names.isEmpty ? "Widget-extensie: niet in de app gevonden" : "Widget-extensie: \(names.joined(separator: ", "))")
-        #if canImport(ActivityKit)
-        if #available(iOS 16.2, *) {
-            lines.append("Live Activities in Instellingen: " + (ActivityAuthorizationInfo().areActivitiesEnabled ? "aan" : "uit"))
-            lines.append("Actieve activiteiten: \(Activity<WorkoutActivityAttributes>.activities.count)")
-        } else {
-            lines.append("Live Activities vragen iOS 16.2 of nieuwer")
-        }
-        #endif
-        lines.append("Laatste melding: " + (lastError ?? "geen"))
-        return lines
-    }
-
     static func sync(name: String?, startAt: Date?, state: WorkoutLiveState?) {
         #if canImport(ActivityKit)
         if #available(iOS 16.2, *) {
