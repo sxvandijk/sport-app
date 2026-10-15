@@ -62,7 +62,7 @@ struct LaunchConfig {
             model.restTotal = 90
             model.restEnd = now.addingTimeInterval(64)
             model.lastSetAt = now.addingTimeInterval(-26)
-        case "workout-acc":
+        case "workout-acc", "workout-side":
             model.screen = .workout
             if let s = model.session, let target = s.exercises.first(where: { $0.name == "Cable One Arm Tricep Extension" }) {
                 model.focusID = target.id
@@ -141,6 +141,12 @@ struct LaunchConfig {
             model.screen = .workout
             let target = model.session?.exercises.first(where: { $0.name == "Cable One Arm Tricep Extension" })?.id
             model.openSheet(name == "accuse" ? .accuse : .accpick, exID: target)
+        case "sidemode":
+            model.screen = .workout
+            let target = model.session?.exercises.first(where: { $0.name == "Cable One Arm Tricep Extension" })?.id
+            model.openSheet(.sidemode, exID: target)
+        case "acclist":
+            model.openSheet(.acclist)
         case "accedit":
             model.accEditID = model.gym.accessoryList.first?.id
             model.openSheet(.accedit)

@@ -69,8 +69,10 @@ private struct SheetBody: View {
         case .machineadd: return ("Apparaat toevoegen", "Kies merk en type. Je past de stappen daarna aan.")
         case .machineedit: return (model.machine(model.machineEditID)?.title ?? "Apparaat", "Stappen en gekoppelde oefeningen")
         case .accedit: return (model.accessory(model.accEditID)?.name ?? "Opzetstuk", "Naam en gewichtsstap")
-        case .accpick: return ("Opzetstukken", name.isEmpty ? "" : "Welke gebruik je bij \(name)? Je gewicht wordt per opzetstuk onthouden.")
-        case .accuse: return ("Opzetstuk", name.isEmpty ? "" : "Waarmee train je \(name) nu?")
+        case .accpick: return ("Opzetstukken", name.isEmpty ? "" : "Welke gebruik je bij \(name)?" + (exercise?.acc.map { " Nu: \($0)." } ?? ""))
+        case .accuse: return ("Opzetstuk", exercise?.acc.map { "Nu: \($0). Houd een opzetstuk ingedrukt om het te verwijderen." } ?? "")
+        case .acclist: return ("Opzetstukken", "Touw, stangen en handgrepen voor je kabels en losse gewichten.")
+        case .sidemode: return ("Hoe vul je dit in?", name)
         }
     }
 
@@ -184,6 +186,8 @@ private struct SheetBody: View {
         case .accedit: AccessoryEditSheet()
         case .accpick: AccessoryPickSheet()
         case .accuse: AccessoryUseSheet()
+        case .acclist: AccessoryListSheet()
+        case .sidemode: SideModeSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
         case .exmenu: ExerciseMenuSheet()
@@ -334,25 +338,14 @@ private struct ExerciseMenuSheet: View {
         }
         .padding(.bottom, 6)
 
-        if let ex = exercise, ex.uni != true, Catalog.kind(ex.name) == .weights || Catalog.kind(ex.name) == .bodyweight {
-            let on = ex.two == true
-            plainRow(Icon.swap(20), Tokens.text, on ? "Gewicht is voor beide kanten samen" : "Gewicht per arm of been",
-                     on ? "Nu telt je volume dubbel: gewicht × reps × 2. Tik om dat uit te zetten." : "Je traint met twee losse armen of benen en vult het gewicht van één kant in. Je volume telt dan dubbel.") {
-                if let id = model.sheetEx { model.toggleTwoSides(id) }
-                model.closeSheet()
+        if let ex = exercise, Catalog.sidesAmbiguous(ex.name) {
+            plainRow(Icon.info(20), Tokens.text, "Hoe vul je dit in?", SideModeSheet.title(ex.sideMode)) {
+                model.openSheet(.sidemode, exID: model.sheetEx)
             }
         }
 
-        if let ex = exercise, Catalog.kind(ex.name) == .weights || Catalog.kind(ex.name) == .bodyweight {
-            let on = ex.uni == true
-            plainRow(Icon.swap(20), Tokens.text, on ? "Links en rechts samen invullen" : "Links en rechts apart invullen",
-                     on ? "Eén aantal reps voor beide kanten." : "Voor armen of benen los, bijvoorbeeld 10 links en 9 rechts. Het volume telt beide kanten.") {
-                if let id = model.sheetEx { model.toggleUnilateral(id) }
-                model.closeSheet()
-            }
-        }
-
-        if let ex = exercise, Catalog.kind(ex.name) == .weights {
+        if let ex = exercise, Catalog.kind(ex.name) == .weights,
+           ex.acc != nil || Catalog.info(ex.name).equipment == "Kabel" || Catalog.info(ex.name).equipment == "Dumbbells" {
             if let acc = ex.acc {
                 plainRow(Icon.swap(20), Tokens.text, "Opzetstuk: \(acc)", "Tik om te wisselen, bijvoorbeeld naar touw of rechte stang.") {
                     model.openSheet(.accuse, exID: model.sheetEx)
@@ -1471,6 +1464,13 @@ private struct AccessoryUseSheet: View {
                     model.chooseAccessory(ex.id, a)
                     model.closeSheet()
                 }
+                .contextMenu {
+                    Button { model.toggleExerciseAccessory(ex.name, a.name) } label: { Label("Bij deze oefening weghalen", systemImage: "minus.circle") }
+                    Button(role: .destructive) {
+                        model.confirm = ConfirmRequest(title: "\(a.name) verwijderen?", message: "Het opzetstuk gaat uit je gym en bij alle oefeningen weg. Eerdere trainingen blijven bewaard.",
+                                                       confirmTitle: "Verwijder") { model.deleteAccessory(a.id) }
+                    } label: { Label("Uit je gym verwijderen", systemImage: "trash") }
+                }
             }
             SheetRowButton(action: { model.openSheet(.accpick, exID: ex.id) }) {
                 HStack {
@@ -1481,5 +1481,80 @@ private struct AccessoryUseSheet: View {
                 .padding(.horizontal, 16).frame(minHeight: 52)
             }
         }
+    }
+}
+
+
+/// Uitleg en keuze: één totaalgewicht, gewicht per arm of been, of links en rechts apart.
+private struct SideModeSheet: View {
+    @EnvironmentObject private var model: AppModel
+    private var exercise: LiveExercise? { model.session?.exercise(model.sheetEx) }
+
+    static func title(_ m: SideMode) -> String {
+        switch m {
+        case .single: return "Eén gewicht in totaal"
+        case .perSide: return "Gewicht per arm of been"
+        case .separate: return "Links en rechts apart"
+        }
+    }
+
+    private static func info(_ m: SideMode) -> String {
+        switch m {
+        case .single: return "Je vult het totale gewicht in. Volume = gewicht \u{00D7} reps."
+        case .perSide: return "Je vult het gewicht van één kant in, met evenveel reps links en rechts. Doe je 2 \u{00D7} 5 kg tegelijk, vul dan 5 in: je volume telt als 10 kg \u{00D7} reps."
+        case .separate: return "Eerst de ene kant, dan de andere, met eigen reps (bijvoorbeeld 10 links en 9 rechts). Het gewicht is van één kant en je volume telt beide kanten."
+        }
+    }
+
+    var body: some View {
+        if let ex = exercise {
+            ForEach([SideMode.single, .perSide, .separate], id: \.self) { m in
+                SheetRowButton(action: {
+                    model.setSideMode(ex.id, m)
+                    model.closeSheet()
+                }) {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(Self.title(m)).sa(17, .semibold).foregroundColor(Tokens.text)
+                            Text(Self.info(m)).sa(13).foregroundColor(Tokens.text2).lineSpacing(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                        if ex.sideMode == m { CheckMark() }
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                }
+                .padding(.bottom, 6)
+            }
+            Text("Doe je dit soms met één en soms met twee armen of benen, dan wissel je hier per training.")
+                .sa(13).foregroundColor(Tokens.text3).padding(.top, 4)
+        }
+    }
+}
+
+/// Alle opzetstukken van je gym: toevoegen, aanpassen en verwijderen.
+private struct AccessoryListSheet: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+
+    var body: some View {
+        ForEach(model.gym.accessoryList) { a in
+            ListRow(title: a.name, sub: accessoryStepText(a)) {
+                model.accEditID = a.id
+                model.openSheet(.accedit)
+            }
+        }
+        Button {
+            model.nameEdit = NameEdit(title: "Nieuw opzetstuk", subtitle: "Bijvoorbeeld Triceps touw", placeholder: "Naam van het opzetstuk", text: "", confirmTitle: "Voeg toe") { model.addAccessory(name: $0) }
+        } label: {
+            Text("+ Opzetstuk toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
+                .frame(maxWidth: .infinity).frame(height: 52)
+                .card(Tokens.raised, radius: Radius.button)
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 6)
+        Text("Bij kabeloefeningen staan al je opzetstukken standaard klaar. Bij andere oefeningen kies je zelf welke je gebruikt.")
+            .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 10)
     }
 }

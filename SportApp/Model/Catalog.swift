@@ -172,7 +172,19 @@ enum Catalog {
     /// Eén stap omhoog (`dir` = 1) of omlaag (`dir` = -1) op het gewicht, volgens de stappen van het apparaat.
     /// Opzetstukken per oefening (afgeleid van de gym en je keuzes), zie `AppModel.applyGym`.
     static var exAccessories: [String: [GymAccessory]] = [:]
-    static func accessories(for name: String) -> [GymAccessory] { exAccessories[name] ?? [] }
+    /// Alle opzetstukken van de gym: die gelden standaard bij kabeloefeningen.
+    static var defaultAccessories: [GymAccessory] = []
+    static func accessories(for name: String) -> [GymAccessory] {
+        if let list = exAccessories[name] { return list }
+        return info(name).equipment == "Kabel" ? defaultAccessories : []
+    }
+
+    /// Oefeningen waarbij het niet vaststaat of je met één of twee armen/benen traint (kabels en dumbbells).
+    static func sidesAmbiguous(_ name: String) -> Bool {
+        guard kind(name) == .weights else { return false }
+        let e = info(name).equipment
+        return e == "Kabel" || e == "Dumbbells" || isOneSided(name)
+    }
 
     static func step(_ name: String, weight: Double, dir: Int, fixed: Double? = nil) -> Double {
         if let f = fixed, f > 0 {

@@ -288,6 +288,7 @@ extension Icon {
     static func machine(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M5 3v18M19 3v18M5 3h14M9 8h6M9 12h6M9 16h6"], lineWidth: 2, size: size) }
     static func edit(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"], lineWidth: 2, size: size) }
     static func duplicate(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M8 8h11v11H8zM5 16V5h11"], lineWidth: 2, size: size) }
+    static func info(_ size: CGFloat = 16) -> Icon { Icon(paths: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M12 11v5.5", "M12 7.6h.01"], lineWidth: 2, size: size) }
     static func bell(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M6 9a6 6 0 0 1 12 0c0 6 2 7.5 2 7.5H4S6 15 6 9z", "M10 20a2 2 0 0 0 4 0"], lineWidth: 2, size: size) }
     static func star(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"], lineWidth: 2, size: size) }
     static func sort(_ size: CGFloat = 18) -> Icon { Icon(paths: ["M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"], lineWidth: 2.2, size: size) }
