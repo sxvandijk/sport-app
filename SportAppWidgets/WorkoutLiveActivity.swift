@@ -2,7 +2,7 @@ import SwiftUI
 import WidgetKit
 import ActivityKit
 
-private func accentColor(_ hex: Int) -> Color {
+private func liveAccent(_ hex: Int) -> Color {
     Color(.sRGB, red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255,
           blue: Double(hex & 0xFF) / 255, opacity: 1)
 }
@@ -16,7 +16,7 @@ private struct TimerText: View {
         if let end = state.restEnd, end > Date() {
             Text(timerInterval: Date()...end, pauseTime: nil, countsDown: true, showsHours: false)
                 .monospacedDigit()
-                .foregroundColor(accentColor(state.accent))
+                .foregroundColor(liveAccent(state.accent))
         } else {
             Text(startAt, style: .timer)
                 .monospacedDigit()
@@ -42,7 +42,7 @@ private struct LockScreenView: View {
                     .font(.system(size: 28, weight: .semibold, design: .rounded))
             }
             ProgressView(value: Double(state.done), total: Double(max(state.total, 1)))
-                .tint(accentColor(state.accent))
+                .tint(liveAccent(state.accent))
             HStack {
                 Text(resting ? "Straks: \(state.exercise)" : state.setText)
                     .font(.system(size: 13)).foregroundColor(.secondary).lineLimit(1)
@@ -62,7 +62,7 @@ struct WorkoutLiveActivity: Widget {
                 .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
             let state = context.state
-            let color = accentColor(state.accent)
+            let color = liveAccent(state.accent)
             let resting = (state.restEnd ?? .distantPast) > Date()
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
