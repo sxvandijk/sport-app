@@ -1154,6 +1154,7 @@ private struct MachineEditSheet: View {
                     Spacer(minLength: 0)
                 }
                 .padding(.bottom, 8)
+                if m.kind == .stack { WeightStackView(machine: m).padding(.bottom, 10) }
                 adjustRow("Eerste stand (kg)", value: m.min, delta: m.step > 0 ? m.step : 5) { v in
                     model.updateMachine(id) { $0.min = Swift.max(0, Swift.min(v, $0.max)) }
                 }
@@ -1506,5 +1507,59 @@ private struct SideModeSheet: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .glassCard(radius: Radius.button)
         }
+    }
+}
+
+
+/// Gewichtsstapel van een apparaat: tik op een plaatje om de pin daar te zetten en het gewicht te zien.
+private struct WeightStackView: View {
+    @Environment(\.accentColors) private var ac
+    let machine: GymMachine
+    @State private var picked: Int = 0
+
+    private var weights: [Double] {
+        let step = machine.step > 0 ? machine.step : 5
+        guard machine.max >= machine.min else { return [machine.min] }
+        var list: [Double] = []
+        var w = machine.min
+        while w <= machine.max + 0.001 && list.count < 60 { list.append(w); w += step }
+        return list
+    }
+
+    var body: some View {
+        let list = weights
+        let sel = min(picked, list.count - 1)
+        let shown = list[sel] + (machine.addOn ?? 0)
+        HStack(alignment: .top, spacing: 16) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 3) {
+                    ForEach(Array(list.enumerated()), id: \.offset) { i, w in
+                        Button { picked = i } label: {
+                            HStack(spacing: 8) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(i <= sel ? ac.accentLine : Tokens.raised)
+                                    .frame(height: 16)
+                                Capsule().fill(i == sel ? Tokens.text : Color.clear).frame(width: 14, height: 4)
+                                Text(GymMachine.fmt(w)).sa(11, .medium).foregroundColor(i == sel ? Tokens.text : Tokens.text3)
+                                    .frame(width: 34, alignment: .trailing)
+                            }
+                            .frame(minHeight: 24).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(GymMachine.fmt(w)) kg")
+                    }
+                }
+            }
+            .frame(height: 200)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(GymMachine.fmt(shown) + " kg").sa(28, .bold).foregroundColor(Tokens.text)
+                Text("Stand \(sel + 1) van \(list.count)" + ((machine.addOn ?? 0) > 0 ? " + extra plaatje" : "")).sa(13).foregroundColor(Tokens.text2)
+                Text("Tik op een plaatje om de pin te verzetten.").sa(12).foregroundColor(Tokens.text3).padding(.top, 6)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(radius: Radius.button)
     }
 }

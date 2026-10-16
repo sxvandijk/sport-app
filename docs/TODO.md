@@ -12,10 +12,10 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 
 ## Volgende
 - [ ] Apple Watch-app, of een andere manier om te zien hoe lang je nog rust hebt
-- [x] Vergeten workout (Ronde 8a, wacht op test): na 3 uur geen set een melding, en bij openen vraagt de app "Workout sluiten?"
+- [x] Vergeten workout (Ronde 8a, wacht op test): na 1,5 uur geen set een melding, en bij openen vraagt de app "Workout sluiten?"
 - [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
-- [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
+- [~] Gewichtsstapel visueel (Ronde 8b): preview in Apparaat bewerken; nog niet in de workout zelf om het gewicht te kiezen
 - [ ] Creatine-melding koppelen aan weekplanning (geen melding op dagen dat je een shake na het sporten neemt)
 - [ ] Instelling: bij een nieuwe week het schema opnieuw beginnen bij de eerste training (bv. weer Push op maandag)
 - [x] Live Activity en Dynamic Island (Ronde 6a, wacht op test met Sideloadly)
@@ -28,7 +28,6 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [ ] Machine-database controleren met echte gegevens (Basic-Fit, jouw gym); geen openbare bron met stapgroottes gevonden
 
 ## Gym-tab (vervolg)
-- [ ] Gewichtsstapel-visual per machine (pin in de stapel)
 - [ ] Eigen machines/sportscholen toevoegen en bewerken
 - [ ] Sportschool-lijsten delen met anderen
 - [ ] Basic-Fit machinelijst controleren/aanvullen na bezoek (15-10)
@@ -85,4 +84,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Gym > Opzetstukken: knop "+ Opzetstuk toevoegen" bovenaan.
 
 ## Ronde 8a (wacht op test)
-- Vergeten workout: 3 uur na je laatste set komt een melding "Workout nog bezig?". Open je de app dan vraagt hij "Workout sluiten?"; sluiten slaat op met de tijd van je laatste set (niet 11 uur). Annuleer = doorgaan, hij vraagt dan pas na een uur weer.
+- Vergeten workout: 1,5 uur na je laatste set komt een melding "Workout nog bezig?". Open je de app dan vraagt hij "Workout sluiten?"; sluiten slaat op met de tijd van je laatste set (niet 11 uur). Annuleer = doorgaan, hij vraagt dan pas na een half uur weer.
+
+## Ronde 8b (wacht op test)
+- Gym > apparaat (stack-machine): gewichtsstapel met pin. Tik op een plaatje en je ziet het gewicht en de stand. Het is een preview om je stappen te controleren; kiezen vanuit de workout volgt later.
