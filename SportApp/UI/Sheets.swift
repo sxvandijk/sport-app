@@ -345,18 +345,6 @@ private struct ExerciseMenuSheet: View {
             }
         }
 
-        if let ex = exercise, Catalog.kind(ex.name) == .weights,
-           ex.acc != nil || Catalog.info(ex.name).equipment == "Kabel" || Catalog.info(ex.name).equipment == "Dumbbells" {
-            if let acc = ex.acc {
-                plainRow(Icon.swap(20), Tokens.text, "Opzetstuk: \(acc)", "Tik om te wisselen, bijvoorbeeld naar touw of rechte stang.") {
-                    model.openSheet(.accuse, exID: model.sheetEx)
-                }
-            }
-            plainRow(Icon.link(20, 2), Tokens.text, "Opzetstukken kiezen", "Welke gebruik je bij deze oefening? Je voegt ze toe bij Gym.") {
-                model.openSheet(.accpick, exID: model.sheetEx)
-            }
-        }
-
         let skip = skipTexts
         plainRow(Icon.skip(20), Tokens.text, skip.title, skip.sub) {
             if let id = model.sheetEx { model.skipExercise(id, removeFromSchema: false) }
@@ -1493,50 +1481,30 @@ private struct SideModeSheet: View {
 
     static func title(_ m: SideMode) -> String {
         switch m {
-        case .single: return "1 arm of been, of totaalgewicht"
-        case .perSide: return "2 armen of benen tegelijk"
-        case .separate: return "Links en rechts apart"
+        case .single: return "Zo logt de app dit"
+        case .perSide: return "Zo logt de app dit: per arm of been"
+        case .separate: return "Zo logt de app dit: links en rechts apart"
         }
     }
 
     private static func info(_ m: SideMode) -> String {
         switch m {
-        case .single: return "Je vult het gewicht in dat je tilt: één arm of been, of het totaal. Volume = gewicht \u{00D7} reps."
-        case .perSide: return "Je vult het gewicht van één kant in. Doe je 2 \u{00D7} 5 kg tegelijk, vul dan 5 in: de app telt je volume als 10 kg \u{00D7} reps."
+        case .single: return "De app logt het gewicht dat je invult en je reps. Volume = gewicht \u{00D7} reps."
+        case .perSide: return "Het gewicht dat je invult is van één kant. Bij 2 \u{00D7} 5 kg tegelijk is dat 5 kg: de app telt je volume als 10 kg \u{00D7} reps."
         case .separate: return "Eerst de ene kant, dan de andere, met eigen reps (bijvoorbeeld 10 links en 9 rechts). Het gewicht is van één kant en je volume telt beide kanten."
         }
     }
 
     var body: some View {
         if let ex = exercise {
-            if ex.sideMode == .separate {
-                Text("Nu: " + Self.title(.separate) + ". " + Self.info(.separate))
-                    .sa(14).foregroundColor(Tokens.text2).lineSpacing(3).padding(.bottom, 10)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(Self.title(ex.sideMode)).sa(17, .semibold).foregroundColor(Tokens.text)
+                Text(Self.info(ex.sideMode)).sa(15).foregroundColor(Tokens.text2).lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Kies hieronder om weer één aantal reps voor beide kanten te gebruiken, of zet links en rechts apart uit via het menu (\u{22EF}).")
-                    .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.bottom, 10)
             }
-            ForEach([SideMode.single, .perSide], id: \.self) { m in
-                SheetRowButton(action: {
-                    model.setSideMode(ex.id, m)
-                    model.closeSheet()
-                }) {
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(Self.title(m)).sa(17, .semibold).foregroundColor(Tokens.text)
-                            Text(Self.info(m)).sa(13).foregroundColor(Tokens.text2).lineSpacing(2)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        Spacer(minLength: 0)
-                        if ex.sideMode == m { CheckMark() }
-                    }
-                    .padding(.horizontal, 16).padding(.vertical, 12)
-                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-                }
-                .padding(.bottom, 6)
-            }
-            Text("Doe je dit soms met één en soms met twee armen of benen? Dan wissel je hier per training.")
-                .sa(13).foregroundColor(Tokens.text3).padding(.top, 4)
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassCard(radius: Radius.button)
         }
     }
 }

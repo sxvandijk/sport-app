@@ -649,6 +649,16 @@ struct GymTab: View {
 
     @ViewBuilder
     private var accessoriesSection: some View {
+        Button {
+            model.nameEdit = NameEdit(title: "Nieuw opzetstuk", subtitle: "Bijvoorbeeld Triceps touw", placeholder: "Naam van het opzetstuk", text: "", confirmTitle: "Voeg toe") { model.addAccessory(name: $0) }
+        } label: {
+            Text("+ Opzetstuk toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
+                .frame(maxWidth: .infinity).frame(height: 52)
+                .card(Tokens.raised, radius: Radius.button)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 14)
         Text("Touw, rechte stang, V-stang: bij kabeloefeningen staan ze standaard klaar. Je gewicht wordt per opzetstuk onthouden.")
             .sa(13).foregroundColor(Tokens.text2).lineSpacing(3).padding(.top, 14).padding(.bottom, 8)
         let list = model.gym.accessoryList
@@ -675,16 +685,6 @@ struct GymTab: View {
             }
         }
         .glassCard(radius: Radius.button)
-        Button {
-            model.nameEdit = NameEdit(title: "Nieuw opzetstuk", subtitle: "Bijvoorbeeld Triceps touw", placeholder: "Naam van het opzetstuk", text: "", confirmTitle: "Voeg toe") { model.addAccessory(name: $0) }
-        } label: {
-            Text("+ Opzetstuk toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
-                .frame(maxWidth: .infinity).frame(height: 52)
-                .card(Tokens.raised, radius: Radius.button)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 12)
     }
 
     @ViewBuilder
