@@ -121,6 +121,8 @@ struct LiveSession: Codable, Hashable {
     var startAt: Date
     var exercises: [LiveExercise]
     var nextGroup: Int
+    /// Laatste keer dat je een set afvinkte (voor de 'vergeten workout'-melding).
+    var lastActivity: Date? = nil
 
     // MARK: Opbouwen
 

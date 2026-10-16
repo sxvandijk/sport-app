@@ -12,7 +12,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 
 ## Volgende
 - [ ] Apple Watch-app, of een andere manier om te zien hoe lang je nog rust hebt
-- [ ] Vergeten workout: als een workout te lang stilstaat (bv. 11 uur open) een melding sturen "Workout sluiten?" en in de app vragen of je hem wilt afsluiten
+- [x] Vergeten workout (Ronde 8a, wacht op test): na 3 uur geen set een melding, en bij openen vraagt de app "Workout sluiten?"
 - [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
 - [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
@@ -83,3 +83,6 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Ronde 7d (wacht op test)
 - i-tje onder de oefening: alleen uitleg hoe de app het logt (niets aanpassen). 3-puntjesmenu: opzetstuk-opties weg (staat al op de kaart).
 - Gym > Opzetstukken: knop "+ Opzetstuk toevoegen" bovenaan.
+
+## Ronde 8a (wacht op test)
+- Vergeten workout: 3 uur na je laatste set komt een melding "Workout nog bezig?". Open je de app dan vraagt hij "Workout sluiten?"; sluiten slaat op met de tijd van je laatste set (niet 11 uur). Annuleer = doorgaan, hij vraagt dan pas na een uur weer.
