@@ -71,8 +71,7 @@ private struct SheetBody: View {
         case .accedit: return (model.accessory(model.accEditID)?.name ?? "Opzetstuk", "Naam en gewichtsstap")
         case .accpick: return ("Opzetstukken", name.isEmpty ? "" : "Welke gebruik je bij \(name)?" + (exercise?.acc.map { " Nu: \($0)." } ?? ""))
         case .accuse: return ("Opzetstuk", exercise?.acc.map { "Nu: \($0). Houd een opzetstuk ingedrukt om het te verwijderen." } ?? "")
-        case .acclist: return ("Opzetstukken", "Touw, stangen en handgrepen voor je kabels en losse gewichten.")
-        case .sidemode: return ("Hoe vul je dit in?", name)
+        case .sidemode: return ("Hoe houdt de app dit bij?", name)
         }
     }
 
@@ -186,7 +185,6 @@ private struct SheetBody: View {
         case .accedit: AccessoryEditSheet()
         case .accpick: AccessoryPickSheet()
         case .accuse: AccessoryUseSheet()
-        case .acclist: AccessoryListSheet()
         case .sidemode: SideModeSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
@@ -339,8 +337,11 @@ private struct ExerciseMenuSheet: View {
         .padding(.bottom, 6)
 
         if let ex = exercise, Catalog.sidesAmbiguous(ex.name) {
-            plainRow(Icon.info(20), Tokens.text, "Hoe vul je dit in?", SideModeSheet.title(ex.sideMode)) {
-                model.openSheet(.sidemode, exID: model.sheetEx)
+            let on = ex.uni == true
+            plainRow(Icon.swap(20), Tokens.text, on ? "Links en rechts samen invullen" : "Links en rechts apart invullen",
+                     on ? "Eén aantal reps voor beide kanten." : "Eerst een kant, dan de andere, bijvoorbeeld 10 links en 9 rechts.") {
+                if let id = model.sheetEx { model.toggleUnilateral(id) }
+                model.closeSheet()
             }
         }
 
@@ -1492,23 +1493,30 @@ private struct SideModeSheet: View {
 
     static func title(_ m: SideMode) -> String {
         switch m {
-        case .single: return "Eén gewicht in totaal"
-        case .perSide: return "Gewicht per arm of been"
+        case .single: return "1 arm of been, of totaalgewicht"
+        case .perSide: return "2 armen of benen tegelijk"
         case .separate: return "Links en rechts apart"
         }
     }
 
     private static func info(_ m: SideMode) -> String {
         switch m {
-        case .single: return "Je vult het totale gewicht in. Volume = gewicht \u{00D7} reps."
-        case .perSide: return "Je vult het gewicht van één kant in, met evenveel reps links en rechts. Doe je 2 \u{00D7} 5 kg tegelijk, vul dan 5 in: je volume telt als 10 kg \u{00D7} reps."
+        case .single: return "Je vult het gewicht in dat je tilt: één arm of been, of het totaal. Volume = gewicht \u{00D7} reps."
+        case .perSide: return "Je vult het gewicht van één kant in. Doe je 2 \u{00D7} 5 kg tegelijk, vul dan 5 in: de app telt je volume als 10 kg \u{00D7} reps."
         case .separate: return "Eerst de ene kant, dan de andere, met eigen reps (bijvoorbeeld 10 links en 9 rechts). Het gewicht is van één kant en je volume telt beide kanten."
         }
     }
 
     var body: some View {
         if let ex = exercise {
-            ForEach([SideMode.single, .perSide, .separate], id: \.self) { m in
+            if ex.sideMode == .separate {
+                Text("Nu: " + Self.title(.separate) + ". " + Self.info(.separate))
+                    .sa(14).foregroundColor(Tokens.text2).lineSpacing(3).padding(.bottom, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Kies hieronder om weer één aantal reps voor beide kanten te gebruiken, of zet links en rechts apart uit via het menu (\u{22EF}).")
+                    .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.bottom, 10)
+            }
+            ForEach([SideMode.single, .perSide], id: \.self) { m in
                 SheetRowButton(action: {
                     model.setSideMode(ex.id, m)
                     model.closeSheet()
@@ -1527,34 +1535,8 @@ private struct SideModeSheet: View {
                 }
                 .padding(.bottom, 6)
             }
-            Text("Doe je dit soms met één en soms met twee armen of benen, dan wissel je hier per training.")
+            Text("Doe je dit soms met één en soms met twee armen of benen? Dan wissel je hier per training.")
                 .sa(13).foregroundColor(Tokens.text3).padding(.top, 4)
         }
-    }
-}
-
-/// Alle opzetstukken van je gym: toevoegen, aanpassen en verwijderen.
-private struct AccessoryListSheet: View {
-    @EnvironmentObject private var model: AppModel
-    @Environment(\.accentColors) private var ac
-
-    var body: some View {
-        ForEach(model.gym.accessoryList) { a in
-            ListRow(title: a.name, sub: accessoryStepText(a)) {
-                model.accEditID = a.id
-                model.openSheet(.accedit)
-            }
-        }
-        Button {
-            model.nameEdit = NameEdit(title: "Nieuw opzetstuk", subtitle: "Bijvoorbeeld Triceps touw", placeholder: "Naam van het opzetstuk", text: "", confirmTitle: "Voeg toe") { model.addAccessory(name: $0) }
-        } label: {
-            Text("+ Opzetstuk toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
-                .frame(maxWidth: .infinity).frame(height: 52)
-                .card(Tokens.raised, radius: Radius.button)
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 6)
-        Text("Bij kabeloefeningen staan al je opzetstukken standaard klaar. Bij andere oefeningen kies je zelf welke je gebruikt.")
-            .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 10)
     }
 }

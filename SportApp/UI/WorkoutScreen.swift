@@ -481,21 +481,32 @@ private struct OpenExerciseCard: View {
                     Text(Catalog.meta(exercise.name) + (exercise.from.map { " · vervangt " + $0 } ?? ""))
                         .sa(13).foregroundColor(Tokens.text2)
                     if let acc = exercise.acc {
-                        Button { model.openSheet(.accuse, exID: exercise.id) } label: {
-                            HStack(spacing: 6) {
-                                Text(acc).sa(13, .semibold)
-                                Icon.chevronDown(11, 2.4)
+                        HStack(spacing: 8) {
+                            Text("Opzetstuk:").sa(13).foregroundColor(Tokens.text2)
+                            Button { model.openSheet(.accuse, exID: exercise.id) } label: {
+                                HStack(spacing: 6) {
+                                    Text(acc).sa(13, .semibold)
+                                    Icon.chevronDown(11, 2.4)
+                                }
+                                .foregroundColor(ac.accentText)
+                                .padding(.horizontal, 12).frame(height: 30)
+                                .background(Capsule().fill(ac.accentSoft))
+                                .frame(minHeight: 40).contentShape(Rectangle())
                             }
-                            .foregroundColor(ac.accentText)
-                            .padding(.horizontal, 12).frame(height: 30)
-                            .background(Capsule().fill(ac.accentSoft))
-                            .frame(minHeight: 40).contentShape(Rectangle())
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Opzetstuk \(acc), tik om te wisselen")
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Opzetstuk \(acc), tik om te wisselen")
                     }
                 }
                 Spacer(minLength: 0)
+                if Catalog.sidesAmbiguous(exercise.name) {
+                    Button { model.openSheet(.sidemode, exID: exercise.id) } label: {
+                        Icon.info(22).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, -8).padding(.trailing, -14)
+                    .accessibilityLabel("Hoe houdt de app dit bij?")
+                }
                 Button { model.openSheet(.exmenu, exID: exercise.id) } label: {
                     Icon.more(22).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
                 }
@@ -824,8 +835,8 @@ private struct Dock: View {
                 let caption: String = {
                     switch exercise.sideMode {
                     case .separate: return "Links en rechts apart \u{00B7} je volume telt beide kanten op"
-                    case .perSide: return "Gewicht per arm of been \u{00B7} je volume telt dubbel (2\u{00D7})"
-                    case .single: return "Eén gewicht in totaal \u{00B7} volume = gewicht \u{00D7} reps"
+                    case .perSide: return "2 armen of benen \u{00B7} je volume telt dubbel (2\u{00D7})"
+                    case .single: return "1 arm of totaalgewicht \u{00B7} volume = gewicht \u{00D7} reps"
                     }
                 }()
                 Button { model.openSheet(.sidemode, exID: exercise.id) } label: {

@@ -11,6 +11,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Ronde 3c: "Alle trainingen" met filter in Progressie, tabbalk lager + glijdende markering + swipen tussen schermen, lichte achtergrond in light mode
 
 ## Volgende
+- [ ] Vergeten workout: als een workout te lang stilstaat (bv. 11 uur open) een melding sturen "Workout sluiten?" en in de app vragen of je hem wilt afsluiten
+- [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
 - [ ] Gewichtsstapel visueel tonen per machine; tik op een plaatje om het gewicht te kiezen
 - [ ] Creatine-melding koppelen aan weekplanning (geen melding op dagen dat je een shake na het sporten neemt)
@@ -71,3 +73,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Oefeningmenu: "Hoe vul je dit in?" alleen bij oefeningen waar dat onduidelijk is (kabels, dumbbells, een-arm): Eén gewicht in totaal / Gewicht per arm of been / Links en rechts apart, met uitleg. Ook via het i-tje onder het gewicht in de workout. Niet meer bij o.a. hanging leg raise.
 - Gym: bovenaan knoppen "+ Apparaat" en "Opzetstukken".
 - Open vraag: heeft de Gym-tab zelf echt nut? (apparaten uit/aan zetten, stappen per apparaat) -- na test bij Basic-Fit beslissen.
+
+## Ronde 7c (wacht op test)
+- Gym-tab: keuze bovenaan tussen "Apparaten" en "Opzetstukken"; per scherm voeg je je eigen dingen toe.
+- Oefeningkaart toont "Opzetstuk: <keuze>" met uitklapknopje.
+- Oefeningmenu (3 puntjes): één knop "Links en rechts apart invullen" (bij onduidelijke oefeningen). Naast de 3 puntjes een i-tje: uitleg hoe de app het bijhoudt, en kiezen tussen 2 armen/benen tegelijk of 1 arm/been.

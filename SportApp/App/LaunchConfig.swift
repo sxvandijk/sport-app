@@ -145,8 +145,6 @@ struct LaunchConfig {
             model.screen = .workout
             let target = model.session?.exercises.first(where: { $0.name == "Cable One Arm Tricep Extension" })?.id
             model.openSheet(.sidemode, exID: target)
-        case "acclist":
-            model.openSheet(.acclist)
         case "accedit":
             model.accEditID = model.gym.accessoryList.first?.id
             model.openSheet(.accedit)

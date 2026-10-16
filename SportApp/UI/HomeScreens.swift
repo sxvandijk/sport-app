@@ -584,11 +584,22 @@ struct ProgressTab: View {
 struct GymTab: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @State private var showAccessories = false
+
+    private func segment(_ title: String, on: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).sa(15, .semibold).foregroundColor(on ? Tokens.text : Tokens.text2)
+                .frame(maxWidth: .infinity).frame(height: 40)
+                .background(Capsule().fill(on ? Tokens.raised : Color.clear))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
 
     var body: some View {
         let gym = model.gym
         VStack(alignment: .leading, spacing: 0) {
-            Text("Apparaten en gewichtsstappen").sa(13, .medium).foregroundColor(Tokens.text2)
+            Text("Apparaten en opzetstukken").sa(13, .medium).foregroundColor(Tokens.text2)
                 .frame(height: 44, alignment: .leading)
             Text("Gym").sa(34, .bold, tracking: -0.6).foregroundColor(Tokens.text)
                 .accessibilityAddTraits(.isHeader)
@@ -620,24 +631,75 @@ struct GymTab: View {
             .buttonStyle(.plain)
             .padding(.top, 16)
 
-            HStack(spacing: 10) {
-                Button { model.openSheet(.machineadd) } label: {
-                    Text("+ Apparaat").sa(16, .semibold).foregroundColor(ac.accentText)
-                        .frame(maxWidth: .infinity).frame(height: 52)
-                        .card(Tokens.raised, radius: Radius.button)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                Button { model.openSheet(.acclist) } label: {
-                    Text("Opzetstukken").sa(16, .semibold).foregroundColor(ac.accentText)
-                        .frame(maxWidth: .infinity).frame(height: 52)
-                        .card(Tokens.raised, radius: Radius.button)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
+            HStack(spacing: 4) {
+                segment("Apparaten", on: !showAccessories) { showAccessories = false }
+                segment("Opzetstukken", on: showAccessories) { showAccessories = true }
             }
+            .padding(4)
+            .glassSurface(Capsule(), interactive: false, fallback: Tokens.surface)
             .padding(.top, 14)
 
+            if showAccessories {
+                accessoriesSection
+            } else {
+                machinesSection
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var accessoriesSection: some View {
+        Text("Touw, rechte stang, V-stang: bij kabeloefeningen staan ze standaard klaar. Je gewicht wordt per opzetstuk onthouden.")
+            .sa(13).foregroundColor(Tokens.text2).lineSpacing(3).padding(.top, 14).padding(.bottom, 8)
+        let list = model.gym.accessoryList
+        VStack(spacing: 0) {
+            ForEach(list) { a in
+                Button {
+                    model.accEditID = a.id
+                    model.openSheet(.accedit)
+                } label: {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(a.name).sa(16, .medium).foregroundColor(Tokens.text).lineLimit(1)
+                            Text(a.step > 0 ? "Stap \(GymMachine.fmt(a.step)) kg" : "Stap van de oefening").sa(13).foregroundColor(Tokens.text2)
+                        }
+                        Spacer(minLength: 0)
+                        Icon.chevronRight(16).foregroundColor(Tokens.text3)
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                if a.id != list.last?.id { Divider().background(Tokens.line).padding(.leading, 16) }
+            }
+        }
+        .glassCard(radius: Radius.button)
+        Button {
+            model.nameEdit = NameEdit(title: "Nieuw opzetstuk", subtitle: "Bijvoorbeeld Triceps touw", placeholder: "Naam van het opzetstuk", text: "", confirmTitle: "Voeg toe") { model.addAccessory(name: $0) }
+        } label: {
+            Text("+ Opzetstuk toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
+                .frame(maxWidth: .infinity).frame(height: 52)
+                .card(Tokens.raised, radius: Radius.button)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 12)
+    }
+
+    @ViewBuilder
+    private var machinesSection: some View {
+        let gym = model.gym
+        Button { model.openSheet(.machineadd) } label: {
+            Text("+ Apparaat toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
+                .frame(maxWidth: .infinity).frame(height: 52)
+                .card(Tokens.raised, radius: Radius.button)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 14)
+
+        VStack(alignment: .leading, spacing: 0) {
             SectionLabel(text: "Apparaten in deze gym").padding(.top, 24).padding(.bottom, 2)
             if gym.equipment.isEmpty {
                 Text("Voeg de apparaten toe die jouw gym heeft. De plus/min-knoppen in je training volgen dan de gewichtsstappen van die apparaten.")
