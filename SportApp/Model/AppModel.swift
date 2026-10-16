@@ -459,7 +459,7 @@ final class AppModel: ObservableObject {
     }
 
     /// Na zoveel stilstand vragen we of je de workout wilt sluiten.
-    static let staleAfter: TimeInterval = 3 * 3600
+    static let staleAfter: TimeInterval = 1.5 * 3600
     private var staleAskedAt: Date?
 
     /// Bij openen van de app: staat er een workout die al uren stilstaat, vraag dan of hij dicht mag.
@@ -468,7 +468,7 @@ final class AppModel: ObservableObject {
         let last = s.lastActivity ?? s.startAt
         let now = Date()
         guard now.timeIntervalSince(last) > Self.staleAfter else { return }
-        if let asked = staleAskedAt, now.timeIntervalSince(asked) < 3600 { return }
+        if let asked = staleAskedAt, now.timeIntervalSince(asked) < 1800 { return }
         staleAskedAt = now
         let hours = Int(now.timeIntervalSince(last) / 3600)
         confirm = ConfirmRequest(title: "Workout sluiten?",
