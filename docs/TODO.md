@@ -11,6 +11,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Ronde 3c: "Alle trainingen" met filter in Progressie, tabbalk lager + glijdende markering + swipen tussen schermen, lichte achtergrond in light mode
 
 ## Volgende
+- [ ] Apple Watch-app, of een andere manier om te zien hoe lang je nog rust hebt
 - [ ] Vergeten workout: als een workout te lang stilstaat (bv. 11 uur open) een melding sturen "Workout sluiten?" en in de app vragen of je hem wilt afsluiten
 - [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
@@ -78,3 +79,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Gym-tab: keuze bovenaan tussen "Apparaten" en "Opzetstukken"; per scherm voeg je je eigen dingen toe.
 - Oefeningkaart toont "Opzetstuk: <keuze>" met uitklapknopje.
 - Oefeningmenu (3 puntjes): één knop "Links en rechts apart invullen" (bij onduidelijke oefeningen). Naast de 3 puntjes een i-tje: uitleg hoe de app het bijhoudt, en kiezen tussen 2 armen/benen tegelijk of 1 arm/been.
+
+## Ronde 7d (wacht op test)
+- i-tje onder de oefening: alleen uitleg hoe de app het logt (niets aanpassen). 3-puntjesmenu: opzetstuk-opties weg (staat al op de kaart).
+- Gym > Opzetstukken: knop "+ Opzetstuk toevoegen" bovenaan.
