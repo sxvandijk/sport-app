@@ -454,12 +454,34 @@ final class AppModel: ObservableObject {
         sheet = nil
         toast = nil
         Notifier.requestAuthorizationIfNeeded()
+        Notifier.scheduleStale(after: Self.staleAfter)
         save()
     }
 
-    func finish(note: String? = nil) {
-        guard let s = session else { return }
+    /// Na zoveel stilstand vragen we of je de workout wilt sluiten.
+    static let staleAfter: TimeInterval = 3 * 3600
+    private var staleAskedAt: Date?
+
+    /// Bij openen van de app: staat er een workout die al uren stilstaat, vraag dan of hij dicht mag.
+    func checkStaleWorkout() {
+        guard let s = session, confirm == nil else { return }
+        let last = s.lastActivity ?? s.startAt
         let now = Date()
+        guard now.timeIntervalSince(last) > Self.staleAfter else { return }
+        if let asked = staleAskedAt, now.timeIntervalSince(asked) < 3600 { return }
+        staleAskedAt = now
+        let hours = Int(now.timeIntervalSince(last) / 3600)
+        confirm = ConfirmRequest(title: "Workout sluiten?",
+                                 message: "Je laatste set was \(hours) uur geleden. Wil je de workout afsluiten en opslaan zoals hij toen stond? Met Annuleer ga je gewoon door.",
+                                 confirmTitle: "Sluit workout af") { [weak self] in
+            self?.finish(at: last)
+        }
+    }
+
+    func finish(note: String? = nil, at end: Date = Date()) {
+        guard let s = session else { return }
+        let now = end
+        Notifier.cancelStale()
         let result = s.finishSummary(now: now, note: note)
         if result.workSets > 0 {
             let minutes = max(1, Int((now.timeIntervalSince(s.startAt) / 60).rounded()))
@@ -489,6 +511,7 @@ final class AppModel: ObservableObject {
         screen = .home
         restEnd = nil
         Notifier.cancelRest()
+        Notifier.cancelStale()
         save()
     }
 
@@ -669,6 +692,8 @@ final class AppModel: ObservableObject {
         }
         guard let result = s.complete(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst, restDefault: restDefault) else { return }
         session = s
+        session?.lastActivity = Date()
+        Notifier.scheduleStale(after: Self.staleAfter)
         scrollTick += 1
         focusSetID = nil
         editField = nil
@@ -1391,6 +1416,19 @@ enum Notifier {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(max(1, seconds)), repeats: false)
         let request = UNNotificationRequest(identifier: "rest", content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
+    }
+
+    static func scheduleStale(after seconds: TimeInterval) {
+        let content = UNMutableNotificationContent()
+        content.title = "Workout nog bezig?"
+        content.body = "Je laatste set was een tijd geleden. Open Set om hem af te sluiten."
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "stale", content: content, trigger: trigger))
+    }
+
+    static func cancelStale() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["stale"])
     }
 
     static func cancelRest() {

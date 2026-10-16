@@ -24,6 +24,7 @@ struct RootView: View {
 private struct ThemedRoot: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         let accent = AccentColors.make(accent: model.accent, scheme: colorScheme)
@@ -46,5 +47,9 @@ private struct ThemedRoot: View {
         }
         .tint(accent.accentText)
         .environment(\.accentColors, accent)
+        .onChange(of: scenePhase) { phase in
+            if phase == .active { model.checkStaleWorkout() }
+        }
+        .onAppear { model.checkStaleWorkout() }
     }
 }
