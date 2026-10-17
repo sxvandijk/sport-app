@@ -58,6 +58,7 @@ private struct SheetBody: View {
         case .superset: return ("Superset", name.isEmpty ? "" : "Koppel oefeningen aan \(name). Je wisselt na elke set.")
         case .add:
             if model.addToDraftWarmup { return ("Warming-up toevoegen", "Komt vooraan in deze training") }
+            if model.addToDraftCooldown { return ("Cooling-down toevoegen", "Komt achteraan in deze training") }
             return ("Oefening toevoegen", model.addToDraft ? "Wordt onderaan je schema gezet" : "Wordt onderaan je workout gezet")
         case .program: return ("Kies je schema", "Je schema bepaalt welke trainingen je op het startscherm ziet.")
         case .tplmenu: return (model.tmName ?? "", "Opties voor deze training")
@@ -690,7 +691,7 @@ private struct SearchList: View {
             if let m = muscleFilter, item.info.muscle != m { return false }
             return q.isEmpty || item.name.lowercased().contains(q) || item.info.muscle.lowercased().contains(q)
         }
-        if model.addToDraftWarmup && q.isEmpty && muscleFilter == nil {
+        if (model.addToDraftWarmup || model.addToDraftCooldown) && q.isEmpty && muscleFilter == nil {
             let first = names.filter { Catalog.warmupNames.contains($0.name) }
             names = first + names.filter { !Catalog.warmupNames.contains($0.name) }
         } else if (mode == .swap || mode == .preference) && q.isEmpty && muscleFilter == nil, let c = current {
@@ -905,6 +906,8 @@ private struct SearchList: View {
         case .add:
             if model.addToDraftWarmup {
                 model.addDraftWarmup(name)
+            } else if model.addToDraftCooldown {
+                model.addDraftCooldown(name)
             } else if model.addToDraft {
                 guard var d = model.draft else { return }
                 let w = Catalog.info(name).defaultWeight

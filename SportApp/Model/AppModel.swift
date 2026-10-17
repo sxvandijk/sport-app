@@ -37,6 +37,9 @@ struct DraftItem: Identifiable, Hashable {
     var w: Double
     var link: Bool
     var isWarmup = false
+    var isCooldown = false
+    /// 0 = warming-up, 1 = oefening, 2 = cooling-down.
+    var blockKind: Int { isWarmup ? 0 : (isCooldown ? 2 : 1) }
 }
 
 extension DraftItem {
@@ -65,11 +68,13 @@ struct Draft: Hashable {
         var list: [DraftItem] = []
         for (i, p) in plans.enumerated() {
             let isWarm = p.isWarmup == true
-            let linked = !isWarm && i > 0 && plans[i - 1].group == p.group && plans[i - 1].isWarmup != true
+            let isCool = p.isCooldown == true
+            let linked = !isWarm && !isCool && i > 0 && plans[i - 1].group == p.group && plans[i - 1].blockKind == 1
             var item = DraftItem(name: p.name, warmSets: p.warm == nil ? 0 : (p.warmCount ?? 1), warmW: p.warm?.w,
                                  sets: p.sets.count, reps: p.sets.first?.r ?? 10, repsMax: p.sets.first?.rmax,
                                  w: p.sets.first?.w ?? 20, link: linked)
             item.isWarmup = isWarm
+            item.isCooldown = isCool
             list.append(item)
         }
         items = list
@@ -78,14 +83,15 @@ struct Draft: Hashable {
     func toPlans() -> [PlanItem] {
         var g = 0
         var out: [PlanItem] = []
-        let ordered = items.filter { $0.isWarmup } + items.filter { !$0.isWarmup }
+        let ordered = items.filter { $0.blockKind == 0 } + items.filter { $0.blockKind == 1 } + items.filter { $0.blockKind == 2 }
         for (i, it) in ordered.enumerated() {
-            if !(i > 0 && it.link && !it.isWarmup && !ordered[i - 1].isWarmup) { g += 1 }
+            if !(i > 0 && it.link && it.blockKind == 1 && ordered[i - 1].blockKind == 1) { g += 1 }
             var sets: [PlanSet] = []
             for _ in 0..<it.sets { sets.append(PlanSet(w: it.w, r: it.reps, rmax: it.repsMax)) }
             var plan = PlanItem(name: it.name, group: g, sets: sets)
             if it.isWarmup { plan.isWarmup = true }
-            if it.warmSets > 0 && !it.isWarmup {
+            if it.isCooldown { plan.isCooldown = true }
+            if it.warmSets > 0 && it.blockKind == 1 {
                 plan.warm = PlanSet(w: it.warmW ?? (it.w / 2).rounded(), r: 12)
                 plan.warmCount = it.warmSets
             }
@@ -250,6 +256,7 @@ final class AppModel: ObservableObject {
     @Published var draft: Draft?
     @Published var addToDraft = false
     @Published var addToDraftWarmup = false
+    @Published var addToDraftCooldown = false
     @Published var swapScope = SwapScope.now
 
     // Kalender
@@ -658,7 +665,7 @@ final class AppModel: ObservableObject {
         guard var items = templates[name], id != targetID else { return }
         var blocks: [[PlanItem]] = []
         for x in items {
-            if let last = blocks.last?.last, last.group == x.group, last.isWarmup == x.isWarmup {
+            if let last = blocks.last?.last, last.group == x.group, last.blockKind == x.blockKind {
                 blocks[blocks.count - 1].append(x)
             } else {
                 blocks.append([x])
@@ -666,7 +673,7 @@ final class AppModel: ObservableObject {
         }
         guard let from = blocks.firstIndex(where: { $0.first?.id == id }),
               let to = blocks.firstIndex(where: { $0.first?.id == targetID }),
-              blocks[from].first?.isWarmup == blocks[to].first?.isWarmup else { return }
+              blocks[from].first?.blockKind == blocks[to].first?.blockKind else { return }
         let moving = blocks.remove(at: from)
         blocks.insert(moving, at: to)
         items = blocks.flatMap { $0 }
@@ -680,7 +687,7 @@ final class AppModel: ObservableObject {
         var blocks = d.blocks
         guard let from = blocks.firstIndex(where: { $0.first?.id == headID }),
               let to = blocks.firstIndex(where: { $0.first?.id == targetID }),
-              blocks[from].first?.isWarmup == blocks[to].first?.isWarmup else { return }
+              blocks[from].first?.blockKind == blocks[to].first?.blockKind else { return }
         let moving = blocks.remove(at: from)
         blocks.insert(moving, at: to)
         d.items = blocks.flatMap { $0 }
@@ -693,7 +700,7 @@ final class AppModel: ObservableObject {
         guard var d = draft, id != targetID,
               let from = d.items.firstIndex(where: { $0.id == id }),
               let to = d.items.firstIndex(where: { $0.id == targetID }),
-              d.items[from].isWarmup == d.items[to].isWarmup else { return }
+              d.items[from].blockKind == d.items[to].blockKind else { return }
         let item = d.items.remove(at: from)
         d.items.insert(item, at: to)
         EditorScreen.normalize(&d)
@@ -852,6 +859,19 @@ final class AppModel: ObservableObject {
         sheet = nil
     }
 
+    /// Zet een oefening in het cooling-downblok (achteraan) van het schema dat je aan het bewerken bent.
+    func addDraftCooldown(_ name: String) {
+        guard var d = draft else { return }
+        let kind = Catalog.kind(name)
+        var item = DraftItem(name: name, warmSets: 0, warmW: nil, sets: kind == .weights || kind == .bodyweight ? 2 : 1,
+                             reps: kind == .weights || kind == .bodyweight ? 15 : 5, w: Catalog.info(name).defaultWeight, link: false)
+        item.isCooldown = true
+        d.items.append(item)
+        EditorScreen.normalize(&d)
+        draft = d
+        sheet = nil
+    }
+
     func renameProgram(_ id: String, to name: String) {
         let n = name.trimmingCharacters(in: .whitespaces)
         guard !n.isEmpty, let i = programs.firstIndex(where: { $0.id == id }) else { return }
@@ -928,6 +948,7 @@ final class AppModel: ObservableObject {
         savePref = false
         addToDraft = false
         addToDraftWarmup = false
+        addToDraftCooldown = false
         swapScope = .now
         if kind == .explain { linkDraft = "" }
     }
@@ -1498,7 +1519,7 @@ extension Draft {
     var blocks: [[DraftItem]] {
         var out: [[DraftItem]] = []
         for (i, it) in items.enumerated() {
-            if i > 0, it.link, !it.isWarmup, !items[i - 1].isWarmup, !out.isEmpty {
+            if i > 0, it.link, it.blockKind == 1, items[i - 1].blockKind == 1, !out.isEmpty {
                 out[out.count - 1].append(it)
             } else {
                 out.append([it])
