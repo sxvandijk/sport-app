@@ -21,7 +21,9 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [ ] Creatine-melding koppelen aan weekplanning (geen melding op dagen dat je een shake na het sporten neemt)
 - [ ] Instelling: bij een nieuwe week het schema opnieuw beginnen bij de eerste training (bv. weer Push op maandag)
 - [x] Live Activity en Dynamic Island (Ronde 6a, wacht op test met Sideloadly)
-- [ ] Alle trainingen-pagina anders uitwerken en mooier maken
+- [~] Alle trainingen-pagina: tik op een training opent het detailscherm (Ronde 10a); mooier maken blijft open
+- [x] Vrije training een naam geven aan het einde (Ronde 10a)
+- [ ] Progressie-scherm in plaats van "sets per spiergroep": statistieken ook als cirkel (donut), menselijk lichaam met spieren (heatmap) en andere leuke extra's
 - [ ] Leuker statistiekenscherm
 - [ ] Opzetstukken per oefening (touw, rechte stang, V-stang...): kiezen welke je gebruikt, gewicht/stap per opzetstuk apart; toevoegen via Gym > accessoires
 - [x] Nieuw startscherm (Ronde 4a): tab "Start", gecentreerd, volgende training in één tik, Ready-Set-Go
@@ -99,3 +101,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Gewichtsstapel weer weggehaald (staat bij Ideeën).
 - Profiel > Training: schakelaar "Melding bij vergeten workout".
 - Progressie > records: toont het opzetstuk erbij (bijv. "Triceps \u00B7 Touw").
+
+## Ronde 10a (wacht op test)
+- Alle trainingen: tik op een training opent een eigen scherm met elke oefening en al je sets (opzetstuk, links/rechts, dropset). Daar kun je de naam wijzigen.
+- Vrije training: op het eindscherm de knop "Geef deze training een naam".

@@ -4,7 +4,7 @@ import UserNotifications
 import AudioToolbox
 import Combine
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail }
 enum HomeTab: Int, CaseIterable, Identifiable {
     case gym, progress, start, training, profile
     var id: Int { rawValue }
@@ -233,6 +233,9 @@ final class AppModel: ObservableObject {
     /// Oefening in het schema-bewerkscherm die gewisseld wordt.
     @Published var draftSwapID: UUID?
     @Published var summary: SessionSummary?
+    /// Training die je net hebt afgerond, als een vrije training die nog een naam kan krijgen.
+    @Published var summaryFreeID: UUID?
+    @Published var detailID: UUID?
 
     // Sheets en schermen
     @Published var pending: String?
@@ -493,7 +496,11 @@ final class AppModel: ObservableObject {
                 let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.two == true && $0.type != .warmup ? 2 : nil) }
                 if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two, acc: e.acc)) }
             }
-            history.insert(HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged), at: 0)
+            let entry = HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged)
+            history.insert(entry, at: 0)
+            summaryFreeID = s.name == "Lege training" ? entry.id : nil
+        } else {
+            summaryFreeID = nil
         }
         summary = result.summary
         session = nil
@@ -521,6 +528,15 @@ final class AppModel: ObservableObject {
     func goHome() {
         screen = .home
         summary = nil
+        summaryFreeID = nil
+    }
+
+    func renameHistory(_ id: UUID, to name: String) {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !n.isEmpty, let i = history.firstIndex(where: { $0.id == id }) else { return }
+        history[i].name = n
+        if summaryFreeID == id { summary?.title = n + " afgerond" }
+        save()
     }
 
     // MARK: Sets
