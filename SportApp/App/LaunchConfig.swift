@@ -52,6 +52,9 @@ struct LaunchConfig {
         case "progress-empty": model.tab = .progress
         case "records": model.screen = .records
         case "allworkouts": model.screen = .allWorkouts
+        case "workoutdetail":
+            model.detailID = model.history.sorted { $0.date > $1.date }.first(where: { !($0.exercises ?? []).isEmpty })?.id
+            model.screen = .workoutDetail
         case "creatine": model.screen = .creatine; model.crea = true
         case "training-empty": model.tab = .training
         case "gym": model.tab = .gym

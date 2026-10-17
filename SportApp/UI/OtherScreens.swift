@@ -782,6 +782,23 @@ struct SummaryScreen: View {
                         Text(sm.title).sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text).padding(.top, 20)
                             .accessibilityAddTraits(.isHeader)
                         Text(sm.note).sa(15).foregroundColor(Tokens.text2).padding(.top, 4)
+                        if let fid = model.summaryFreeID {
+                            Button {
+                                model.nameEdit = NameEdit(title: "Naam van je training", subtitle: "Zo vind je hem later terug",
+                                                          placeholder: "Bijvoorbeeld Borst en rug", text: "", confirmTitle: "Bewaar") { model.renameHistory(fid, to: $0) }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Icon.edit(14)
+                                    Text("Geef deze training een naam").sa(15, .semibold)
+                                }
+                                .foregroundColor(ac.accentText)
+                                .padding(.horizontal, 14).frame(height: 44)
+                                .background(Capsule().fill(ac.accentSoft))
+                                .contentShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 12)
+                        }
                         HStack(alignment: .top, spacing: 12) {
                             stat(sm.time, "duur", flex: 1)
                             stat(sm.sets, "sets", flex: 1)

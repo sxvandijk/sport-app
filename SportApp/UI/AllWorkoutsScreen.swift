@@ -6,7 +6,6 @@ struct AllWorkoutsScreen: View {
     @Environment(\.accentColors) private var ac
     @State private var filter: String?
     @State private var limit = 20
-    @State private var openWorkout: UUID?
 
     var body: some View {
         let names = Array(Set(model.history.map { $0.name })).sorted()
@@ -88,9 +87,11 @@ struct AllWorkoutsScreen: View {
     }
 
     private func workoutRow(_ h: HistoryEntry) -> some View {
-        let open = openWorkout == h.id
-        return VStack(alignment: .leading, spacing: 0) {
-            Button { openWorkout = open ? nil : h.id } label: {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                model.detailID = h.id
+                model.screen = .workoutDetail
+            } label: {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(h.name).sa(16, .semibold).foregroundColor(Tokens.text)
@@ -98,29 +99,12 @@ struct AllWorkoutsScreen: View {
                             .sa(13).foregroundColor(Tokens.text2)
                     }
                     Spacer(minLength: 0)
-                    (open ? Icon.chevronUp(14) : Icon.chevronDown(14)).foregroundColor(Tokens.text3)
+                    Icon.chevronRight(14).foregroundColor(Tokens.text3)
                 }
                 .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            if open {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(h.exercises ?? [], id: \.name) { e in
-                        let sets = e.sets.filter { $0.type != .warmup }
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(e.name).sa(14, .medium).foregroundColor(Tokens.text).lineLimit(1)
-                            Spacer(minLength: 8)
-                            Text(sets.map { Format.weight($0.w) + "\u{00D7}" + $0.repsText }.joined(separator: ", "))
-                                .sa(12, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
-                        }
-                    }
-                    if (h.exercises ?? []).isEmpty {
-                        Text("Van deze training is geen detail bewaard.").sa(13).foregroundColor(Tokens.text2)
-                    }
-                }
-                .padding(.bottom, 10)
-            }
             Divider().background(Tokens.line)
         }
     }
