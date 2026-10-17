@@ -15,7 +15,9 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Vergeten workout (Ronde 8a, wacht op test): na 1,5 uur geen set een melding, en bij openen vraagt de app "Workout sluiten?"
 - [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
-- [~] Gewichtsstapel visueel (Ronde 8b): preview in Apparaat bewerken; nog niet in de workout zelf om het gewicht te kiezen
+- [ ] Instellingen: kopje "Fun features" voor speelse extra's
+- [x] Melding bij vergeten workout is nu een instelling (Profiel > Training, standaard aan)
+- [x] Opzetstuk per record in Progressie (Ronde 9a)
 - [ ] Creatine-melding koppelen aan weekplanning (geen melding op dagen dat je een shake na het sporten neemt)
 - [ ] Instelling: bij een nieuwe week het schema opnieuw beginnen bij de eerste training (bv. weer Push op maandag)
 - [x] Live Activity en Dynamic Island (Ronde 6a, wacht op test met Sideloadly)
@@ -88,3 +90,12 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 
 ## Ronde 8b (wacht op test)
 - Gym > apparaat (stack-machine): gewichtsstapel met pin. Tik op een plaatje en je ziet het gewicht en de stand. Het is een preview om je stappen te controleren; kiezen vanuit de workout volgt later.
+
+## Ideeën (nog niet gepland)
+- Gewichtsstapel visueel: Ronde 8b was niet wat je bedoelde en is weggehaald. Opnieuw uitwerken: eerst afspreken hoe het eruit moet zien en waar je het gebruikt (waarschijnlijk in de workout, onder een Fun features-kopje).
+- Creatine-widget op het iPhone-beginscherm.
+
+## Ronde 9a (wacht op test)
+- Gewichtsstapel weer weggehaald (staat bij Ideeën).
+- Profiel > Training: schakelaar "Melding bij vergeten workout".
+- Progressie > records: toont het opzetstuk erbij (bijv. "Triceps \u00B7 Touw").

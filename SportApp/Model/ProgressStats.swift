@@ -9,6 +9,8 @@ struct PersonalRecord: Identifiable, Hashable {
     /// Geschat 1RM (Epley); 0 bij lichaamsgewicht zonder extra gewicht.
     let oneRM: Double
     let date: Date
+    /// Opzetstuk waarmee dit record is gedaan (bijv. Touw).
+    var acc: String? = nil
 }
 
 /// Alle cijfers voor het Progressie-tabblad, berekend uit wat je echt gedaan hebt.
@@ -57,7 +59,7 @@ struct ProgressStats {
                         better = true
                     }
                     if better {
-                        best[e.name] = PersonalRecord(name: e.name, kind: kind, weight: s.w, reps: s.r, oneRM: one, date: h.date)
+                        best[e.name] = PersonalRecord(name: e.name, kind: kind, weight: s.w, reps: s.r, oneRM: one, date: h.date, acc: e.acc)
                     }
                 }
             }

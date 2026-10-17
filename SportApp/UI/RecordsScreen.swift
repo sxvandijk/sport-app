@@ -107,7 +107,7 @@ struct RecordCard: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(r.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
                 HStack(spacing: 8) {
-                    Text(Catalog.info(r.name).muscle + " \u{00B7} " + DateText.short(r.date)).sa(13).foregroundColor(Tokens.text2)
+                    Text(Catalog.info(r.name).muscle + (r.acc.map { " \u{00B7} " + $0 } ?? "") + " \u{00B7} " + DateText.short(r.date)).sa(13).foregroundColor(Tokens.text2)
                     if fresh {
                         Text("Nieuw").sa(11, .bold).foregroundColor(ac.accentText)
                             .padding(.horizontal, 7).frame(height: 20)
