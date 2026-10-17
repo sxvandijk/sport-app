@@ -151,6 +151,9 @@ struct LaunchConfig {
         case "accedit":
             model.accEditID = model.gym.accessoryList.first?.id
             model.openSheet(.accedit)
+        case "weekplan":
+            model.weekPlan = ["2": "Push", "4": "Pull", "6": "Legs"]
+            model.openSheet(.weekplan)
         case "gym":
             model.openSheet(.gym)
         case "machineadd":

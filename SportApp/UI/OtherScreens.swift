@@ -834,6 +834,23 @@ struct SummaryScreen: View {
                             .buttonStyle(.plain)
                             .padding(.top, 12)
                         }
+                        if !model.summaryAdded.isEmpty, let tpl = model.summaryTemplate {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Erbij in deze training").sa(15, .semibold).foregroundColor(Tokens.text)
+                                Text(model.summaryAdded.map { $0.name }.joined(separator: ", ") + " staat nog niet in je schema " + tpl + ".")
+                                    .sa(14).foregroundColor(Tokens.text2).lineSpacing(2)
+                                Button { model.saveSummaryToSchema() } label: {
+                                    Text("Zet in mijn schema").sa(15, .semibold).foregroundColor(ac.accentText)
+                                        .padding(.horizontal, 14).frame(height: 44)
+                                        .background(Capsule().fill(ac.accentSoft)).contentShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                            .glassCard(radius: Radius.button).padding(.top, 16)
+                        } else if model.summarySaved {
+                            Text("Toegevoegd aan je schema.").sa(14).foregroundColor(ac.accentText).padding(.top, 16)
+                        }
                         HStack(alignment: .top, spacing: 12) {
                             stat(sm.time, "duur", flex: 1)
                             stat(sm.sets, "sets", flex: 1)

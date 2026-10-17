@@ -37,10 +37,10 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [ ] Basic-Fit machinelijst controleren/aanvullen na bezoek (15-10)
 
 ## Training
-- [ ] Opwarmen/afkoelblok (cooling-down)
-- [ ] Schema-wijzigingen na de training opslaan in het schema
-- [ ] Weekplanning
-- [ ] Handmatig een cardioset starten
+- [x] Cooling-down-blok achteraan in je schema (Ronde 10b)
+- [~] Schema-wijzigingen opslaan na de training (Ronde 10b): alleen oefeningen die je erbij deed; aangepaste sets/gewichten volgen
+- [x] Weekplanning (Ronde 10b): per dag een training kiezen
+- [~] Cardio starten (Ronde 10b): knop op Start; geen live-timer
 - [ ] Live Activity / Dynamic Island voor rust en training
 
 ## Overig scherm
@@ -105,3 +105,9 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Ronde 10a (wacht op test)
 - Alle trainingen: tik op een training opent een eigen scherm met elke oefening en al je sets (opzetstuk, links/rechts, dropset). Daar kun je de naam wijzigen.
 - Vrije training: op het eindscherm de knop "Geef deze training een naam".
+
+## Ronde 10b (wacht op test)
+- Cooling-down: in de schema-editor een blok "Cooling-down" onder je oefeningen (bijv. uitfietsen of stretchen); staat ook in het overzicht en in je workout achteraan. Telt niet mee voor volume (net als warming-up).
+- Weekplanning: Profiel > Training > Weekplanning. Per weekdag een training kiezen; op die dag staat die bovenaan bij Start ("Gepland voor vandaag"). Dagen zonder keuze volgen je gewone rotatie.
+- Na je training: deed je een oefening erbij die niet in het schema staat, dan staat op het eindscherm "Zet in mijn schema". Alleen nieuwe oefeningen; wijzigingen aan sets of gewicht niet.
+- Start: knop "Cardio starten" kiest een cardio-oefening en start meteen een vrije training. (Nog geen lopende timer.)

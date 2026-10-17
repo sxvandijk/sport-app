@@ -244,6 +244,10 @@ final class AppModel: ObservableObject {
     /// Training die je net hebt afgerond, als een vrije training die nog een naam kan krijgen.
     @Published var summaryFreeID: UUID?
     @Published var detailID: UUID?
+    /// Oefeningen die je in deze training erbij deed en die nog niet in het schema staan.
+    @Published var summaryAdded: [PlanItem] = []
+    @Published var summaryTemplate: String?
+    @Published var summarySaved = false
 
     // Sheets en schermen
     @Published var pending: String?
@@ -259,6 +263,7 @@ final class AppModel: ObservableObject {
     @Published var addToDraft = false
     @Published var addToDraftWarmup = false
     @Published var addToDraftCooldown = false
+    @Published var cardioStart = false
     @Published var swapScope = SwapScope.now
 
     // Kalender
@@ -525,6 +530,20 @@ final class AppModel: ObservableObject {
         } else {
             summaryFreeID = nil
         }
+        summaryAdded = []
+        summaryTemplate = nil
+        summarySaved = false
+        if let plan = templates[s.name] {
+            let known = Set(plan.map { $0.name })
+            var seen = Set<String>()
+            for e in s.exercises where !known.contains(e.name) && !seen.contains(e.name) {
+                let done = e.sets.filter { $0.done && $0.type != .warmup }
+                if done.isEmpty { continue }
+                seen.insert(e.name)
+                summaryAdded.append(PlanItem(name: e.name, group: 0, sets: done.map { PlanSet(w: $0.w, r: $0.r, rmax: nil) }))
+            }
+            if !summaryAdded.isEmpty { summaryTemplate = s.name }
+        }
         summary = result.summary
         session = nil
         screen = .summary
@@ -552,6 +571,23 @@ final class AppModel: ObservableObject {
         screen = .home
         summary = nil
         summaryFreeID = nil
+        summaryAdded = []
+        summaryTemplate = nil
+        summarySaved = false
+    }
+
+    /// Zet de oefeningen die je erbij deed in het schema (vóór een eventuele cooling-down).
+    func saveSummaryToSchema() {
+        guard let name = summaryTemplate, var items = templates[name], !summaryAdded.isEmpty else { return }
+        var g = (items.map { $0.group }.max() ?? 0)
+        let at = items.firstIndex(where: { $0.isCooldown == true }) ?? items.count
+        var add: [PlanItem] = []
+        for var p in summaryAdded { g += 1; p.group = g; add.append(p) }
+        items.insert(contentsOf: add, at: at)
+        templates[name] = items
+        summaryAdded = []
+        summarySaved = true
+        save()
     }
 
     func renameHistory(_ id: UUID, to name: String) {
@@ -965,6 +1001,7 @@ final class AppModel: ObservableObject {
         addToDraft = false
         addToDraftWarmup = false
         addToDraftCooldown = false
+        cardioStart = false
         swapScope = .now
         if kind == .explain { linkDraft = "" }
     }

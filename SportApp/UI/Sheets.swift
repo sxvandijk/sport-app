@@ -59,6 +59,7 @@ private struct SheetBody: View {
         case .add:
             if model.addToDraftWarmup { return ("Warming-up toevoegen", "Komt vooraan in deze training") }
             if model.addToDraftCooldown { return ("Cooling-down toevoegen", "Komt achteraan in deze training") }
+            if model.cardioStart { return ("Cardio starten", "Kies je cardio. Je training start meteen.") }
             return ("Oefening toevoegen", model.addToDraft ? "Wordt onderaan je schema gezet" : "Wordt onderaan je workout gezet")
         case .program: return ("Kies je schema", "Je schema bepaalt welke trainingen je op het startscherm ziet.")
         case .tplmenu: return (model.tmName ?? "", "Opties voor deze training")
@@ -693,7 +694,9 @@ private struct SearchList: View {
             if let m = muscleFilter, item.info.muscle != m { return false }
             return q.isEmpty || item.name.lowercased().contains(q) || item.info.muscle.lowercased().contains(q)
         }
-        if (model.addToDraftWarmup || model.addToDraftCooldown) && q.isEmpty && muscleFilter == nil {
+        if model.cardioStart && q.isEmpty && muscleFilter == nil {
+            names = names.filter { Catalog.kind($0.name) == .cardio || Catalog.kind($0.name) == .timed } + names.filter { Catalog.kind($0.name) != .cardio && Catalog.kind($0.name) != .timed }
+        } else if (model.addToDraftWarmup || model.addToDraftCooldown) && q.isEmpty && muscleFilter == nil {
             let first = names.filter { Catalog.warmupNames.contains($0.name) }
             names = first + names.filter { !Catalog.warmupNames.contains($0.name) }
         } else if (mode == .swap || mode == .preference) && q.isEmpty && muscleFilter == nil, let c = current {
@@ -918,6 +921,10 @@ private struct SearchList: View {
                                          repsMax: Catalog.kind(name) == .cardio ? nil : 12, w: w, link: false))
                 model.draft = d
                 model.sheet = nil
+            } else if model.cardioStart {
+                model.cardioStart = false
+                model.doStart("")
+                model.addExercise(name)
             } else {
                 model.addExercise(name)
             }
