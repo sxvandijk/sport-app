@@ -151,6 +151,9 @@ struct LaunchConfig {
         case "accedit":
             model.accEditID = model.gym.accessoryList.first?.id
             model.openSheet(.accedit)
+        case "weekplan":
+            model.weekPlan = ["2": "Push", "4": "Pull", "6": "Legs"]
+            model.openSheet(.weekplan)
         case "gym":
             model.openSheet(.gym)
         case "machineadd":
@@ -215,6 +218,9 @@ enum ScreenshotScenario {
                             sets: [PlanSet(w: 2.5, r: 15, rmax: nil), PlanSet(w: 2.5, r: 15, rmax: nil)])
         item.isWarmup = true
         plans.insert(item, at: 0)
+        var cool = PlanItem(name: "Fietsen", group: 99, sets: [PlanSet(w: 0, r: 5, rmax: nil)])
+        cool.isCooldown = true
+        plans.append(cool)
         model.templates["Push"] = plans
     }
 

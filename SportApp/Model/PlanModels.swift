@@ -16,6 +16,8 @@ struct PlanItem: Codable, Hashable, Identifiable {
     var sets: [PlanSet]
     /// Hoort bij het warming-upblok vooraan in de training (bijv. rotator cuff of fietsen).
     var isWarmup: Bool?
+    /// Hoort bij het cooling-downblok achteraan de training (bijv. stretchen of uitfietsen).
+    var isCooldown: Bool?
     /// Aantal warming-upsets vooraf (nil = 1 als `warm` is ingesteld).
     var warmCount: Int?
 
@@ -26,6 +28,11 @@ struct PlanItem: Codable, Hashable, Identifiable {
         self.sets = sets
         self.isWarmup = isWarmup
     }
+}
+
+extension PlanItem {
+    /// 0 = warming-up, 1 = oefening, 2 = cooling-down.
+    var blockKind: Int { isWarmup == true ? 0 : (isCooldown == true ? 2 : 1) }
 }
 
 struct PlanProgram: Codable, Hashable, Identifiable {

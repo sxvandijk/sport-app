@@ -155,7 +155,7 @@ struct LiveSession: Codable, Hashable {
 
     static func makeExercise(name: String, group: Int, plan: PlanItem?, last: LoggedExercise? = nil) -> LiveExercise {
         var sets: [LiveSet] = []
-        let isWarmupBlock = plan?.isWarmup == true
+        let isWarmupBlock = plan?.isWarmup == true || plan?.isCooldown == true
         let lastWork = (last?.sets ?? []).filter { isWarmupBlock ? $0.type == .warmup : $0.type != .warmup }
         let kind = Catalog.kind(name)
         let workType: SetType = isWarmupBlock ? .warmup : .work
@@ -199,7 +199,7 @@ struct LiveSession: Codable, Hashable {
         let plans = templates[name] ?? []
         var list: [LiveExercise] = []
         for item in plans {
-            let last = item.isWarmup == true ? lastLoggedWarmup(item.name, in: history) : lastLogged(item.name, in: history)
+            let last = (item.isWarmup == true || item.isCooldown == true) ? lastLoggedWarmup(item.name, in: history) : lastLogged(item.name, in: history)
             list.append(makeExercise(name: item.name, group: item.group, plan: item, last: last))
         }
         return LiveSession(name: name.isEmpty ? "Lege training" : name, startAt: startAt, exercises: list, nextGroup: 100)

@@ -37,7 +37,7 @@ struct StartTab: View {
         } else if let name = next {
             let info = model.planSummary(name)
             VStack(spacing: 8) {
-                Text("Volgende training").sa(13, .semibold).foregroundColor(ac.accentText)
+                Text(model.plannedWorkout() == name ? "Gepland voor vandaag" : "Volgende training").sa(13, .semibold).foregroundColor(ac.accentText)
                 Text(name).sa(52, .bold, tracking: -1.2).foregroundColor(Tokens.text)
                     .minimumScaleFactor(0.6).lineLimit(1)
                 Text(info.sub).sa(15, .medium).foregroundColor(Tokens.text2)
@@ -50,6 +50,7 @@ struct StartTab: View {
                 secondary("Andere training kiezen") { model.tab = .training }
                     .padding(.top, 4)
                 secondary("Vrije training zonder schema") { model.askStart("") }
+                secondary("Cardio starten") { model.openSheet(.add); model.cardioStart = true }
             }
             .frame(maxWidth: .infinity)
         } else {

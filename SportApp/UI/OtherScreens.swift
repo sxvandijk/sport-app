@@ -118,8 +118,9 @@ struct OverviewScreen: View {
     var body: some View {
         if let name = model.ovName, model.templates[name] != nil {
             let info = model.planSummary(name)
-            let blockList = blocks(of: info.items.filter { $0.isWarmup != true })
+            let blockList = blocks(of: info.items.filter { $0.blockKind == 1 })
             let warmItems = info.items.filter { $0.isWarmup == true }
+            let coolItems = info.items.filter { $0.isCooldown == true }
             VStack(spacing: 0) {
                 HStack {
                     Button {
@@ -168,6 +169,10 @@ struct OverviewScreen: View {
                         }
                         SectionLabel(text: "Oefeningen").padding(.top, 22).padding(.bottom, 4)
                         overviewBlocks(blockList)
+                        if !coolItems.isEmpty {
+                            SectionLabel(text: "Cooling-down").padding(.top, 22).padding(.bottom, 4)
+                            ForEach(coolItems) { x in warmupRow(x) }
+                        }
                     }
                     .coordinateSpace(name: "reorder")
                     .onPreferenceChange(ReorderFramesKey.self) { coord.setFrames($0) }
@@ -237,8 +242,9 @@ struct EditorScreen: View {
     var body: some View {
         if let draft = model.draft {
             let nameOk = !draft.name.trimmingCharacters(in: .whitespaces).isEmpty
-            let workItems = draft.items.filter { !$0.isWarmup }
+            let workItems = draft.items.filter { $0.blockKind == 1 }
             let warmCount = draft.items.filter { $0.isWarmup }.count
+            let coolCount = draft.items.filter { $0.isCooldown }.count
             let sets = workItems.reduce(0) { $0 + $1.sets }
             let warm = workItems.reduce(0) { $0 + $1.warmSets }
             let minutes = Int((Double(sets) * 2.25 + Double(warm)).rounded())
@@ -292,7 +298,7 @@ struct EditorScreen: View {
 
                         let ssList = supersetIndices(draft)
                         if !reordering {
-                            ForEach(Array(draft.items[warmCount...])) { item in
+                            ForEach(Array(draft.items[warmCount..<(draft.items.count - coolCount)])) { item in
                                 if let i = draft.items.firstIndex(where: { $0.id == item.id }) {
                                     itemView(i, item, ss: ssList[i], first: warmCount)
                                 }
@@ -313,6 +319,7 @@ struct EditorScreen: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 4)
+                        if !reordering { cooldownSection(draft, coolCount: coolCount) }
                         if draft.items.count > 1 { reorderBar.padding(.top, 22) }
 
                         Text("Koppel twee oefeningen met de knop ertussen om er een superset van te maken.")
@@ -373,6 +380,33 @@ struct EditorScreen: View {
         }
     }
 
+    private func cooldownSection(_ draft: Draft, coolCount: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionLabel(text: "Cooling-down").padding(.top, 24).padding(.bottom, 4)
+            Text("Staat achteraan in deze training. Bijvoorbeeld stretchen of uitfietsen.")
+                .sa(13).foregroundColor(Tokens.text2).padding(.bottom, 8)
+            ForEach(Array(draft.items[(draft.items.count - coolCount)...])) { item in
+                if let i = draft.items.firstIndex(where: { $0.id == item.id }) {
+                    warmupCard(i, item, isFirst: false)
+                }
+            }
+            Button {
+                model.openSheet(.add)
+                model.addToDraft = true
+                model.addToDraftCooldown = true
+            } label: {
+                HStack(spacing: 6) {
+                    Icon.plus(18, 2.4)
+                    Text("Cooling-down toevoegen").sa(16, .semibold)
+                }
+                .foregroundColor(Tokens.warm)
+                .frame(maxWidth: .infinity).frame(height: 48)
+                .card(Tokens.raised, radius: Radius.button)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private func warmupCard(_ i: Int, _ it: DraftItem, isFirst: Bool) -> some View {
         let info = Catalog.info(it.name)
         let kind = info.kind
@@ -388,12 +422,12 @@ struct EditorScreen: View {
                     Icon.swap(18).foregroundColor(Tokens.text2).frame(width: 40, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Wissel warming-up")
+                .accessibilityLabel("Wissel oefening")
                 Button { confirmRemove(i, it) } label: {
                     Icon.trash(18).foregroundColor(Tokens.danger).frame(width: 40, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Verwijder warming-up")
+                .accessibilityLabel("Verwijder oefening")
             }
             if kind == .timed {
                 HStack(spacing: 8) {
@@ -515,7 +549,7 @@ struct EditorScreen: View {
         ForEach(blocks, id: \.first!.id) { members in
             let head = members[0]
             let hi = draft.items.firstIndex(where: { $0.id == head.id }) ?? 0
-            if !head.isWarmup && hi > warmTotal { linkToggle(hi, head, hue: nil) }
+            if head.blockKind == 1 && hi > warmTotal { linkToggle(hi, head, hue: nil) }
             if members.count > 1 {
                 SupersetFrame(index: ssList[hi] ?? 0, count: members.count) {
                     VStack(alignment: .leading, spacing: 0) {
@@ -543,14 +577,14 @@ struct EditorScreen: View {
 
     private func reorderItemRow(_ it: DraftItem, number: Int, hue: Color?, handle: Bool) -> some View {
         HStack(spacing: 12) {
-            if it.isWarmup {
+            if it.blockKind != 1 {
                 Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
             } else {
                 NumberBadge(text: String(number), hue: hue, size: 28)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(it.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
-                Text((it.isWarmup ? "Warming-up \u{00B7} " : "") + "\(it.sets) \u{00D7} \(it.reps)")
+                Text((it.isWarmup ? "Warming-up \u{00B7} " : (it.isCooldown ? "Cooling-down \u{00B7} " : "")) + "\(it.sets) \u{00D7} \(it.reps)")
                     .sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
             }
             Spacer(minLength: 0)
@@ -730,7 +764,7 @@ struct EditorScreen: View {
 
     private func moveUp(_ i: Int) {
         guard var d = model.draft, i > 0, d.items.indices.contains(i) else { return }
-        if d.items[i - 1].isWarmup != d.items[i].isWarmup { return }
+        if d.items[i - 1].blockKind != d.items[i].blockKind { return }
         d.items.swapAt(i, i - 1)
         EditorScreen.normalize(&d)
         model.draft = d
@@ -754,9 +788,10 @@ struct EditorScreen: View {
 
     /// Warming-ups staan vooraan en zijn nooit gekoppeld; de eerste echte oefening heeft niets om aan te koppelen.
     static func normalize(_ d: inout Draft) {
+        d.items = d.items.filter { $0.blockKind == 0 } + d.items.filter { $0.blockKind == 1 } + d.items.filter { $0.blockKind == 2 }
         var seenWork = false
         for k in d.items.indices {
-            if d.items[k].isWarmup {
+            if d.items[k].blockKind != 1 {
                 d.items[k].link = false
             } else if !seenWork {
                 d.items[k].link = false
@@ -798,6 +833,23 @@ struct SummaryScreen: View {
                             }
                             .buttonStyle(.plain)
                             .padding(.top, 12)
+                        }
+                        if !model.summaryAdded.isEmpty, let tpl = model.summaryTemplate {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Erbij in deze training").sa(15, .semibold).foregroundColor(Tokens.text)
+                                Text(model.summaryAdded.map { $0.name }.joined(separator: ", ") + " staat nog niet in je schema " + tpl + ".")
+                                    .sa(14).foregroundColor(Tokens.text2).lineSpacing(2)
+                                Button { model.saveSummaryToSchema() } label: {
+                                    Text("Zet in mijn schema").sa(15, .semibold).foregroundColor(ac.accentText)
+                                        .padding(.horizontal, 14).frame(height: 44)
+                                        .background(Capsule().fill(ac.accentSoft)).contentShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                            .glassCard(radius: Radius.button).padding(.top, 16)
+                        } else if model.summarySaved {
+                            Text("Toegevoegd aan je schema.").sa(14).foregroundColor(ac.accentText).padding(.top, 16)
                         }
                         HStack(alignment: .top, spacing: 12) {
                             stat(sm.time, "duur", flex: 1)

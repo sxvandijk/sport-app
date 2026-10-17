@@ -20,7 +20,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode, weekplan
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -37,6 +37,9 @@ struct DraftItem: Identifiable, Hashable {
     var w: Double
     var link: Bool
     var isWarmup = false
+    var isCooldown = false
+    /// 0 = warming-up, 1 = oefening, 2 = cooling-down.
+    var blockKind: Int { isWarmup ? 0 : (isCooldown ? 2 : 1) }
 }
 
 extension DraftItem {
@@ -65,11 +68,13 @@ struct Draft: Hashable {
         var list: [DraftItem] = []
         for (i, p) in plans.enumerated() {
             let isWarm = p.isWarmup == true
-            let linked = !isWarm && i > 0 && plans[i - 1].group == p.group && plans[i - 1].isWarmup != true
+            let isCool = p.isCooldown == true
+            let linked = !isWarm && !isCool && i > 0 && plans[i - 1].group == p.group && plans[i - 1].blockKind == 1
             var item = DraftItem(name: p.name, warmSets: p.warm == nil ? 0 : (p.warmCount ?? 1), warmW: p.warm?.w,
                                  sets: p.sets.count, reps: p.sets.first?.r ?? 10, repsMax: p.sets.first?.rmax,
                                  w: p.sets.first?.w ?? 20, link: linked)
             item.isWarmup = isWarm
+            item.isCooldown = isCool
             list.append(item)
         }
         items = list
@@ -78,14 +83,15 @@ struct Draft: Hashable {
     func toPlans() -> [PlanItem] {
         var g = 0
         var out: [PlanItem] = []
-        let ordered = items.filter { $0.isWarmup } + items.filter { !$0.isWarmup }
+        let ordered = items.filter { $0.blockKind == 0 } + items.filter { $0.blockKind == 1 } + items.filter { $0.blockKind == 2 }
         for (i, it) in ordered.enumerated() {
-            if !(i > 0 && it.link && !it.isWarmup && !ordered[i - 1].isWarmup) { g += 1 }
+            if !(i > 0 && it.link && it.blockKind == 1 && ordered[i - 1].blockKind == 1) { g += 1 }
             var sets: [PlanSet] = []
             for _ in 0..<it.sets { sets.append(PlanSet(w: it.w, r: it.reps, rmax: it.repsMax)) }
             var plan = PlanItem(name: it.name, group: g, sets: sets)
             if it.isWarmup { plan.isWarmup = true }
-            if it.warmSets > 0 && !it.isWarmup {
+            if it.isCooldown { plan.isCooldown = true }
+            if it.warmSets > 0 && it.blockKind == 1 {
                 plan.warm = PlanSet(w: it.warmW ?? (it.w / 2).rounded(), r: 12)
                 plan.warmCount = it.warmSets
             }
@@ -166,6 +172,7 @@ struct PersistedState: Codable {
     var exAcc: [String: [String]]? = nil   // per oefening: namen van de opzetstukken die je gebruikt
     var weekReset: Bool? = nil             // nieuwe week: schema begint weer bij de eerste training
     var staleReminder: Bool? = nil         // melding bij vergeten workout (standaard aan)
+    var weekPlan: [String: String]? = nil  // weekdag (1 = zondag ... 7 = zaterdag) -> naam van de training
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -213,6 +220,7 @@ final class AppModel: ObservableObject {
     @Published var exAcc: [String: [String]]
     @Published var weekReset: Bool
     @Published var staleReminder: Bool
+    @Published var weekPlan: [String: String]
     @Published var accEditID: String?
     @Published var noteLog: [String: [NoteEntry]]
 
@@ -236,6 +244,10 @@ final class AppModel: ObservableObject {
     /// Training die je net hebt afgerond, als een vrije training die nog een naam kan krijgen.
     @Published var summaryFreeID: UUID?
     @Published var detailID: UUID?
+    /// Oefeningen die je in deze training erbij deed en die nog niet in het schema staan.
+    @Published var summaryAdded: [PlanItem] = []
+    @Published var summaryTemplate: String?
+    @Published var summarySaved = false
 
     // Sheets en schermen
     @Published var pending: String?
@@ -250,6 +262,8 @@ final class AppModel: ObservableObject {
     @Published var draft: Draft?
     @Published var addToDraft = false
     @Published var addToDraftWarmup = false
+    @Published var addToDraftCooldown = false
+    @Published var cardioStart = false
     @Published var swapScope = SwapScope.now
 
     // Kalender
@@ -291,6 +305,7 @@ final class AppModel: ObservableObject {
         exAcc = state.exAcc ?? [:]
         weekReset = state.weekReset ?? false
         staleReminder = state.staleReminder ?? true
+        weekPlan = state.weekPlan ?? [:]
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -375,7 +390,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -399,14 +414,14 @@ final class AppModel: ObservableObject {
         var work = 0
         var warm = 0
         var muscles: [String] = []
-        for x in items where x.isWarmup != true {
+        for x in items where x.blockKind == 1 {
             work += x.sets.count
             if x.warm != nil { warm += x.warmCount ?? 1 }
             let m = Catalog.info(x.name).muscle
             if !muscles.contains(m) { muscles.append(m) }
         }
         let minutes = Int((Double(work) * 2.25 + Double(warm)).rounded())
-        let count = items.filter { $0.isWarmup != true }.count
+        let count = items.filter { $0.blockKind == 1 }.count
         let sub = "\(count) \(count == 1 ? "oefening" : "oefeningen") · \(work) sets · ~\(minutes) min"
         return (sub, muscles.isEmpty ? "Nog leeg" : muscles.joined(separator: " · "), items)
     }
@@ -423,10 +438,23 @@ final class AppModel: ObservableObject {
         history.first(where: { dayOffset($0.date, now: now) == off })
     }
 
+    /// De training die je voor vandaag in de weekplanning hebt gezet (als die in je schema zit).
+    func plannedWorkout(now: Date = Date()) -> String? {
+        let day = String(Calendar.current.component(.weekday, from: now))
+        guard let name = weekPlan[day], program.workouts.contains(name) else { return nil }
+        return name
+    }
+
+    func setPlan(weekday: Int, to name: String?) {
+        if let n = name { weekPlan[String(weekday)] = n } else { weekPlan[String(weekday)] = nil }
+        save()
+    }
+
     /// Welke training volgt in de rotatie van het gekozen schema.
     func nextWorkoutName(now: Date = Date()) -> String? {
         let names = program.workouts
         if names.isEmpty { return nil }
+        if let planned = plannedWorkout(now: now) { return planned }
         let sorted = history.sorted { $0.date > $1.date }
         if let last = sorted.first(where: { names.contains($0.name) }), let i = names.firstIndex(of: last.name) {
             if weekReset {
@@ -502,6 +530,20 @@ final class AppModel: ObservableObject {
         } else {
             summaryFreeID = nil
         }
+        summaryAdded = []
+        summaryTemplate = nil
+        summarySaved = false
+        if let plan = templates[s.name] {
+            let known = Set(plan.map { $0.name })
+            var seen = Set<String>()
+            for e in s.exercises where !known.contains(e.name) && !seen.contains(e.name) {
+                let done = e.sets.filter { $0.done && $0.type != .warmup }
+                if done.isEmpty { continue }
+                seen.insert(e.name)
+                summaryAdded.append(PlanItem(name: e.name, group: 0, sets: done.map { PlanSet(w: $0.w, r: $0.r, rmax: nil) }))
+            }
+            if !summaryAdded.isEmpty { summaryTemplate = s.name }
+        }
         summary = result.summary
         session = nil
         screen = .summary
@@ -529,6 +571,23 @@ final class AppModel: ObservableObject {
         screen = .home
         summary = nil
         summaryFreeID = nil
+        summaryAdded = []
+        summaryTemplate = nil
+        summarySaved = false
+    }
+
+    /// Zet de oefeningen die je erbij deed in het schema (vóór een eventuele cooling-down).
+    func saveSummaryToSchema() {
+        guard let name = summaryTemplate, var items = templates[name], !summaryAdded.isEmpty else { return }
+        var g = (items.map { $0.group }.max() ?? 0)
+        let at = items.firstIndex(where: { $0.isCooldown == true }) ?? items.count
+        var add: [PlanItem] = []
+        for var p in summaryAdded { g += 1; p.group = g; add.append(p) }
+        items.insert(contentsOf: add, at: at)
+        templates[name] = items
+        summaryAdded = []
+        summarySaved = true
+        save()
     }
 
     func renameHistory(_ id: UUID, to name: String) {
@@ -658,7 +717,7 @@ final class AppModel: ObservableObject {
         guard var items = templates[name], id != targetID else { return }
         var blocks: [[PlanItem]] = []
         for x in items {
-            if let last = blocks.last?.last, last.group == x.group, last.isWarmup == x.isWarmup {
+            if let last = blocks.last?.last, last.group == x.group, last.blockKind == x.blockKind {
                 blocks[blocks.count - 1].append(x)
             } else {
                 blocks.append([x])
@@ -666,7 +725,7 @@ final class AppModel: ObservableObject {
         }
         guard let from = blocks.firstIndex(where: { $0.first?.id == id }),
               let to = blocks.firstIndex(where: { $0.first?.id == targetID }),
-              blocks[from].first?.isWarmup == blocks[to].first?.isWarmup else { return }
+              blocks[from].first?.blockKind == blocks[to].first?.blockKind else { return }
         let moving = blocks.remove(at: from)
         blocks.insert(moving, at: to)
         items = blocks.flatMap { $0 }
@@ -680,7 +739,7 @@ final class AppModel: ObservableObject {
         var blocks = d.blocks
         guard let from = blocks.firstIndex(where: { $0.first?.id == headID }),
               let to = blocks.firstIndex(where: { $0.first?.id == targetID }),
-              blocks[from].first?.isWarmup == blocks[to].first?.isWarmup else { return }
+              blocks[from].first?.blockKind == blocks[to].first?.blockKind else { return }
         let moving = blocks.remove(at: from)
         blocks.insert(moving, at: to)
         d.items = blocks.flatMap { $0 }
@@ -693,7 +752,7 @@ final class AppModel: ObservableObject {
         guard var d = draft, id != targetID,
               let from = d.items.firstIndex(where: { $0.id == id }),
               let to = d.items.firstIndex(where: { $0.id == targetID }),
-              d.items[from].isWarmup == d.items[to].isWarmup else { return }
+              d.items[from].blockKind == d.items[to].blockKind else { return }
         let item = d.items.remove(at: from)
         d.items.insert(item, at: to)
         EditorScreen.normalize(&d)
@@ -852,6 +911,19 @@ final class AppModel: ObservableObject {
         sheet = nil
     }
 
+    /// Zet een oefening in het cooling-downblok (achteraan) van het schema dat je aan het bewerken bent.
+    func addDraftCooldown(_ name: String) {
+        guard var d = draft else { return }
+        let kind = Catalog.kind(name)
+        var item = DraftItem(name: name, warmSets: 0, warmW: nil, sets: kind == .weights || kind == .bodyweight ? 2 : 1,
+                             reps: kind == .weights || kind == .bodyweight ? 15 : 5, w: Catalog.info(name).defaultWeight, link: false)
+        item.isCooldown = true
+        d.items.append(item)
+        EditorScreen.normalize(&d)
+        draft = d
+        sheet = nil
+    }
+
     func renameProgram(_ id: String, to name: String) {
         let n = name.trimmingCharacters(in: .whitespaces)
         guard !n.isEmpty, let i = programs.firstIndex(where: { $0.id == id }) else { return }
@@ -928,6 +1000,8 @@ final class AppModel: ObservableObject {
         savePref = false
         addToDraft = false
         addToDraftWarmup = false
+        addToDraftCooldown = false
+        cardioStart = false
         swapScope = .now
         if kind == .explain { linkDraft = "" }
     }
@@ -1498,7 +1572,7 @@ extension Draft {
     var blocks: [[DraftItem]] {
         var out: [[DraftItem]] = []
         for (i, it) in items.enumerated() {
-            if i > 0, it.link, !it.isWarmup, !items[i - 1].isWarmup, !out.isEmpty {
+            if i > 0, it.link, it.blockKind == 1, items[i - 1].blockKind == 1, !out.isEmpty {
                 out[out.count - 1].append(it)
             } else {
                 out.append([it])
