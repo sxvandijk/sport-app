@@ -20,7 +20,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode, weekplan
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -172,6 +172,7 @@ struct PersistedState: Codable {
     var exAcc: [String: [String]]? = nil   // per oefening: namen van de opzetstukken die je gebruikt
     var weekReset: Bool? = nil             // nieuwe week: schema begint weer bij de eerste training
     var staleReminder: Bool? = nil         // melding bij vergeten workout (standaard aan)
+    var weekPlan: [String: String]? = nil  // weekdag (1 = zondag ... 7 = zaterdag) -> naam van de training
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -219,6 +220,7 @@ final class AppModel: ObservableObject {
     @Published var exAcc: [String: [String]]
     @Published var weekReset: Bool
     @Published var staleReminder: Bool
+    @Published var weekPlan: [String: String]
     @Published var accEditID: String?
     @Published var noteLog: [String: [NoteEntry]]
 
@@ -298,6 +300,7 @@ final class AppModel: ObservableObject {
         exAcc = state.exAcc ?? [:]
         weekReset = state.weekReset ?? false
         staleReminder = state.staleReminder ?? true
+        weekPlan = state.weekPlan ?? [:]
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -382,7 +385,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -430,10 +433,23 @@ final class AppModel: ObservableObject {
         history.first(where: { dayOffset($0.date, now: now) == off })
     }
 
+    /// De training die je voor vandaag in de weekplanning hebt gezet (als die in je schema zit).
+    func plannedWorkout(now: Date = Date()) -> String? {
+        let day = String(Calendar.current.component(.weekday, from: now))
+        guard let name = weekPlan[day], program.workouts.contains(name) else { return nil }
+        return name
+    }
+
+    func setPlan(weekday: Int, to name: String?) {
+        if let n = name { weekPlan[String(weekday)] = n } else { weekPlan[String(weekday)] = nil }
+        save()
+    }
+
     /// Welke training volgt in de rotatie van het gekozen schema.
     func nextWorkoutName(now: Date = Date()) -> String? {
         let names = program.workouts
         if names.isEmpty { return nil }
+        if let planned = plannedWorkout(now: now) { return planned }
         let sorted = history.sorted { $0.date > $1.date }
         if let last = sorted.first(where: { names.contains($0.name) }), let i = names.firstIndex(of: last.name) {
             if weekReset {

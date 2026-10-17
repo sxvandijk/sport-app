@@ -846,6 +846,21 @@ struct ProfileTab: View {
                 }
                 .frame(minHeight: 64)
                 Divider().background(Tokens.line)
+                Button { model.openSheet(.weekplan) } label: {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Weekplanning").sa(16, .medium).foregroundColor(Tokens.text)
+                            Text(model.weekPlan.isEmpty ? "Kies per dag welke training je doet" : "\(model.weekPlan.count) \(model.weekPlan.count == 1 ? "dag" : "dagen") ingepland")
+                                .sa(13).foregroundColor(Tokens.text2)
+                        }
+                        Spacer(minLength: 0)
+                        Icon.chevronRight(16).foregroundColor(Tokens.text3)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                Divider().background(Tokens.line)
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Melding bij vergeten workout").sa(16, .medium).foregroundColor(Tokens.text)
