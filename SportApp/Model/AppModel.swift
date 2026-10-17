@@ -406,14 +406,14 @@ final class AppModel: ObservableObject {
         var work = 0
         var warm = 0
         var muscles: [String] = []
-        for x in items where x.isWarmup != true {
+        for x in items where x.blockKind == 1 {
             work += x.sets.count
             if x.warm != nil { warm += x.warmCount ?? 1 }
             let m = Catalog.info(x.name).muscle
             if !muscles.contains(m) { muscles.append(m) }
         }
         let minutes = Int((Double(work) * 2.25 + Double(warm)).rounded())
-        let count = items.filter { $0.isWarmup != true }.count
+        let count = items.filter { $0.blockKind == 1 }.count
         let sub = "\(count) \(count == 1 ? "oefening" : "oefeningen") · \(work) sets · ~\(minutes) min"
         return (sub, muscles.isEmpty ? "Nog leeg" : muscles.joined(separator: " · "), items)
     }
