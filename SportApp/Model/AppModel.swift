@@ -165,6 +165,7 @@ struct PersistedState: Codable {
     var creaDayLateOff: [Int]? = nil       // weekdagen zonder tweede herinnering
     var exAcc: [String: [String]]? = nil   // per oefening: namen van de opzetstukken die je gebruikt
     var weekReset: Bool? = nil             // nieuwe week: schema begint weer bij de eerste training
+    var staleReminder: Bool? = nil         // melding bij vergeten workout (standaard aan)
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -211,6 +212,7 @@ final class AppModel: ObservableObject {
     @Published var creaDayLateOff: [Int]
     @Published var exAcc: [String: [String]]
     @Published var weekReset: Bool
+    @Published var staleReminder: Bool
     @Published var accEditID: String?
     @Published var noteLog: [String: [NoteEntry]]
 
@@ -285,6 +287,7 @@ final class AppModel: ObservableObject {
         creaDayLateOff = state.creaDayLateOff ?? []
         exAcc = state.exAcc ?? [:]
         weekReset = state.weekReset ?? false
+        staleReminder = state.staleReminder ?? true
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -369,7 +372,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -454,7 +457,7 @@ final class AppModel: ObservableObject {
         sheet = nil
         toast = nil
         Notifier.requestAuthorizationIfNeeded()
-        Notifier.scheduleStale(after: Self.staleAfter)
+        if staleReminder { Notifier.scheduleStale(after: Self.staleAfter) }
         save()
     }
 
@@ -464,7 +467,7 @@ final class AppModel: ObservableObject {
 
     /// Bij openen van de app: staat er een workout die al uren stilstaat, vraag dan of hij dicht mag.
     func checkStaleWorkout() {
-        guard let s = session, confirm == nil else { return }
+        guard staleReminder, let s = session, confirm == nil else { return }
         let last = s.lastActivity ?? s.startAt
         let now = Date()
         guard now.timeIntervalSince(last) > Self.staleAfter else { return }
@@ -693,7 +696,7 @@ final class AppModel: ObservableObject {
         guard let result = s.complete(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst, restDefault: restDefault) else { return }
         session = s
         session?.lastActivity = Date()
-        Notifier.scheduleStale(after: Self.staleAfter)
+        if staleReminder { Notifier.scheduleStale(after: Self.staleAfter) }
         scrollTick += 1
         focusSetID = nil
         editField = nil

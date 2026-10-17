@@ -845,6 +845,20 @@ struct ProfileTab: View {
                     }
                 }
                 .frame(minHeight: 64)
+                Divider().background(Tokens.line)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Melding bij vergeten workout").sa(16, .medium).foregroundColor(Tokens.text)
+                        Text("Na 1,5 uur zonder set vraagt de app of je wilt afsluiten, op de tijd van je laatste set").sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    SAToggle(isOn: model.staleReminder, onColor: ac.accentLine, label: "Melding bij vergeten workout") {
+                        model.staleReminder.toggle()
+                        if !model.staleReminder { Notifier.cancelStale() }
+                        model.save()
+                    }
+                }
+                .frame(minHeight: 64)
             }
             .padding(.horizontal, 16).padding(.vertical, 4)
             .glassCard(radius: Radius.button)
