@@ -29,7 +29,7 @@ struct WorkoutDetailScreen: View {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(h.name).sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text)
                             .accessibilityAddTraits(.isHeader)
-                        Text(DateText.long(h.date).capitalized + " \u{00B7} \(h.minutes) min")
+                        Text(DateText.long(h.date).prefix(1).uppercased() + DateText.long(h.date).dropFirst() + " \u{00B7} \(h.minutes) min")
                             .sa(15).foregroundColor(Tokens.text2).padding(.top, 4)
 
                         HStack(alignment: .top, spacing: 12) {
