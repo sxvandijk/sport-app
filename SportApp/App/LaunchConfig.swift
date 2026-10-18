@@ -52,6 +52,10 @@ struct LaunchConfig {
         case "progress-empty": model.tab = .progress
         case "records": model.screen = .records
         case "allworkouts": model.screen = .allWorkouts
+        case "weekplan":
+            model.weekPlan = ["2": "Push", "4": "Pull", "6": "Legs"]
+            if let name = model.program.workouts.first { model.weekOverrides[AppModel.dateKey(Date())] = name }
+            model.screen = .weekPlan
         case "workoutdetail":
             model.detailID = model.history.sorted { $0.date > $1.date }.first(where: { !($0.exercises ?? []).isEmpty })?.id
             model.screen = .workoutDetail
@@ -153,7 +157,7 @@ struct LaunchConfig {
             model.openSheet(.accedit)
         case "weekplan":
             model.weekPlan = ["2": "Push", "4": "Pull", "6": "Legs"]
-            model.openSheet(.weekplan)
+            model.screen = .weekPlan
         case "gym":
             model.openSheet(.gym)
         case "machineadd":

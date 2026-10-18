@@ -59,11 +59,9 @@ private struct SheetBody: View {
         case .add:
             if model.addToDraftWarmup { return ("Warming-up toevoegen", "Komt vooraan in deze training") }
             if model.addToDraftCooldown { return ("Cooling-down toevoegen", "Komt achteraan in deze training") }
-            if model.cardioStart { return ("Cardio starten", "Kies je cardio. Je training start meteen.") }
             return ("Oefening toevoegen", model.addToDraft ? "Wordt onderaan je schema gezet" : "Wordt onderaan je workout gezet")
         case .program: return ("Kies je schema", "Je schema bepaalt welke trainingen je op het startscherm ziet.")
         case .tplmenu: return (model.tmName ?? "", "Opties voor deze training")
-        case .weekplan: return ("Weekplanning", "Kies per dag welke training je doet. Op die dag staat die op je startscherm. Dagen zonder keuze volgen je rotatie.")
         case .exmenu: return (name, "Opties voor deze oefening")
         case .swapscope: return ("Oefening wisselen", name.isEmpty ? "" : "Wanneer wil je \(name) wisselen?")
         case .settype: return ("Soort set", name)
@@ -191,7 +189,6 @@ private struct SheetBody: View {
         case .sidemode: SideModeSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
-        case .weekplan: WeekPlanSheet()
         case .exmenu: ExerciseMenuSheet()
         case .swapscope: SwapScopeSheet()
         }
@@ -694,9 +691,7 @@ private struct SearchList: View {
             if let m = muscleFilter, item.info.muscle != m { return false }
             return q.isEmpty || item.name.lowercased().contains(q) || item.info.muscle.lowercased().contains(q)
         }
-        if model.cardioStart && q.isEmpty && muscleFilter == nil {
-            names = names.filter { Catalog.kind($0.name) == .cardio || Catalog.kind($0.name) == .timed } + names.filter { Catalog.kind($0.name) != .cardio && Catalog.kind($0.name) != .timed }
-        } else if (model.addToDraftWarmup || model.addToDraftCooldown) && q.isEmpty && muscleFilter == nil {
+        if (model.addToDraftWarmup || model.addToDraftCooldown) && q.isEmpty && muscleFilter == nil {
             let first = names.filter { Catalog.warmupNames.contains($0.name) }
             names = first + names.filter { !Catalog.warmupNames.contains($0.name) }
         } else if (mode == .swap || mode == .preference) && q.isEmpty && muscleFilter == nil, let c = current {
@@ -921,10 +916,6 @@ private struct SearchList: View {
                                          repsMax: Catalog.kind(name) == .cardio ? nil : 12, w: w, link: false))
                 model.draft = d
                 model.sheet = nil
-            } else if model.cardioStart {
-                model.cardioStart = false
-                model.doStart("")
-                model.addExercise(name)
             } else {
                 model.addExercise(name)
             }
@@ -1517,41 +1508,6 @@ private struct SideModeSheet: View {
             .padding(.horizontal, 16).padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .glassCard(radius: Radius.button)
-        }
-    }
-}
-
-/// Per weekdag kiezen welke training je doet.
-private struct WeekPlanSheet: View {
-    @EnvironmentObject private var model: AppModel
-    // Calendar-weekdagen: 2 = maandag ... 7 = zaterdag, 1 = zondag.
-    private let days: [(Int, String)] = [(2, "Maandag"), (3, "Dinsdag"), (4, "Woensdag"), (5, "Donderdag"), (6, "Vrijdag"), (7, "Zaterdag"), (1, "Zondag")]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ForEach(days, id: \.0) { day in
-                let current = model.weekPlan[String(day.0)]
-                HStack {
-                    Text(day.1).sa(17, .medium).foregroundColor(Tokens.text)
-                    Spacer(minLength: 0)
-                    Menu {
-                        Button("Geen keuze") { model.setPlan(weekday: day.0, to: nil) }
-                        ForEach(model.program.workouts, id: \.self) { n in
-                            Button(n) { model.setPlan(weekday: day.0, to: n) }
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text(current ?? "Geen keuze").sa(15, .semibold).lineLimit(1)
-                            Icon.chevronDown(12, 2.4)
-                        }
-                        .foregroundColor(Tokens.text)
-                        .padding(.horizontal, 14).frame(height: 40)
-                        .background(Capsule().fill(Tokens.raised))
-                    }
-                }
-                .frame(minHeight: 56)
-                Divider().background(Tokens.line)
-            }
         }
     }
 }

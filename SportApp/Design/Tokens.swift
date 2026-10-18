@@ -50,6 +50,10 @@ enum Tokens {
     static let text2 = Color("text2")
     static let text3 = Color("text3")
     static let warm = Color("warm")
+    /// Blauw voor het cooling-downblok (oranje `warm` is voor warming-up).
+    static let cool = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(red: 0.42, green: 0.66, blue: 1.0, alpha: 1) : UIColor(red: 0.10, green: 0.41, blue: 0.86, alpha: 1)
+    })
     static let drop = Color("drop")
     static let danger = Color("danger")
     static let onDanger = Color("onDanger")

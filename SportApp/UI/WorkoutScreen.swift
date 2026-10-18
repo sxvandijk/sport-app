@@ -464,6 +464,15 @@ private struct OpenExerciseCard: View {
         }
     }
 
+    /// Oranje voor het warming-upblok, blauw voor het cooling-downblok.
+    private var blockColor: Color? {
+        switch exercise.blk {
+        case 1: return Tokens.warm
+        case 2: return Tokens.cool
+        default: return nil
+        }
+    }
+
     var body: some View {
         let labels = OpenExerciseCard.labels(for: exercise.sets)
         let rows: [(set: LiveSet, label: String)] = Array(zip(exercise.sets, labels)).map { (set: $0.0, label: $0.1) }
@@ -563,6 +572,8 @@ private struct OpenExerciseCard: View {
         }
         .padding(.top, 16).padding(.bottom, 10)
         .glassCard(radius: Radius.card)
+        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(blockColor?.opacity(0.10) ?? Color.clear))
+        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).stroke(blockColor?.opacity(0.7) ?? Color.clear, lineWidth: 1.5).allowsHitTesting(false))
         .padding(.horizontal, -8)
         .padding(.top, 4).padding(.bottom, 10)
     }
@@ -784,7 +795,7 @@ private struct Dock: View {
         let nums = exercise.sets.filter { $0.type != .warmup && $0.type != .drop }
         let ni = (nums.firstIndex(where: { $0.id == set.id }) ?? -1) + 1
         switch set.type {
-        case .warmup: return ("Warming-up", Tokens.warm)
+        case .warmup: return exercise.blk == 2 ? ("Cooling-down", Tokens.cool) : ("Warming-up", Tokens.warm)
         case .drop: return ("Dropset", Tokens.drop)
         case .failure: return ("Tot falen \u{00B7} \(ni) van \(nums.count)", Tokens.danger)
         case .work: return ("Set \(ni) van \(nums.count)", Tokens.text2)
@@ -881,6 +892,8 @@ private struct Dock: View {
                     PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: 52, icon: Icon.check(22)) { model.complete() }
                 }
                 .padding(.top, 10)
+            } else if (kind == .cardio || kind == .timed) && !set.done {
+                cardioControls(kind)
             } else {
                 PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
                     .padding(.top, 10)
@@ -895,6 +908,35 @@ private struct Dock: View {
         .transaction { $0.animation = nil }
         .onChange(of: model.editField) { _ in buffer = nil }
         .onChange(of: set.id) { _ in buffer = nil }
+    }
+
+    // MARK: Cardiotimer
+
+    /// Start / stop: de tijd loopt vanaf Start en wordt bij Stop als minuten ingevuld.
+    @ViewBuilder
+    private func cardioControls(_ kind: ExerciseKind) -> some View {
+        if let s = model.session, s.cardioSet == set.id, let at = s.cardioAt {
+            VStack(spacing: 8) {
+                TimelineView(.periodic(from: at, by: 1)) { ctx in
+                    let secs = max(0, Int(ctx.date.timeIntervalSince(at)))
+                    Text(String(format: "%d:%02d", secs / 60, secs % 60))
+                        .sa(40, .bold, tracking: -0.8, mono: true).foregroundColor(Tokens.text)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityLabel("\(secs / 60) minuten \(secs % 60) seconden bezig")
+                }
+                HStack(spacing: 10) {
+                    GlassButton(title: "Annuleer", role: .secondary, height: Size.primaryButton) { model.cancelCardioTimer() }
+                    PrimaryButton(title: "Stop en bewaar", height: Size.primaryButton, icon: Icon.check(22)) { model.stopCardioTimer() }
+                }
+            }
+            .padding(.top, 10)
+        } else {
+            HStack(spacing: 10) {
+                GlassButton(title: "Start timer", role: .secondary, height: Size.primaryButton) { model.startCardioTimer() }
+                PrimaryButton(title: "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
+            }
+            .padding(.top, 10)
+        }
     }
 
     // MARK: Invoer

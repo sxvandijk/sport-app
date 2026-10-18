@@ -39,8 +39,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Training
 - [x] Cooling-down-blok achteraan in je schema (Ronde 10b)
 - [~] Schema-wijzigingen opslaan na de training (Ronde 10b): alleen oefeningen die je erbij deed; aangepaste sets/gewichten volgen
-- [x] Weekplanning (Ronde 10b): per dag een training kiezen
-- [~] Cardio starten (Ronde 10b): knop op Start; geen live-timer
+- [x] Weekplanning als weekkalender (Ronde 11a): plannen per dag of vast op een weekdag
+- [x] Cardio-timer in de workout (Ronde 11a): Start bij de set, Stop vult de minuten in; knop op Start is weg
 - [ ] Live Activity / Dynamic Island voor rust en training
 
 ## Overig scherm
@@ -111,3 +111,10 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Weekplanning: Profiel > Training > Weekplanning. Per weekdag een training kiezen; op die dag staat die bovenaan bij Start ("Gepland voor vandaag"). Dagen zonder keuze volgen je gewone rotatie.
 - Na je training: deed je een oefening erbij die niet in het schema staat, dan staat op het eindscherm "Zet in mijn schema". Alleen nieuwe oefeningen; wijzigingen aan sets of gewicht niet.
 - Start: knop "Cardio starten" kiest een cardio-oefening en start meteen een vrije training. (Nog geen lopende timer.)
+
+## Ronde 11a (wacht op test)
+- Kleuren: cooling-down blauw (knop in de editor en het vak in je workout), warming-up oranje op dezelfde manier.
+- Warming-up- en cooling-downblokken tellen nu mee voor sets en volume (op het eindscherm, in Progressie en in het detailscherm). Oude trainingen blijven zoals ze waren.
+- "Lege training" heet nu "Vrije training".
+- Cardio starten op het startscherm is weg. In de workout staat bij een cardio-/tijdset "Start timer": de tijd loopt, "Stop en bewaar" vult de minuten in en rondt de set af. De timer loopt door als je de app sluit.
+- Weekplanning: Profiel > Training > Weekplanning toont de week als kalender, met pijltjes naar andere weken. Tik op een dag: "Alleen op deze dag" (training of rustdag) of "Vast elke maandag" enz. Een losse keuze gaat voor op de vaste.

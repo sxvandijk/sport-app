@@ -846,11 +846,11 @@ struct ProfileTab: View {
                 }
                 .frame(minHeight: 64)
                 Divider().background(Tokens.line)
-                Button { model.openSheet(.weekplan) } label: {
+                Button { model.screen = .weekPlan } label: {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Weekplanning").sa(16, .medium).foregroundColor(Tokens.text)
-                            Text(model.weekPlan.isEmpty ? "Kies per dag welke training je doet" : "\(model.weekPlan.count) \(model.weekPlan.count == 1 ? "dag" : "dagen") ingepland")
+                            Text(model.weekPlan.isEmpty && model.weekOverrides.isEmpty ? "Plan je week in en zet trainingen vast op een dag" : "Bekijk en pas je week aan")
                                 .sa(13).foregroundColor(Tokens.text2)
                         }
                         Spacer(minLength: 0)

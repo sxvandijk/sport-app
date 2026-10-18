@@ -69,7 +69,7 @@ struct WorkoutDetailScreen: View {
     }
 
     private func workSets(_ h: HistoryEntry) -> Int {
-        (h.exercises ?? []).reduce(0) { $0 + $1.sets.filter { $0.type != .warmup }.count }
+        (h.exercises ?? []).reduce(0) { $0 + $1.countedSets.count }
     }
 
     private func stat(_ value: String, _ label: String) -> some View {

@@ -94,7 +94,7 @@ struct OverviewScreen: View {
 
     private func warmupRow(_ x: PlanItem) -> some View {
         HStack(spacing: 12) {
-            Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 32)
+            Circle().fill(x.isCooldown == true ? Tokens.cool : Tokens.warm).frame(width: 10, height: 10).frame(width: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(x.name).sa(17, .medium).foregroundColor(Tokens.text)
                 Text(OverviewScreen.warmupLine(x)).sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
@@ -374,7 +374,7 @@ struct EditorScreen: View {
                 }
                 .foregroundColor(Tokens.warm)
                 .frame(maxWidth: .infinity).frame(height: 48)
-                .card(Tokens.raised, radius: Radius.button)
+                .card(Tokens.warm.opacity(0.14), radius: Radius.button)
             }
             .buttonStyle(.plain)
         }
@@ -399,9 +399,9 @@ struct EditorScreen: View {
                     Icon.plus(18, 2.4)
                     Text("Cooling-down toevoegen").sa(16, .semibold)
                 }
-                .foregroundColor(Tokens.warm)
+                .foregroundColor(Tokens.cool)
                 .frame(maxWidth: .infinity).frame(height: 48)
-                .card(Tokens.raised, radius: Radius.button)
+                .card(Tokens.cool.opacity(0.14), radius: Radius.button)
             }
             .buttonStyle(.plain)
         }
@@ -412,7 +412,7 @@ struct EditorScreen: View {
         let kind = info.kind
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 10) {
-                Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
+                Circle().fill(it.isCooldown ? Tokens.cool : Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
                     Text(info.muscle + " \u{00B7} " + kind.title).sa(13).foregroundColor(Tokens.text2)
@@ -578,7 +578,7 @@ struct EditorScreen: View {
     private func reorderItemRow(_ it: DraftItem, number: Int, hue: Color?, handle: Bool) -> some View {
         HStack(spacing: 12) {
             if it.blockKind != 1 {
-                Circle().fill(Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
+                Circle().fill(it.isCooldown ? Tokens.cool : Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
             } else {
                 NumberBadge(text: String(number), hue: hue, size: 28)
             }
