@@ -43,7 +43,7 @@ struct ProgressStats {
             let weeksAgo = cal.dateComponents([.day], from: hWeekStart, to: weekStart).day.map { $0 / 7 } ?? 99
             for e in h.exercises ?? [] {
                 let kind = Catalog.kind(e.name)
-                for s in e.sets where s.type != .warmup {
+                for s in e.countedSets {
                     if kind == .cardio || kind == .timed { continue }
                     let vol = s.w * Double(s.totalReps)
                     if inMonth { out.volume += vol }
@@ -94,7 +94,7 @@ struct ProgressStats {
         for e in entry.exercises ?? [] {
             let kind = Catalog.kind(e.name)
             if kind == .cardio || kind == .timed { continue }
-            for s in e.sets where s.type != .warmup { total += s.w * Double(s.totalReps) }
+            for s in e.countedSets { total += s.w * Double(s.totalReps) }
         }
         return total
     }

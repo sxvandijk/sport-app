@@ -4,7 +4,7 @@ import UserNotifications
 import AudioToolbox
 import Combine
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan }
 enum HomeTab: Int, CaseIterable, Identifiable {
     case gym, progress, start, training, profile
     var id: Int { rawValue }
@@ -20,7 +20,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode, weekplan
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -172,7 +172,8 @@ struct PersistedState: Codable {
     var exAcc: [String: [String]]? = nil   // per oefening: namen van de opzetstukken die je gebruikt
     var weekReset: Bool? = nil             // nieuwe week: schema begint weer bij de eerste training
     var staleReminder: Bool? = nil         // melding bij vergeten workout (standaard aan)
-    var weekPlan: [String: String]? = nil  // weekdag (1 = zondag ... 7 = zaterdag) -> naam van de training
+    var weekPlan: [String: String]? = nil  // vaste dag: weekdag (1 = zondag ... 7 = zaterdag) -> naam van de training
+    var weekOverrides: [String: String]? = nil // alleen die datum (jjjj-mm-dd) -> training, of "" voor rustdag
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
@@ -221,6 +222,7 @@ final class AppModel: ObservableObject {
     @Published var weekReset: Bool
     @Published var staleReminder: Bool
     @Published var weekPlan: [String: String]
+    @Published var weekOverrides: [String: String]
     @Published var accEditID: String?
     @Published var noteLog: [String: [NoteEntry]]
 
@@ -263,7 +265,6 @@ final class AppModel: ObservableObject {
     @Published var addToDraft = false
     @Published var addToDraftWarmup = false
     @Published var addToDraftCooldown = false
-    @Published var cardioStart = false
     @Published var swapScope = SwapScope.now
 
     // Kalender
@@ -306,6 +307,7 @@ final class AppModel: ObservableObject {
         weekReset = state.weekReset ?? false
         staleReminder = state.staleReminder ?? true
         weekPlan = state.weekPlan ?? [:]
+        weekOverrides = state.weekOverrides ?? [:]
         var log = state.noteLog ?? [:]
         for (name, text) in state.notes ?? [:] where log[name] == nil && !text.isEmpty {
             log[name] = [NoteEntry(date: now, text: text)]
@@ -390,7 +392,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, weekOverrides: weekOverrides, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
     }
 
     func save() {
@@ -438,15 +440,33 @@ final class AppModel: ObservableObject {
         history.first(where: { dayOffset($0.date, now: now) == off })
     }
 
-    /// De training die je voor vandaag in de weekplanning hebt gezet (als die in je schema zit).
-    func plannedWorkout(now: Date = Date()) -> String? {
-        let day = String(Calendar.current.component(.weekday, from: now))
-        guard let name = weekPlan[day], program.workouts.contains(name) else { return nil }
-        return name
+    static func dateKey(_ d: Date) -> String {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: d)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
-    func setPlan(weekday: Int, to name: String?) {
+    /// Wat er voor een dag gepland staat: een losse keuze voor alleen die dag gaat voor op de vaste weekdag.
+    func plan(for date: Date) -> (name: String?, fixed: Bool, rest: Bool) {
+        if let o = weekOverrides[Self.dateKey(date)] {
+            if o.isEmpty { return (nil, false, true) }
+            return (program.workouts.contains(o) || templates[o] != nil ? o : nil, false, false)
+        }
+        let day = String(Calendar.current.component(.weekday, from: date))
+        if let f = weekPlan[day], templates[f] != nil { return (f, true, false) }
+        return (nil, false, false)
+    }
+
+    /// De training die je voor vandaag hebt ingepland (niet op een rustdag).
+    func plannedWorkout(now: Date = Date()) -> String? { plan(for: now).name }
+
+    func setFixedPlan(weekday: Int, to name: String?) {
         if let n = name { weekPlan[String(weekday)] = n } else { weekPlan[String(weekday)] = nil }
+        save()
+    }
+
+    /// name: training, "" = rustdag, nil = losse keuze wissen.
+    func setDayPlan(date: Date, to name: String?) {
+        if let n = name { weekOverrides[Self.dateKey(date)] = n } else { weekOverrides[Self.dateKey(date)] = nil }
         save()
     }
 
@@ -522,11 +542,11 @@ final class AppModel: ObservableObject {
             var logged: [LoggedExercise] = []
             for e in s.exercises {
                 let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.two == true && $0.type != .warmup ? 2 : nil) }
-                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two, acc: e.acc)) }
+                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two, acc: e.acc, blk: e.blk)) }
             }
             let entry = HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged)
             history.insert(entry, at: 0)
-            summaryFreeID = s.name == "Lege training" ? entry.id : nil
+            summaryFreeID = s.name == "Vrije training" ? entry.id : nil
         } else {
             summaryFreeID = nil
         }
@@ -627,6 +647,40 @@ final class AppModel: ObservableObject {
         editField = nil
         Haptics.light()
         save()
+    }
+
+    /// Start de timer voor de huidige cardioset.
+    func startCardioTimer() {
+        guard var s = session, let c = current().cur else { return }
+        s.cardioSet = c.setID
+        s.cardioAt = Date()
+        session = s
+        editField = nil
+        Haptics.light()
+        save()
+    }
+
+    func cancelCardioTimer() {
+        guard var s = session else { return }
+        s.cardioSet = nil
+        s.cardioAt = nil
+        session = s
+        save()
+    }
+
+    /// Stopt de timer, vult de gelopen minuten in en rondt de set af.
+    func stopCardioTimer() {
+        guard var s = session, let id = s.cardioSet, let at = s.cardioAt else { return }
+        let minutes = max(1, Int((Date().timeIntervalSince(at) / 60).rounded()))
+        s.setReps(set: id, to: minutes)
+        s.cardioSet = nil
+        s.cardioAt = nil
+        if let ex = s.exercises.first(where: { $0.sets.contains(where: { $0.id == id }) }) {
+            focusID = ex.id
+            focusSetID = id
+        }
+        session = s
+        complete()
     }
 
     func stepReps(_ dir: Int, second: Bool = false) {
@@ -1001,7 +1055,6 @@ final class AppModel: ObservableObject {
         addToDraft = false
         addToDraftWarmup = false
         addToDraftCooldown = false
-        cardioStart = false
         swapScope = .now
         if kind == .explain { linkDraft = "" }
     }

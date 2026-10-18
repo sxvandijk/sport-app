@@ -75,6 +75,8 @@ struct LiveExercise: Identifiable, Codable, Hashable {
     /// Gekozen opzetstuk (touw, rechte stang...) en de eigen stap daarvan.
     var acc: String? = nil
     var accStep: Double? = nil
+    /// 1 = warming-upblok, 2 = cooling-downblok (die tellen mee voor sets en volume).
+    var blk: Int? = nil
 
     var workSets: [LiveSet] { sets.filter { $0.type != .warmup } }
 
@@ -123,6 +125,15 @@ struct LiveSession: Codable, Hashable {
     var nextGroup: Int
     /// Laatste keer dat je een set afvinkte (voor de 'vergeten workout'-melding).
     var lastActivity: Date? = nil
+    /// Lopende cardiotimer: welke set en sinds wanneer.
+    var cardioSet: UUID? = nil
+    var cardioAt: Date? = nil
+
+    mutating func setReps(set id: UUID, to r: Int) {
+        for e in exercises.indices {
+            if let s = exercises[e].sets.firstIndex(where: { $0.id == id }) { exercises[e].sets[s].r = r; return }
+        }
+    }
 
     // MARK: Opbouwen
 
@@ -156,6 +167,7 @@ struct LiveSession: Codable, Hashable {
     static func makeExercise(name: String, group: Int, plan: PlanItem?, last: LoggedExercise? = nil) -> LiveExercise {
         var sets: [LiveSet] = []
         let isWarmupBlock = plan?.isWarmup == true || plan?.isCooldown == true
+        let blk: Int? = plan?.isWarmup == true ? 1 : (plan?.isCooldown == true ? 2 : nil)
         let lastWork = (last?.sets ?? []).filter { isWarmupBlock ? $0.type == .warmup : $0.type != .warmup }
         let kind = Catalog.kind(name)
         let workType: SetType = isWarmupBlock ? .warmup : .work
@@ -178,6 +190,7 @@ struct LiveSession: Codable, Hashable {
             sets.append(LiveSet(type: workType, w: w, r: r, pw: prev?.w, pr: prev?.r, rmax: base?.rmax, rmin: base?.r))
         }
         var ex = LiveExercise(name: name, group: group, from: nil, sets: sets)
+        ex.blk = blk
         if !isWarmupBlock {
             let accs = Catalog.accessories(for: name)
             if let a = accs.first(where: { $0.name == last?.acc }) ?? accs.first {
@@ -202,7 +215,7 @@ struct LiveSession: Codable, Hashable {
             let last = (item.isWarmup == true || item.isCooldown == true) ? lastLoggedWarmup(item.name, in: history) : lastLogged(item.name, in: history)
             list.append(makeExercise(name: item.name, group: item.group, plan: item, last: last))
         }
-        return LiveSession(name: name.isEmpty ? "Lege training" : name, startAt: startAt, exercises: list, nextGroup: 100)
+        return LiveSession(name: name.isEmpty ? "Vrije training" : name, startAt: startAt, exercises: list, nextGroup: 100)
     }
 
     // MARK: Opvragen
@@ -603,13 +616,13 @@ struct LiveSession: Codable, Hashable {
         var workDone = 0
         var volume = 0.0
         for e in exercises {
-            for s in e.sets where s.type != .warmup && s.done {
+            for s in e.sets where (s.type != .warmup || e.blk != nil) && s.done {
                 workDone += 1
                 if Catalog.kind(e.name) != .cardio { volume += s.w * Double(s.volumeReps(twoSides: e.two == true)) }
             }
         }
         var lines: [SummaryLine] = []
-        for e in exercises where e.sets.contains(where: { $0.done && $0.type != .warmup }) {
+        for e in exercises where e.sets.contains(where: { $0.done && ($0.type != .warmup || e.blk != nil) }) {
             lines.append(SummaryLine(name: e.name, summary: LiveSession.summary(of: e.sets.filter { $0.done }, kind: Catalog.kind(e.name))))
         }
         let seconds = Int(now.timeIntervalSince(startAt))

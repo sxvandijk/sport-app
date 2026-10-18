@@ -50,7 +50,6 @@ struct StartTab: View {
                 secondary("Andere training kiezen") { model.tab = .training }
                     .padding(.top, 4)
                 secondary("Vrije training zonder schema") { model.askStart("") }
-                secondary("Cardio starten") { model.openSheet(.add); model.cardioStart = true }
             }
             .frame(maxWidth: .infinity)
         } else {
