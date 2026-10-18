@@ -208,6 +208,24 @@ struct TrainingTab: View {
 
             CalendarCard(expandable: true).padding(.top, 14)
 
+            Button { model.screen = .weekPlan } label: {
+                HStack(spacing: 12) {
+                    Icon.calendar(18).foregroundColor(ac.accentText)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Weekplanning").sa(16, .semibold).foregroundColor(Tokens.text)
+                        Text("Plan je week in, of zet een training vast op een dag").sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    Icon.chevronRight(16).foregroundColor(Tokens.text3)
+                }
+                .padding(.horizontal, 14)
+                .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                .glassCard(radius: Radius.button)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 10)
+
             HStack(alignment: .center) {
                 SectionLabel(text: "Mijn schema")
                 Spacer(minLength: 0)

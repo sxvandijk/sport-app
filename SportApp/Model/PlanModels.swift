@@ -202,8 +202,8 @@ struct LoggedExercise: Codable, Hashable {
     /// 1 = warming-upblok, 2 = cooling-downblok (telt mee voor sets en volume).
     var blk: Int? = nil
 
-    /// Sets die meetellen: werksets, en alles uit een warming-up- of cooling-downblok.
-    var countedSets: [LoggedSet] { sets.filter { $0.type != .warmup || blk != nil } }
+    /// Sets die meetellen voor sets en volume: alles wat je deed, ook warming-upsets.
+    var countedSets: [LoggedSet] { sets }
 }
 
 struct HistoryEntry: Codable, Hashable, Identifiable {

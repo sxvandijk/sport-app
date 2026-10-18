@@ -27,7 +27,7 @@ enum SetType: String, Codable, CaseIterable, Hashable {
 
     var detail: String {
         switch self {
-        case .warmup: return "Telt niet mee voor je sets en volume"
+        case .warmup: return "Lichtere opwarmset, telt mee"
         case .work: return "Normale set, telt mee"
         case .drop: return "Direct na de vorige set, lichter, zonder rust"
         case .failure: return "Werkset tot je geen rep meer kunt"
@@ -616,13 +616,13 @@ struct LiveSession: Codable, Hashable {
         var workDone = 0
         var volume = 0.0
         for e in exercises {
-            for s in e.sets where (s.type != .warmup || e.blk != nil) && s.done {
+            for s in e.sets where s.done {
                 workDone += 1
                 if Catalog.kind(e.name) != .cardio { volume += s.w * Double(s.volumeReps(twoSides: e.two == true)) }
             }
         }
         var lines: [SummaryLine] = []
-        for e in exercises where e.sets.contains(where: { $0.done && ($0.type != .warmup || e.blk != nil) }) {
+        for e in exercises where e.sets.contains(where: { $0.done }) {
             lines.append(SummaryLine(name: e.name, summary: LiveSession.summary(of: e.sets.filter { $0.done }, kind: Catalog.kind(e.name))))
         }
         let seconds = Int(now.timeIntervalSince(startAt))

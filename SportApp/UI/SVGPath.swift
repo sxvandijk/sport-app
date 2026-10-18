@@ -286,6 +286,7 @@ extension Icon {
         Icon(paths: ["M12 9v4l2.5 2M9 2.5h6"], circles: [.init(cx: 12, cy: 13, r: 8)], lineWidth: 2, size: size)
     }
     static func machine(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M5 3v18M19 3v18M5 3h14M9 8h6M9 12h6M9 16h6"], lineWidth: 2, size: size) }
+    static func calendar(_ size: CGFloat = 18) -> Icon { Icon(paths: ["M5 5h14v15H5zM5 10h14M9 3v4M15 3v4"], lineWidth: 2, size: size) }
     static func edit(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"], lineWidth: 2, size: size) }
     static func duplicate(_ size: CGFloat = 20) -> Icon { Icon(paths: ["M8 8h11v11H8zM5 16V5h11"], lineWidth: 2, size: size) }
     static func info(_ size: CGFloat = 16) -> Icon { Icon(paths: ["M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z", "M12 11v5.5", "M12 7.6h.01"], lineWidth: 2, size: size) }

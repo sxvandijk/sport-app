@@ -738,6 +738,7 @@ private struct SearchList: View {
             .card(Tokens.raised, radius: Radius.field)
             filterRow.padding(.top, 8)
             Spacer().frame(height: 4)
+            createSection
 
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(0..<shown.count, id: \.self) { i in
@@ -752,7 +753,6 @@ private struct SearchList: View {
             }
             // Vaste minimale hoogte: de lijst springt niet omlaag als er minder resultaten zijn.
             .frame(maxWidth: .infinity, minHeight: 420, alignment: .topLeading)
-            createSection
         }
     }
 

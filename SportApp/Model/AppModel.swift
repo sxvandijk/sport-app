@@ -668,7 +668,7 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    /// Stopt de timer, vult de gelopen minuten in en rondt de set af.
+    /// Stopt de timer en vult de gelopen minuten in. De set is nog niet af: je kunt de tijd of kilometers nog aanpassen.
     func stopCardioTimer() {
         guard var s = session, let id = s.cardioSet, let at = s.cardioAt else { return }
         let minutes = max(1, Int((Date().timeIntervalSince(at) / 60).rounded()))
@@ -678,9 +678,12 @@ final class AppModel: ObservableObject {
         if let ex = s.exercises.first(where: { $0.sets.contains(where: { $0.id == id }) }) {
             focusID = ex.id
             focusSetID = id
+            // Cardio: eerst de kilometers; alleen-tijd: de minuten.
+            editField = Catalog.kind(ex.name) == .timed ? .reps : .weight
         }
         session = s
-        complete()
+        Haptics.success()
+        save()
     }
 
     func stepReps(_ dir: Int, second: Bool = false) {

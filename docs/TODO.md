@@ -11,6 +11,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Ronde 3c: "Alle trainingen" met filter in Progressie, tabbalk lager + glijdende markering + swipen tussen schermen, lichte achtergrond in light mode
 
 ## Volgende
+- [ ] Profiel-tab opruimen: kopjes voor Meldingen, App-instellingen, Persoonlijke instellingen enzovoort
 - [ ] Apple Watch-app, of een andere manier om te zien hoe lang je nog rust hebt
 - [x] Vergeten workout (Ronde 8a, wacht op test): na 1,5 uur geen set een melding, en bij openen vraagt de app "Workout sluiten?"
 - [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
@@ -118,3 +119,10 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - "Lege training" heet nu "Vrije training".
 - Cardio starten op het startscherm is weg. In de workout staat bij een cardio-/tijdset "Start timer": de tijd loopt, "Stop en bewaar" vult de minuten in en rondt de set af. De timer loopt door als je de app sluit.
 - Weekplanning: Profiel > Training > Weekplanning toont de week als kalender, met pijltjes naar andere weken. Tik op een dag: "Alleen op deze dag" (training of rustdag) of "Vast elke maandag" enz. Een losse keuze gaat voor op de vaste.
+
+## Ronde 11b (wacht op test)
+- Alle sets tellen mee voor sets en volume, ook gewone warming-upsets.
+- Cardio-timer: Stop vult de minuten in maar rondt de set niet af. Je kunt daarna kilometers en tijd nog aanpassen en tikt zelf op "Set klaar".
+- Nieuwe oefening toevoegen: de knop "Eigen oefening: ..." staat nu bovenaan de zoekresultaten, boven het toetsenbord.
+- Kalender: dagen met een geplande training krijgen een stipje. Tik op een dag: je ziet wat er gepland staat en kunt via "Plan" (alleen die dag of vast elke weekdag) inplannen. Zelfde kalender op Start, Training en Progressie.
+- Training-tab: knop "Weekplanning" onder de kalender (naast Profiel).
