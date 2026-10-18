@@ -52,7 +52,8 @@ final class RoundOneTests: XCTestCase {
                                          LoggedExercise(name: "Hardlopen op de loopband", sets: [LoggedSet(w: 2.4, r: 3, type: .work)])])
         let st = ProgressStats.make(history: [a, b], now: now)
         XCTAssertEqual(st.trainings, 2)
-        XCTAssertEqual(st.volume, 60 * 10 + 70 * 8, accuracy: 0.001)
+        // Warming-upsets tellen mee (30 kg × 12).
+        XCTAssertEqual(st.volume, 60 * 10 + 30 * 12 + 70 * 8, accuracy: 0.001)
         XCTAssertEqual(st.records.first(where: { $0.name == "Butterfly" })?.weight, 70)
         XCTAssertNil(st.records.first(where: { $0.name == "Hardlopen op de loopband" }))
         XCTAssertEqual(st.newRecords, 1)
