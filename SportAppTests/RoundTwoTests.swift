@@ -122,6 +122,6 @@ final class WeekWorkoutsTests: XCTestCase {
         XCTAssertEqual(ProgressStats.workouts(inWeek: 7, history: h, now: now, calendar: cal).map { $0.name }, ["Legs"])
         XCTAssertEqual(ProgressStats.workouts(inWeek: 6, history: h, now: now, calendar: cal).map { $0.name }, ["Push"])
         XCTAssertTrue(ProgressStats.workouts(inWeek: 0, history: h, now: now, calendar: cal).isEmpty)
-        XCTAssertEqual(ProgressStats.volume(of: thisWeek), 1000)
+        XCTAssertEqual(ProgressStats.volume(of: thisWeek), 1000 + 600) // warming-upset telt mee
     }
 }

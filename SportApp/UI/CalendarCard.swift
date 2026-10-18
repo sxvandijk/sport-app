@@ -81,9 +81,27 @@ struct CalendarCard: View {
                     }
                 }
             }
-            if let sel = selected { Text(info(for: sel, today: today)).sa(13).foregroundColor(Tokens.text2)
+            if let sel = selected {
+                HStack(spacing: 8) {
+                    Text(info(for: sel, today: today)).sa(13).foregroundColor(Tokens.text2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if sel >= today && entry(on: sel) == nil {
+                        Menu {
+                            DayPlanMenuContent(date: sel)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Icon.plus(12, 2.6)
+                                Text("Plan").sa(13, .semibold)
+                            }
+                            .foregroundColor(ac.accentText)
+                            .padding(.horizontal, 12).frame(height: 32)
+                            .background(Capsule().fill(ac.accentSoft))
+                            .frame(minHeight: 40).contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Plan deze dag")
+                    }
+                }
                 .padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 6)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
@@ -93,7 +111,13 @@ struct CalendarCard: View {
     private func info(for day: Date, today: Date) -> String {
         if let t = entry(on: day) { return DateText.short(day) + " \u{00B7} " + t.name + " \u{00B7} \(t.minutes) min" }
         if cal.isDate(day, inSameDayAs: today), let s = model.session { return "Vandaag \u{00B7} " + s.name + " loopt nog" }
-        return DateText.short(day) + (day > today ? "" : " \u{00B7} rustdag")
+        let plan = model.plan(for: day)
+        if day >= today {
+            if let n = plan.name { return DateText.short(day) + " \u{00B7} gepland: " + n }
+            if plan.rest { return DateText.short(day) + " \u{00B7} rustdag" }
+            return DateText.short(day) + " \u{00B7} niets gepland"
+        }
+        return DateText.short(day) + " \u{00B7} rustdag"
     }
 
     private func summaryHeader(now: Date, today: Date) -> some View {
@@ -179,6 +203,7 @@ struct CalendarCard: View {
         else if isToday { textColor = Tokens.text }
 
         let showRing = isToday && trained == nil
+        let planned = trained == nil && day >= today && model.plan(for: day).name != nil
         let number = String(cal.component(.day, from: day))
         let bold = trained != nil || isToday
 
@@ -191,6 +216,9 @@ struct CalendarCard: View {
                 .background(Circle().fill(fill))
                 .overlay(Circle().stroke(showRing ? ac.accentLine : Color.clear, lineWidth: 2))
                 .frame(maxWidth: .infinity).frame(height: 42)
+                .overlay(alignment: .bottom) {
+                    Circle().fill(planned ? ac.accentLine : Color.clear).frame(width: 5, height: 5).offset(y: -1)
+                }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -926,7 +926,7 @@ private struct Dock: View {
                 }
                 HStack(spacing: 10) {
                     GlassButton(title: "Annuleer", role: .secondary, height: Size.primaryButton) { model.cancelCardioTimer() }
-                    PrimaryButton(title: "Stop en bewaar", height: Size.primaryButton, icon: Icon.check(22)) { model.stopCardioTimer() }
+                    PrimaryButton(title: "Stop", height: Size.primaryButton, icon: Icon.check(22)) { model.stopCardioTimer() }
                 }
             }
             .padding(.top, 10)

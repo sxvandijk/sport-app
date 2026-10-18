@@ -36,7 +36,7 @@ struct WeekPlanScreen: View {
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)
-                        Text("Profiel").sa(17)
+                        Text("Terug").sa(17)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.leading, 4).padding(.trailing, 10).frame(height: 44)
@@ -98,25 +98,12 @@ struct WeekPlanScreen: View {
 
     private func dayRow(_ d: Date) -> some View {
         let plan = model.plan(for: d)
-        let weekday = Calendar.current.component(.weekday, from: d)
         let isToday = Calendar.current.isDateInToday(d)
         let done = model.history.first(where: { Calendar.current.isDate($0.date, inSameDayAs: d) })
         let dayName = weekdayName(d)
         let dayNum = Calendar.current.component(.day, from: d)
         return Menu {
-            Menu("Alleen op deze dag") {
-                ForEach(model.program.workouts, id: \.self) { n in
-                    Button(n) { model.setDayPlan(date: d, to: n) }
-                }
-                Button("Rustdag") { model.setDayPlan(date: d, to: "") }
-                Button("Terug naar vast schema") { model.setDayPlan(date: d, to: nil) }
-            }
-            Menu("Vast elke " + dayName) {
-                ForEach(model.program.workouts, id: \.self) { n in
-                    Button(n) { model.setFixedPlan(weekday: weekday, to: n) }
-                }
-                Button("Niets vast") { model.setFixedPlan(weekday: weekday, to: nil) }
-            }
+            DayPlanMenuContent(date: d)
         } label: {
             HStack(spacing: 12) {
                 VStack(spacing: 0) {
@@ -155,5 +142,36 @@ struct WeekPlanScreen: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(dayName + " \(dayNum)")
+    }
+}
+
+
+/// De keuzes om een dag in te plannen: alleen die dag, of vast voor elke zelfde weekdag.
+struct DayPlanMenuContent: View {
+    @EnvironmentObject private var model: AppModel
+    let date: Date
+
+    private var dayName: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "nl_NL")
+        f.dateFormat = "EEEE"
+        return f.string(from: date)
+    }
+
+    var body: some View {
+        let weekday = Calendar.current.component(.weekday, from: date)
+        Menu("Alleen op deze dag") {
+            ForEach(model.program.workouts, id: \.self) { n in
+                Button(n) { model.setDayPlan(date: date, to: n) }
+            }
+            Button("Rustdag") { model.setDayPlan(date: date, to: "") }
+            Button("Terug naar vast schema") { model.setDayPlan(date: date, to: nil) }
+        }
+        Menu("Vast elke " + dayName) {
+            ForEach(model.program.workouts, id: \.self) { n in
+                Button(n) { model.setFixedPlan(weekday: weekday, to: n) }
+            }
+            Button("Niets vast") { model.setFixedPlan(weekday: weekday, to: nil) }
+        }
     }
 }
