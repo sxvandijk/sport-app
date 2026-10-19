@@ -32,7 +32,7 @@ struct WeekPlanScreen: View {
         VStack(spacing: 0) {
             HStack {
                 Button {
-                    model.screen = .home
+                    model.screen = model.cameFromSettings ? .settings : .home; model.cameFromSettings = false
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)

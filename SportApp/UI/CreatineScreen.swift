@@ -13,7 +13,7 @@ struct CreatineScreen: View {
             HStack {
                 Button {
                     model.tab = .profile
-                    model.screen = .home
+                    model.screen = model.cameFromSettings ? .settings : .home; model.cameFromSettings = false
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)

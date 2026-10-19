@@ -4,7 +4,7 @@ import UserNotifications
 import AudioToolbox
 import Combine
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings }
 enum HomeTab: Int, CaseIterable, Identifiable {
     case gym, progress, start, training, profile
     var id: Int { rawValue }
@@ -269,6 +269,8 @@ final class AppModel: ObservableObject {
 
     // Kalender
     @Published var calOpen = false
+    @Published var profileSub: ProfileSub = .training
+    var cameFromSettings = false
     @Published var calOpenProgress = false
     @Published var calSel: Int?
     @Published var calInfo = ""

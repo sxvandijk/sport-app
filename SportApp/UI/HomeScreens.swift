@@ -796,97 +796,6 @@ struct ProfileTab: View {
             .glassCard(radius: Radius.button)
             .padding(.top, 16)
 
-            SectionLabel(text: "Training").padding(.top, 24).padding(.bottom, 10)
-            VStack(spacing: 0) {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Standaard rusttijd").sa(16, .medium).foregroundColor(Tokens.text)
-                        Text("Na een werkset").sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    HStack(spacing: 0) {
-                        Button { model.setRestDefault(model.restDefault - 15) } label: {
-                            Text("−").sa(20).foregroundColor(Tokens.text).frame(width: 40, height: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Kortere rust")
-                        Text(SAFormat.clock(seconds: model.restDefault)).sa(16, .semibold, mono: true)
-                            .foregroundColor(Tokens.text).frame(minWidth: 48)
-                        Button { model.setRestDefault(model.restDefault + 15) } label: {
-                            Text("+").sa(20).foregroundColor(Tokens.text).frame(width: 40, height: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Langere rust")
-                    }
-                    .card(Tokens.raised, radius: Radius.field)
-                }
-                .frame(minHeight: 60)
-
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Warming-up in superset").sa(16, .medium).foregroundColor(Tokens.text)
-                        Text("Eerst direct je eerste werkset, dan wisselen").sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    SAToggle(isOn: model.warmFirst, onColor: ac.accentLine, label: "Warming-up in superset") {
-                        model.warmFirst.toggle()
-                        model.save()
-                    }
-                }
-                .frame(minHeight: 64)
-
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Elke week opnieuw beginnen").sa(16, .medium).foregroundColor(Tokens.text)
-                        Text("Op maandag weer de eerste training van je schema").sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    SAToggle(isOn: model.weekReset, onColor: ac.accentLine, label: "Elke week opnieuw beginnen") {
-                        model.weekReset.toggle()
-                        model.save()
-                    }
-                }
-                .frame(minHeight: 64)
-                Divider().background(Tokens.line)
-                Button { model.screen = .weekPlan } label: {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Weekplanning").sa(16, .medium).foregroundColor(Tokens.text)
-                            Text(model.weekPlan.isEmpty && model.weekOverrides.isEmpty ? "Plan je week in en zet trainingen vast op een dag" : "Bekijk en pas je week aan")
-                                .sa(13).foregroundColor(Tokens.text2)
-                        }
-                        Spacer(minLength: 0)
-                        Icon.chevronRight(16).foregroundColor(Tokens.text3)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 4)
-            .glassCard(radius: Radius.button)
-
-            SectionLabel(text: "Meldingen").padding(.top, 24).padding(.bottom, 10)
-            VStack(spacing: 0) {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Melding bij vergeten workout").sa(16, .medium).foregroundColor(Tokens.text)
-                        Text("Na 1,5 uur zonder set vraagt de app of je wilt afsluiten, op de tijd van je laatste set").sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    SAToggle(isOn: model.staleReminder, onColor: ac.accentLine, label: "Melding bij vergeten workout") {
-                        model.staleReminder.toggle()
-                        if !model.staleReminder { Notifier.cancelStale() }
-                        model.save()
-                    }
-                }
-                .frame(minHeight: 64)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 4)
-            .glassCard(radius: Radius.button)
-
-            CreatineRow().padding(.top, 10)
-
             SectionLabel(text: "Weergave").padding(.top, 24).padding(.bottom, 10)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {
@@ -902,9 +811,16 @@ struct ProfileTab: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .glassCard(radius: Radius.button)
 
-            SectionLabel(text: "Persoonlijk").padding(.top, 24).padding(.bottom, 10)
-            Text("Hier komen later kg of lb, gegevens exporteren en een back-up.")
-                .sa(13).foregroundColor(Tokens.text3).lineSpacing(3)
+            SectionLabel(text: "Instellingen").padding(.top, 24).padding(.bottom, 10)
+            VStack(spacing: 0) {
+                SettingsLink(title: "Training", sub: "Rusttijd, warming-up, weekplanning", page: .training)
+                Divider().background(Tokens.line)
+                SettingsLink(title: "Meldingen", sub: "Vergeten workout, creatine", page: .notifications)
+                Divider().background(Tokens.line)
+                SettingsLink(title: "Persoonlijk", sub: "Binnenkort: kg of lb, exporteren, back-up", page: .personal)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 4)
+            .glassCard(radius: Radius.button)
         }
     }
 }
@@ -1014,12 +930,12 @@ func timeBinding(_ value: Int, _ set: @escaping (Int) -> Void) -> Binding<Date> 
 }
 
 /// Rij in Profiel die het aparte creatine-scherm opent.
-private struct CreatineRow: View {
+struct CreatineRow: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
     var body: some View {
-        Button { model.screen = .creatine } label: {
+        Button { model.cameFromSettings = true; model.screen = .creatine } label: {
             HStack(spacing: 14) {
                 Icon.bell(20).foregroundColor(ac.accentText)
                     .frame(width: 44, height: 44).background(Circle().fill(ac.accentSoft))
