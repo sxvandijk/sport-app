@@ -20,13 +20,13 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Melding bij vergeten workout is nu een instelling (Profiel > Training, standaard aan)
 - [x] Opzetstuk per record in Progressie (Ronde 9a)
 - [ ] Creatine-melding koppelen aan weekplanning (geen melding op dagen dat je een shake na het sporten neemt)
-- [ ] Instelling: bij een nieuwe week het schema opnieuw beginnen bij de eerste training (bv. weer Push op maandag)
+- [x] Instelling "Elke week opnieuw beginnen" (Ronde 7a): Profiel > Training; op maandag weer de eerste training
 - [x] Live Activity en Dynamic Island (Ronde 6a, wacht op test met Sideloadly)
 - [~] Alle trainingen-pagina: tik op een training opent het detailscherm (Ronde 10a); mooier maken blijft open
 - [x] Vrije training een naam geven aan het einde (Ronde 10a)
 - [ ] Progressie-scherm in plaats van "sets per spiergroep": statistieken ook als cirkel (donut), menselijk lichaam met spieren (heatmap) en andere leuke extra's
 - [ ] Leuker statistiekenscherm
-- [ ] Opzetstukken per oefening (touw, rechte stang, V-stang...): kiezen welke je gebruikt, gewicht/stap per opzetstuk apart; toevoegen via Gym > accessoires
+- [x] Opzetstukken per oefening (Ronde 7a-7d): kiezen op de oefeningkaart, gewicht/stap per opzetstuk, beheren in Gym > Opzetstukken
 - [x] Nieuw startscherm (Ronde 4a): tab "Start", gecentreerd, volgende training in één tik, Ready-Set-Go
 - [x] Ronde 4b: kalender bovenaan, duidelijkere knoppen, Ready-Set-Go bij openen van de app (niet bij workout starten), tabvolgorde Gym > Progressie > Start > Training > Profiel
 - [ ] Design-ronde: moderner, nog minimalistisch (skills: ui-ux-pro-max, SwiftUI-expert, Apple HIG)
@@ -42,10 +42,10 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [~] Schema-wijzigingen opslaan na de training (Ronde 10b): alleen oefeningen die je erbij deed; aangepaste sets/gewichten volgen
 - [x] Weekplanning als weekkalender (Ronde 11a): plannen per dag of vast op een weekdag
 - [x] Cardio-timer in de workout (Ronde 11a): Start bij de set, Stop vult de minuten in; knop op Start is weg
-- [ ] Live Activity / Dynamic Island voor rust en training
+- [~] Live Activity / Dynamic Island: werkt op iPhone 8; op iOS 27 geblokkeerd door Sideloadly-signering (geparkeerd)
 
 ## Overig scherm
-- [ ] Startscherm met "Ready Set Go"-splash
+- [x] Startscherm met "Ready Set Go"-splash (Ronde 4)
 - [ ] Trainingsgeschiedenis, sorteerbaar op type
 - [ ] Week aantikken in de volumegrafiek
 
