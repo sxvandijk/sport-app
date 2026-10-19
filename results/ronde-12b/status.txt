@@ -1,0 +1,4 @@
+branch: ronde-12b
+commit: 17e6d7d7218e882e8d4c4dec279388942dea3849
+status: failure
+run: https://github.com/sxvandijk/sport-app/actions/runs/39315740846
