@@ -144,7 +144,6 @@ struct SettingsScreen: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-            }
         }
         .padding(.horizontal, 16).padding(.vertical, 4)
         .glassCard(radius: Radius.button)
