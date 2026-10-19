@@ -63,6 +63,8 @@ struct LaunchConfig {
         case "training-empty": model.tab = .training
         case "gym": model.tab = .gym
         case "profile": model.tab = .profile
+        case "settings-training": model.profileSub = .training; model.screen = .settings
+        case "settings-notifications": model.profileSub = .notifications; model.screen = .settings
         case "workout": model.screen = .workout
         case "workout-rest":
             model.screen = .workout

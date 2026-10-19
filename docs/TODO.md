@@ -11,7 +11,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Ronde 3c: "Alle trainingen" met filter in Progressie, tabbalk lager + glijdende markering + swipen tussen schermen, lichte achtergrond in light mode
 
 ## Volgende
-- [x] Profiel-tab opgeruimd (Ronde 12a): kopjes Training, Meldingen, Weergave, Persoonlijk
+- [x] Profiel-tab opgeruimd (Ronde 12b): Weergave bovenaan, daaronder Instellingen met subschermen Training, Meldingen en Persoonlijk
 - [ ] Apple Watch-app, of een andere manier om te zien hoe lang je nog rust hebt
 - [x] Vergeten workout (Ronde 8a, wacht op test): na 1,5 uur geen set een melding, en bij openen vraagt de app "Workout sluiten?"
 - [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
@@ -130,3 +130,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Ronde 12a (wacht op test)
 - Training-tab: de knop "Week plannen" is klein en staat pas onder de kalender als je die uitklapt.
 - Profiel opgeruimd in kopjes: Training (rusttijd, warming-up in superset, elke week opnieuw, weekplanning), Meldingen (vergeten workout, creatine), Weergave (kleur, modus), Persoonlijk (nog leeg: later kg/lb, export, back-up).
+
+## Ronde 12b (wacht op test)
+- Profiel: Weergave staat weer bovenaan. Daaronder "Instellingen" met drie rijen die naar een subscherm gaan: Training (rusttijd, warming-up in superset, elke week opnieuw, weekplanning), Meldingen (vergeten workout, creatine) en Persoonlijk (nog leeg).
+- Terug vanuit weekplanning of creatine (geopend via Instellingen) brengt je terug naar het subscherm.
