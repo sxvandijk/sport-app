@@ -208,23 +208,22 @@ struct TrainingTab: View {
 
             CalendarCard(expandable: true).padding(.top, 14)
 
-            Button { model.screen = .weekPlan } label: {
-                HStack(spacing: 12) {
-                    Icon.calendar(18).foregroundColor(ac.accentText)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Weekplanning").sa(16, .semibold).foregroundColor(Tokens.text)
-                        Text("Plan je week in, of zet een training vast op een dag").sa(13).foregroundColor(Tokens.text2)
+            if model.calOpen {
+                Button { model.screen = .weekPlan } label: {
+                    HStack(spacing: 8) {
+                        Icon.calendar(16).foregroundColor(ac.accentText)
+                        Text("Week plannen").sa(15, .semibold).foregroundColor(ac.accentText)
+                        Spacer(minLength: 0)
+                        Icon.chevronRight(14).foregroundColor(Tokens.text3)
                     }
-                    Spacer(minLength: 0)
-                    Icon.chevronRight(16).foregroundColor(Tokens.text3)
+                    .padding(.horizontal, 14)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .glassSurface(Capsule(), interactive: true, fallback: Tokens.raised)
+                    .contentShape(Capsule())
                 }
-                .padding(.horizontal, 14)
-                .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-                .glassCard(radius: Radius.button)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .padding(.top, 8)
             }
-            .buttonStyle(.plain)
-            .padding(.top, 10)
 
             HStack(alignment: .center) {
                 SectionLabel(text: "Mijn schema")
@@ -797,21 +796,6 @@ struct ProfileTab: View {
             .glassCard(radius: Radius.button)
             .padding(.top, 16)
 
-            SectionLabel(text: "Weergave").padding(.top, 24).padding(.bottom, 10)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Accentkleur").sa(16, .medium).foregroundColor(Tokens.text)
-                    Spacer()
-                    Text(model.accent.displayName).sa(14).foregroundColor(Tokens.text2)
-                }
-                AccentPicker().padding(.top, 8)
-                Text("Modus").sa(16, .medium).foregroundColor(Tokens.text).padding(.top, 16).padding(.bottom, 8)
-                ModePicker()
-            }
-            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassCard(radius: Radius.button)
-
             SectionLabel(text: "Training").padding(.top, 24).padding(.bottom, 10)
             VStack(spacing: 0) {
                 HStack(spacing: 12) {
@@ -878,7 +862,12 @@ struct ProfileTab: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                Divider().background(Tokens.line)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 4)
+            .glassCard(radius: Radius.button)
+
+            SectionLabel(text: "Meldingen").padding(.top, 24).padding(.bottom, 10)
+            VStack(spacing: 0) {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Melding bij vergeten workout").sa(16, .medium).foregroundColor(Tokens.text)
@@ -896,11 +885,26 @@ struct ProfileTab: View {
             .padding(.horizontal, 16).padding(.vertical, 4)
             .glassCard(radius: Radius.button)
 
-            SectionLabel(text: "Herinneringen").padding(.top, 24).padding(.bottom, 10)
-            CreatineRow()
+            CreatineRow().padding(.top, 10)
 
-            Text("Later hier ook: kg of lb, gegevens exporteren en een back-up.")
-                .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 16)
+            SectionLabel(text: "Weergave").padding(.top, 24).padding(.bottom, 10)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Accentkleur").sa(16, .medium).foregroundColor(Tokens.text)
+                    Spacer()
+                    Text(model.accent.displayName).sa(14).foregroundColor(Tokens.text2)
+                }
+                AccentPicker().padding(.top, 8)
+                Text("Modus").sa(16, .medium).foregroundColor(Tokens.text).padding(.top, 16).padding(.bottom, 8)
+                ModePicker()
+            }
+            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassCard(radius: Radius.button)
+
+            SectionLabel(text: "Persoonlijk").padding(.top, 24).padding(.bottom, 10)
+            Text("Hier komen later kg of lb, gegevens exporteren en een back-up.")
+                .sa(13).foregroundColor(Tokens.text3).lineSpacing(3)
         }
     }
 }
