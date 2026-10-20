@@ -38,6 +38,7 @@
 		8DB0632372FB61F39C0AD5A6 /* WorkoutLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E843FFB2CFC68666CE2D53 /* WorkoutLogic.swift */; };
 		9CBF1955DF3A5CFCF602FDEA /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D54759F8040E33B2C14343 /* Glass.swift */; };
 		A0110CE2AF7AECE8C2781550 /* WorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0712612F457AE49D40617626 /* WorkoutStore.swift */; };
+		A1AD9A1072B1B2DEB6226C10 /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB7E5FADDADE4A5DBA7A0A6 /* SettingsScreen.swift */; };
 		A3D503EFB5EDC0BAC3E15589 /* SetWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2059F43EBA6B7238D4FAD028 /* SetWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A5B26B79A8591E6D6C268A88 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049E495496112395984D36A2 /* Components.swift */; };
 		ABEB0E1CB30A90E6BE3DF2FF /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42714DFDD5D907BC4C03BFCD /* WorkoutActivityAttributes.swift */; };
@@ -127,6 +128,7 @@
 		8690A6B0684E501990C50472 /* MachineDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachineDB.swift; sourceTree = "<group>"; };
 		87A6C6FBD9988FE4300BFDA8 /* OtherScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherScreens.swift; sourceTree = "<group>"; };
 		8AD2BC91197F81593504F85C /* WorkoutDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailScreen.swift; sourceTree = "<group>"; };
+		8EB7E5FADDADE4A5DBA7A0A6 /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
 		904C969D974EED4BDAFD24AE /* StoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreTests.swift; sourceTree = "<group>"; };
 		918CC0964C868C2CD443E51D /* DomainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainTests.swift; sourceTree = "<group>"; };
 		959A7F48557742F5435E81D0 /* Gym.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gym.swift; sourceTree = "<group>"; };
@@ -163,6 +165,7 @@
 				126581F677789CD791AC5137 /* HomeScreens.swift */,
 				87A6C6FBD9988FE4300BFDA8 /* OtherScreens.swift */,
 				7FF10B0A5955D7380CAB57CB /* RecordsScreen.swift */,
+				8EB7E5FADDADE4A5DBA7A0A6 /* SettingsScreen.swift */,
 				EE5A68D9636C3C4FDB011318 /* Sheets.swift */,
 				AAFA5B54810A38D095507DC9 /* StartScreen.swift */,
 				1E3FA897A80262B5FD9BADA2 /* SVGPath.swift */,
@@ -444,6 +447,7 @@
 				224E9FB15BE95AF39FF4C3C6 /* RecordsScreen.swift in Sources */,
 				1CEE362E8B65DB787C242767 /* RootView.swift in Sources */,
 				5AFAC9BB1BFC69EAB7E3082D /* SVGPath.swift in Sources */,
+				A1AD9A1072B1B2DEB6226C10 /* SettingsScreen.swift in Sources */,
 				3D9D878A700537D75780C23A /* Sheets.swift in Sources */,
 				10C1EA55EB35837427EBCDC7 /* SportAppApp.swift in Sources */,
 				6959566389082FE5DAB04F87 /* StartScreen.swift in Sources */,
