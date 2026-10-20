@@ -134,3 +134,15 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 ## Ronde 12b (wacht op test)
 - Profiel: Weergave staat weer bovenaan. Daaronder "Instellingen" met drie rijen die naar een subscherm gaan: Training (rusttijd, warming-up in superset, elke week opnieuw, weekplanning), Meldingen (vergeten workout, creatine) en Persoonlijk (nog leeg).
 - Terug vanuit weekplanning of creatine (geopend via Instellingen) brengt je terug naar het subscherm.
+
+## Ronde 13a (wacht op test)
+- Vinkje van een eerder setje per ongeluk weggehaald: de rusttimer loopt door en je krijgt "Ongedaan maken". De knop bij een gedaan setje heet nu "Terug naar huidige set".
+- Superset tijdens de workout: bovenin staat een vinkje zodra je iets kiest, en de knop "Koppelen" staat boven de zoeklijst.
+- Superset: de lijst scrolt naar de oefening waar je nu mee bezig bent, niet naar het begin van het blok.
+- Invoer met toetsenblok is lager (kleinere toetsen), en de rustklok is weg tijdens het invullen.
+- Links en rechts apart: je kunt nu een eigen gewicht per kant instellen, met een knop om ze gelijk te zetten. Het volume rekent met beide gewichten.
+- Zijmodus-scherm is nu een keuze: Eén gewicht, Per arm of been tegelijk (2x), Links en rechts apart. Eén handvat met twee handen telt niet meer dubbel; kabel telt alleen dubbel bij "Losse handgreep".
+- Na afloop kun je per erbij gedane oefening kiezen of hij in je schema komt.
+- Na je geplande training van vandaag staat de volgende training op het startscherm, met een regel dat je de ingeplande hebt afgerond.
+- Creatine staat op het startscherm: vink hem daar af of open hem.
+

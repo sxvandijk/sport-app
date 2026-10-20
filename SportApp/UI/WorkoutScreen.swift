@@ -597,7 +597,7 @@ private struct SetRow: View {
         case .timed: return ""
         case .bodyweight: return set.w == 0 ? "\u{2013}" : Format.weight(set.w)
         case .cardio: return Format.km(set.w)
-        case .weights: return Format.weight(set.w)
+        case .weights: return set.w2 != nil && set.w2 != set.w && set.type != .warmup ? Format.weight(set.w) + "/" + Format.weight(set.w2 ?? set.w) : Format.weight(set.w)
         }
     }
 
