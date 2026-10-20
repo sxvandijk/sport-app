@@ -166,3 +166,10 @@ Status per 2026-10-20. Minimaal iOS 26 (bouwen op GitHub). Ronde 1 (training log
 - Meer opzetstukken in de standaardlijst (o.a. lat-stang, parallelle greep, smalle greep, enkelband). Gyms waar je de lijst zelf hebt aangepast houden hun eigen lijst; voeg nieuwe zelf toe.
 - One-arm oefeningen staan standaard op links en rechts apart.
 - Test: rechte stang, 12 x 25 kg telt als 300 kg volume.
+
+## Ronde 14b (wacht op test, branch ronde-14b, nog niet in main)
+- Voeding: balk bovenin met kcal gegeten, hoeveel er nog mag en eiwit. "Doel aanpassen": cutten/onderhouden/bulken plus eigen kcal en eiwit. Maaltijden loggen met naam, kcal, eiwit; snel opnieuw toevoegen van eerdere maaltijden (geen productendatabase).
+- Supplementen in Voeding: creatine, omega 3, magnesium en eigen supplementen. Afvinken per dag, per supplement een eigen herinnering met "Gehad"-knop.
+- Voeding staat standaard aan. Creatine staat niet meer op Start.
+- Start-tab: alleen de bliksem, geen cirkel. Tab "Progressie" heet weer "Profiel"; kalender eruit (staat op Start en Training).
+- Nog te doen: redesign door de hele app (workout, schema/training instellen, sheets).
