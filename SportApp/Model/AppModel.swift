@@ -4,7 +4,7 @@ import UserNotifications
 import AudioToolbox
 import Combine
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings, supplement }
 /// De tabs, in vaste volgorde. Voeding is optioneel (Instellingen › Functionaliteiten).
 /// Gebruik altijd de case, nooit een index: zonder Voeding schuiven de posities op.
 enum HomeTab: Int, CaseIterable, Identifiable {
@@ -16,7 +16,7 @@ enum HomeTab: Int, CaseIterable, Identifiable {
         case .logbook: return "Logboek"
         case .start: return "Start"
         case .training: return "Training"
-        case .progress: return "Progressie"
+        case .progress: return "Profiel"
         }
     }
 }
@@ -48,6 +48,22 @@ struct MealEntry: Codable, Hashable, Identifiable {
     var name: String
     var kcal: Int?
     var protein: Int?
+}
+
+/// Een supplement met een eigen dagelijkse herinnering (creatine heeft een eigen, uitgebreider scherm).
+struct Supplement: Codable, Hashable, Identifiable {
+    var id: String = UUID().uuidString
+    var name: String
+    var on: Bool = false
+    /// Minuten sinds middernacht.
+    var time: Int = 9 * 60
+    /// Dagen (jjjj-mm-dd) waarop je hem hebt afgevinkt.
+    var done: [String] = []
+
+    static let defaults: [Supplement] = [
+        Supplement(id: "std-omega3", name: "Omega 3", on: false, time: 9 * 60),
+        Supplement(id: "std-magnesium", name: "Magnesium", on: false, time: 21 * 60)
+    ]
 }
 
 enum SheetKind: String {
@@ -218,6 +234,9 @@ struct PersistedState: Codable {
     var nutritionTab: Bool? = nil               // Voeding-tab zichtbaar (standaard uit)
     var nutritionPlan: NutritionPlan? = nil
     var meals: [MealEntry]? = nil
+    var nutritionKcalGoal: Int? = nil           // dagdoel in kcal (nil = standaard bij je doel)
+    var nutritionProteinGoal: Int? = nil        // dagdoel eiwit in gram
+    var supplements: [Supplement]? = nil        // naast creatine
 }
 
 /// De toestand van de hele app. De regels staan in `LiveSession`; dit is de laag die schermen en opslag verbindt.
@@ -269,6 +288,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var nutritionTab: Bool
     @Published var nutritionPlan: NutritionPlan
     @Published var meals: [MealEntry]
+    @Published var nutritionKcalGoal: Int?
+    @Published var nutritionProteinGoal: Int?
+    @Published var supplements: [Supplement]
+    @Published var supplementEditID: String?
 
     // Werkscherm
     @Published var focusID: UUID?
@@ -365,9 +388,12 @@ final class AppModel: ObservableObject {
             log[name] = [NoteEntry(date: now, text: text)]
         }
         noteLog = log
-        nutritionTab = state.nutritionTab ?? false
+        nutritionTab = state.nutritionTab ?? true
         nutritionPlan = state.nutritionPlan ?? .maintain
         meals = state.meals ?? []
+        nutritionKcalGoal = state.nutritionKcalGoal
+        nutritionProteinGoal = state.nutritionProteinGoal
+        supplements = state.supplements ?? Supplement.defaults
         // Eerdere versies hadden 1:30 als standaard rusttijd; de nieuwe standaard is 3:00.
         if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
@@ -447,7 +473,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, weekOverrides: weekOverrides, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog, nutritionTab: nutritionTab, nutritionPlan: nutritionPlan, meals: meals)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, weekOverrides: weekOverrides, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog, nutritionTab: nutritionTab, nutritionPlan: nutritionPlan, meals: meals, nutritionKcalGoal: nutritionKcalGoal, nutritionProteinGoal: nutritionProteinGoal, supplements: supplements)
     }
 
     func save() {
@@ -1212,6 +1238,94 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    /// Dagdoel in kcal: je eigen keuze, anders een beginwaarde bij je doel (pas hem aan naar jezelf).
+    var kcalGoal: Int {
+        nutritionKcalGoal ?? (nutritionPlan == .cut ? 2200 : (nutritionPlan == .bulk ? 3000 : 2600))
+    }
+
+    var proteinGoal: Int { nutritionProteinGoal ?? 140 }
+
+    func setNutritionGoals(kcal: Int? = nil, protein: Int? = nil) {
+        if let k = kcal { nutritionKcalGoal = min(6000, max(1000, k)) }
+        if let p = protein { nutritionProteinGoal = min(400, max(30, p)) }
+        save()
+    }
+
+    /// Maaltijden van de laatste weken, uniek op naam: snel opnieuw toevoegen zonder een productendatabase.
+    var recentMeals: [MealEntry] {
+        var seen = Set<String>()
+        var out: [MealEntry] = []
+        for m in meals.sorted(by: { $0.date > $1.date }) where !seen.contains(m.name.lowercased()) && (m.kcal != nil || m.protein != nil) {
+            seen.insert(m.name.lowercased())
+            out.append(m)
+            if out.count >= 8 { break }
+        }
+        return out
+    }
+
+    // MARK: Supplementen
+
+    func supplement(_ id: String?) -> Supplement? { supplements.first { $0.id == id } }
+
+    func supplementDoneToday(_ s: Supplement) -> Bool { s.done.contains(AppModel.dayKey(Date())) }
+
+    func toggleSupplementDone(_ id: String) {
+        guard let i = supplements.firstIndex(where: { $0.id == id }) else { return }
+        let key = AppModel.dayKey(Date())
+        if let k = supplements[i].done.firstIndex(of: key) { supplements[i].done.remove(at: k) } else { supplements[i].done.append(key) }
+        if supplements[i].done.count > 60 { supplements[i].done.removeFirst(supplements[i].done.count - 60) }
+        Haptics.light()
+        rescheduleSupplements()
+        save()
+    }
+
+    /// Vanuit de melding ("Gehad").
+    func markSupplementDoneFromNotification(_ id: String) {
+        guard let i = supplements.firstIndex(where: { $0.id == id }) else { return }
+        let key = AppModel.dayKey(Date())
+        if !supplements[i].done.contains(key) { supplements[i].done.append(key) }
+        rescheduleSupplements()
+        save()
+    }
+
+    func setSupplement(_ id: String, on: Bool) {
+        guard let i = supplements.firstIndex(where: { $0.id == id }) else { return }
+        supplements[i].on = on
+        if on { Notifier.requestAuthorizationIfNeeded() }
+        rescheduleSupplements()
+        save()
+    }
+
+    func setSupplementTime(_ id: String, minutes: Int) {
+        guard let i = supplements.firstIndex(where: { $0.id == id }) else { return }
+        supplements[i].time = min(1439, max(0, minutes))
+        rescheduleSupplements()
+        save()
+    }
+
+    func addSupplement(name: String) {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !n.isEmpty, !supplements.contains(where: { $0.name.lowercased() == n.lowercased() }) else { return }
+        supplements.append(Supplement(name: n, on: true, time: 9 * 60))
+        Notifier.requestAuthorizationIfNeeded()
+        rescheduleSupplements()
+        save()
+    }
+
+    func deleteSupplement(_ id: String) {
+        Notifier.cancelSupplement(id)
+        supplements.removeAll { $0.id == id }
+        save()
+    }
+
+    func rescheduleSupplements() {
+        for s in supplements { Notifier.scheduleSupplement(s) }
+    }
+
+    func supplementSummary(_ s: Supplement) -> String {
+        s.on ? "Elke dag om " + clockText(s.time) : "Herinnering uit"
+    }
+
     func closeSheet() { sheet = nil }
 
     // MARK: Schema's en trainingen
@@ -1687,6 +1801,10 @@ enum Notifier {
     static let creatineCategory = "CREATINE"
     static let takenAction = "CREATINE_TAKEN"
     static let laterAction = "CREATINE_LATER"
+    static let supplementCategory = "SUPPLEMENT"
+    static let supplementTakenAction = "SUPPLEMENT_TAKEN"
+    /// Wordt door de app gezet; draait wanneer je in de melding van een supplement op "Gehad" tikt.
+    static var onSupplementTaken: ((String) -> Void)?
     /// Wordt door de app gezet; draait wanneer je in de melding op "Gehad" tikt.
     static var onCreatineTaken: (() -> Void)?
 
@@ -1695,7 +1813,9 @@ enum Notifier {
         let taken = UNNotificationAction(identifier: takenAction, title: "Gehad", options: [])
         let later = UNNotificationAction(identifier: laterAction, title: "Later", options: [])
         let category = UNNotificationCategory(identifier: creatineCategory, actions: [taken, later], intentIdentifiers: [], options: [])
-        UNUserNotificationCenter.current().setNotificationCategories([category])
+        let suppTaken = UNNotificationAction(identifier: supplementTakenAction, title: "Gehad", options: [])
+        let suppCategory = UNNotificationCategory(identifier: supplementCategory, actions: [suppTaken], intentIdentifiers: [], options: [])
+        UNUserNotificationCenter.current().setNotificationCategories([category, suppCategory])
     }
 
     static func requestAuthorizationIfNeeded() {
@@ -1750,6 +1870,37 @@ enum Notifier {
             if lateOn && !lateOffDays.contains(weekday) && late > first {
                 add(center, id: "creatine-b-\(i)", day: day, minutes: late, body: "Creatine nog niet gehad? Pak hem bij het avondeten.", now: now)
             }
+        }
+    }
+
+    private static func supplementIDs(_ id: String) -> [String] { (0..<14).map { "supp-\(id)-\($0)" } }
+
+    static func cancelSupplement(_ id: String) {
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: supplementIDs(id))
+    }
+
+    /// Plant de komende 14 dagen een herinnering per supplement, behalve op dagen dat je hem al hebt afgevinkt.
+    static func scheduleSupplement(_ s: Supplement) {
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return }
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: supplementIDs(s.id))
+        guard s.on else { return }
+        let cal = Calendar.current
+        let now = Date()
+        let start = cal.startOfDay(for: now)
+        for i in 0..<14 {
+            guard let day = cal.date(byAdding: .day, value: i, to: start), !s.done.contains(AppModel.dayKey(day)) else { continue }
+            guard let fire = cal.date(byAdding: .minute, value: s.time, to: day), fire > now else { continue }
+            let content = UNMutableNotificationContent()
+            content.title = s.name
+            content.body = "Tijd voor je \(s.name.lowercased())."
+            content.sound = .default
+            content.categoryIdentifier = supplementCategory
+            content.userInfo = ["supplement": s.id]
+            let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+            center.add(UNNotificationRequest(identifier: "supp-\(s.id)-\(i)", content: content,
+                                             trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
         }
     }
 

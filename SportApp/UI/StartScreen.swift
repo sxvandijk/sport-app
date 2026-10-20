@@ -17,7 +17,6 @@ struct StartTab: View {
             Spacer(minLength: 24)
             hero(next)
             Spacer(minLength: 24)
-            if model.crea { creatineCard.padding(.bottom, 12) }
         }
         .frame(minHeight: UIScreen.main.bounds.height - 230)
     }
@@ -67,38 +66,6 @@ struct StartTab: View {
             }
             .frame(maxWidth: .infinity)
         }
-    }
-
-    /// Creatine direct op het startscherm: één tik om af te vinken, of open voor de tijden.
-    private var creatineCard: some View {
-        let done = model.creaDoneToday
-        return HStack(spacing: 4) {
-            Button { model.toggleCreaDone() } label: {
-                ZStack {
-                    Circle().fill(done ? ac.accentLine : Color.clear)
-                    Circle().stroke(done ? Color.clear : Tokens.line, lineWidth: 2)
-                    if done { Icon.check(14, 3).foregroundColor(ac.onAccent) }
-                }
-                .frame(width: 28, height: 28)
-                .frame(width: 48, height: 52).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(done ? "Creatine vandaag gehad, tik om weg te halen" : "Creatine vandaag afvinken")
-            Button { model.cameFromSettings = false; model.screen = .creatine } label: {
-                HStack(spacing: 8) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Creatine").sa(16, .semibold).foregroundColor(Tokens.text)
-                        Text(done ? "Vandaag gehad" : "Vandaag nog niet gehad").sa(13).foregroundColor(Tokens.text2)
-                    }
-                    Spacer(minLength: 0)
-                    Icon.chevronRight(16).foregroundColor(Tokens.text3)
-                }
-                .padding(.trailing, 16)
-                .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        }
-        .glassCard(radius: Radius.button)
     }
 
     private func secondary(_ title: String, action: @escaping () -> Void) -> some View {

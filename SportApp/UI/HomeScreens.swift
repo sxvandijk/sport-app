@@ -13,7 +13,7 @@ struct AppTabBar: View {
         case .logbook: return Icon.tabLogbook
         case .start: return Icon.tabStart
         case .training: return Icon.tabTraining
-        case .progress: return Icon.tabProgress
+        case .progress: return Icon.tabProfile
         }
     }
 
@@ -41,16 +41,9 @@ struct AppTabBar: View {
                     ForEach(tabs) { tab in
                         let on = model.tab == tab
                         VStack(spacing: 3) {
-                            if tab == .start {
-                                // Start is de hoofdactie: altijd een gevulde accentcirkel.
-                                icon(tab).foregroundColor(ac.onAccent)
-                                    .frame(width: 30, height: 30)
-                                    .background(Circle().fill(ac.accent))
-                                    .scaleEffect(on ? 1.1 : 1)
-                                    .padding(.top, -3)
-                            } else {
-                                icon(tab).scaleEffect(on && !reduceMotion ? 1.12 : 1)
-                            }
+                            // Start is de hoofdactie: de bliksem is iets groter, zonder cirkel.
+                            icon(tab)
+                                .scaleEffect((on && !reduceMotion ? 1.12 : 1) * (tab == .start ? 1.15 : 1))
                             Text(tab.title).sa(11, .semibold).lineLimit(1).minimumScaleFactor(0.8)
                         }
                         .animation(reduceMotion ? nil : Motion.pop, value: on)

@@ -29,7 +29,7 @@ struct SettingsLink: View {
     }
 }
 
-/// Instellingen (via het tandwiel op Progressie) en de subschermen Training, Gym, Meldingen en Persoonlijk.
+/// Instellingen (via het tandwiel op Profiel) en de subschermen Training, Gym, Meldingen en Persoonlijk.
 struct SettingsScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
@@ -57,7 +57,7 @@ struct SettingsScreen: View {
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)
-                        Text(model.profileSub == .overview ? "Progressie" : "Instellingen").sa(17)
+                        Text(model.profileSub == .overview ? "Profiel" : "Instellingen").sa(17)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.leading, 4).padding(.trailing, 10).frame(height: 44)
@@ -128,7 +128,7 @@ struct SettingsScreen: View {
                 Divider().background(Tokens.line)
                 SettingsLink(title: "Gym", sub: model.gym.name + " \u{00B7} apparaten en opzetstukken", page: .gym)
                 Divider().background(Tokens.line)
-                SettingsLink(title: "Meldingen", sub: "Vergeten workout, creatine", page: .notifications)
+                SettingsLink(title: "Meldingen", sub: "Vergeten workout en supplementen", page: .notifications)
                 Divider().background(Tokens.line)
                 SettingsLink(title: "Persoonlijk", sub: "Binnenkort: kg of lb, exporteren, back-up", page: .personal)
             }
@@ -227,7 +227,12 @@ struct SettingsScreen: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 4)
             .glassCard(radius: Radius.button)
-            CreatineRow().padding(.top, 10)
+            if model.nutritionTab {
+                Text("Creatine, omega 3 en andere supplementen stel je in op de Voeding-tab.")
+                    .sa(13).foregroundColor(Tokens.text2).lineSpacing(3).padding(.top, 12).padding(.horizontal, 4)
+            } else {
+                CreatineRow().padding(.top, 10)
+            }
         }
     }
 

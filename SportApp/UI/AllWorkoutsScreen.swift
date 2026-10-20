@@ -19,7 +19,7 @@ struct AllWorkoutsScreen: View {
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)
-                        Text("Progressie").sa(17)
+                        Text("Profiel").sa(17)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.leading, 4).padding(.trailing, 10).frame(height: 44)

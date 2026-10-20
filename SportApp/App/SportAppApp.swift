@@ -9,6 +9,9 @@ final class NotificationHandler: NSObject, UNUserNotificationCenterDelegate {
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         if response.actionIdentifier == Notifier.takenAction {
             DispatchQueue.main.async { Notifier.onCreatineTaken?() }
+        } else if response.actionIdentifier == Notifier.supplementTakenAction,
+                  let id = response.notification.request.content.userInfo["supplement"] as? String {
+            DispatchQueue.main.async { Notifier.onSupplementTaken?(id) }
         }
         completionHandler()
     }
@@ -36,6 +39,7 @@ struct SportAppApp: App {
             UNUserNotificationCenter.current().delegate = NotificationHandler.shared
             Notifier.registerCategories()
             Notifier.onCreatineTaken = { model.markCreaDoneFromNotification() }
+            Notifier.onSupplementTaken = { model.markSupplementDoneFromNotification($0) }
             _model = StateObject(wrappedValue: model)
         }
     }
@@ -44,7 +48,7 @@ struct SportAppApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(model)
-                .onAppear { if !LaunchConfig().isScreenshotRun { model.rescheduleCreatine() } }
+                .onAppear { if !LaunchConfig().isScreenshotRun { model.rescheduleCreatine(); model.rescheduleSupplements() } }
         }
     }
 }
