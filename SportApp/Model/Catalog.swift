@@ -38,6 +38,12 @@ struct ExerciseInfo {
 /// De oefeningenbibliotheek (Engelse namen, zoals in de sportschool). De volgorde is de volgorde in zoekresultaten.
 enum Catalog {
     /// Oefeningen waarbij je het gewicht van één arm of been invult (dumbbells, one-arm, bayesian).
+    /// Eén arm of been tegelijk (one arm, single leg, bayesian, concentration): die doe je altijd links én rechts.
+    static func isOneArm(_ name: String) -> Bool {
+        let n = name.lowercased()
+        return ["one arm", "one-arm", "single arm", "single-arm", "one leg", "single leg", "bayesian", "concentration"].contains { n.contains($0) }
+    }
+
     static func isOneSided(_ name: String) -> Bool {
         if info(name).equipment == "Dumbbells" { return true }
         let n = name.lowercased()
@@ -47,8 +53,7 @@ enum Catalog {
     /// Telt het volume automatisch dubbel? Ja bij twee dumbbells en bij twee losse handgrepen tegelijk (kabel met "Losse handgreep").
     /// Eén handvat met twee handen, een machine of een stang telt één keer. Links en rechts apart (na elkaar) regelt de app zelf via de reps.
     static func autoTwoSides(_ name: String, acc: String?) -> Bool {
-        let n = name.lowercased()
-        if ["one arm", "one-arm", "single arm", "single-arm", "one leg", "single leg", "bayesian", "concentration"].contains(where: { n.contains($0) }) { return false }
+        if isOneArm(name) { return false }
         let e = info(name).equipment
         if e == "Kabel" { return acc == "Losse handgreep" }
         return e == "Dumbbells"

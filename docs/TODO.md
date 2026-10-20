@@ -160,3 +160,9 @@ Status per 2026-10-20. Minimaal iOS 26 (bouwen op GitHub). Ronde 1 (training log
 - Voeding (eerste versie): doel kiezen (cutten, onderhouden, bulken), maaltijden van vandaag met kcal en eiwit, creatine afvinken.
 - Animaties: vinkje ploept bij Set klaar, "sets te gaan" rolt omlaag, tabicoon veert, knoppen deuken in.
 - Minimaal iOS 26. De iPhone 8 Plus (iOS 16) kan de app niet meer installeren.
+
+
+## Ronde 13c (wacht op test)
+- Meer opzetstukken in de standaardlijst (o.a. lat-stang, parallelle greep, smalle greep, enkelband). Gyms waar je de lijst zelf hebt aangepast houden hun eigen lijst; voeg nieuwe zelf toe.
+- One-arm oefeningen staan standaard op links en rechts apart.
+- Test: rechte stang, 12 x 25 kg telt als 300 kg volume.
