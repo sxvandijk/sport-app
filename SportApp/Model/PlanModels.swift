@@ -187,8 +187,13 @@ struct LoggedSet: Codable, Hashable {
     var r2: Int? = nil
     /// 2 = gewicht per arm/been met hetzelfde aantal reps: het volume telt dubbel.
     var m: Int? = nil
+    /// Gewicht rechterkant als links en rechts een ander gewicht hadden. `nil` = zelfde als `w`.
+    var w2: Double? = nil
 
     var totalReps: Int { r2 != nil ? r + (r2 ?? 0) : r * (m ?? 1) }
+    /// Volume van deze set in kg.
+    var volume: Double { r2 != nil ? w * Double(r) + (w2 ?? w) * Double(r2 ?? 0) : w * Double(totalReps) }
+    var weightText: String { w2 != nil && w2 != w ? "\(Format.weight(w))/\(Format.weight(w2 ?? w))" : Format.weight(w) }
     var repsText: String { r2 == nil ? String(r) : "\(r)/\(r2 ?? 0)" }
 }
 

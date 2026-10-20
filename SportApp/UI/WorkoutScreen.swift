@@ -235,7 +235,7 @@ private struct WorkoutList: View {
                 Color.clear.frame(height: 0)
                     .background(GeometryReader { g in
                         Color.clear.preference(key: HeadYKey.self,
-                                               value: members.contains(where: { $0.id == openID }) ? g.frame(in: .named("wlist")).minY : -1)
+                                               value: members.count == 1 && members.contains(where: { $0.id == openID }) ? g.frame(in: .named("wlist")).minY : -1)
                     })
                 blockView(members, blockIndex: bi, blocks: blocks, openID: openID)
             }
@@ -304,6 +304,10 @@ private struct WorkoutList: View {
             let badge = hue != nil ? String(mi + 1) : ""
             if e.id == openID {
                 OpenExerciseCard(exercise: e, badge: badge, hue: hue, cur: cur).id(e.id)
+                    .background(GeometryReader { g in
+                        // In een superset scrolt de lijst naar de open oefening zelf, niet naar het begin van het blok.
+                        Color.clear.preference(key: HeadYKey.self, value: hue != nil ? g.frame(in: .named("wlist")).minY : -1)
+                    })
             } else {
                 ClosedExerciseRow(exercise: e, badge: badge, hue: hue).id(e.id)
             }
@@ -706,7 +710,7 @@ private struct WorkoutBottom: View {
                         HStack {
                             Text(toast.text).sa(15, .medium).foregroundColor(Tokens.onInverse)
                             Spacer()
-                            if toast.removed != nil {
+                            if toast.removed != nil || toast.redo != nil {
                                 Button { model.undo() } label: {
                                     Text("Ongedaan maken").sa(15, .bold).underline().foregroundColor(Tokens.onInverse)
                                         .padding(.horizontal, 12).frame(height: 44)
@@ -811,7 +815,7 @@ private struct Dock: View {
             prev = "Nog geen vorige keer"
         }
         if kind == .timed { prev = set.type == .warmup ? "Warming-up" : "Op tijd" }
-        if set.done { prev = "Gedaan \u{00B7} pas aan en tik op Klaar" }
+        if set.done { prev = "Gedaan \u{00B7} pas aan en tik op Terug" }
         if let m = set.rmax, let lo = set.rmin, m > lo, kind != .cardio && kind != .timed { prev += " \u{00B7} doel \(lo)\u{2013}\(m) reps" }
         return prev
     }
@@ -845,8 +849,8 @@ private struct Dock: View {
             if kind == .weights || kind == .bodyweight, set.type != .warmup, exercise.uni == true || exercise.two == true || Catalog.sidesAmbiguous(exercise.name) {
                 let caption: String = {
                     switch exercise.sideMode {
-                    case .separate: return "Links en rechts apart \u{00B7} je volume telt beide kanten op"
-                    case .perSide: return "2 armen of benen \u{00B7} je volume telt dubbel (2\u{00D7})"
+                    case .separate: return "Links en rechts apart \u{00B7} volume telt beide kanten"
+                    case .perSide: return "Gewicht per arm of been \u{00B7} volume telt 2\u{00D7}"
                     case .single: return "1 arm of totaalgewicht \u{00B7} volume = gewicht \u{00D7} reps"
                     }
                 }()
@@ -863,16 +867,38 @@ private struct Dock: View {
                 .accessibilityLabel("Hoe vul je dit in? Tik voor uitleg")
             }
 
-            if let since = model.lastSetAt {
+            if let since = model.lastSetAt, model.editField == nil {
                 RestInline(since: since).padding(.top, 8)
             }
 
             if exercise.uni == true && set.r2 != nil && set.type != .warmup {
                 VStack(spacing: 8) {
-                    if kind != .timed { weightBox(kind) }
+                    if kind != .timed {
+                        if exercise.splitW == true {
+                            HStack(spacing: 10) {
+                                weightBox(kind, side: 1)
+                                weightBox(kind, side: 2)
+                            }
+                        } else {
+                            weightBox(kind)
+                        }
+                    }
                     HStack(spacing: 10) {
                         repsBox(kind, left: true)
                         repsBox(kind, left: false)
+                    }
+                    if kind != .timed {
+                        Button { model.toggleSplitWeights(exercise.id) } label: {
+                            HStack(spacing: 6) {
+                                Icon.link(14, 2)
+                                Text(exercise.splitW == true ? "Links en rechts een eigen gewicht \u{00B7} tik om gelijk te zetten" : "Zelfde gewicht links en rechts \u{00B7} tik voor eigen gewicht")
+                                    .sa(12, .medium).lineLimit(1).minimumScaleFactor(0.8)
+                            }
+                            .foregroundColor(ac.accentText)
+                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(exercise.splitW == true ? "Gewicht links en rechts gelijk zetten" : "Links en rechts een eigen gewicht")
                     }
                 }
                 .padding(.top, 10)
@@ -886,16 +912,16 @@ private struct Dock: View {
 
             if model.editField != nil {
                 Numpad(onKey: { key($0, kind) })
-                    .padding(.top, 10)
+                    .padding(.top, 8)
                 HStack(spacing: 10) {
-                    GlassButton(title: "Klaar met invullen", role: .secondary, height: 52) { model.editField = nil }
-                    PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: 52, icon: Icon.check(22)) { model.complete() }
+                    GlassButton(title: "Klaar met invullen", role: .secondary, height: 46) { model.editField = nil }
+                    PrimaryButton(title: set.done ? "Terug" : "Set klaar", height: 46, icon: Icon.check(22)) { model.complete() }
                 }
-                .padding(.top, 10)
+                .padding(.top, 8)
             } else if (kind == .cardio || kind == .timed) && !set.done {
                 cardioControls(kind)
             } else {
-                PrimaryButton(title: set.done ? "Klaar" : "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
+                PrimaryButton(title: set.done ? "Terug naar huidige set" : "Set klaar", height: Size.primaryButton, icon: Icon.check(22)) { model.complete() }
                     .padding(.top, 10)
             }
         }
@@ -952,7 +978,7 @@ private struct Dock: View {
         case .digit(let d):
             if text.count < 6 { text += String(d) }
         case .comma:
-            if field == .weight && !text.contains(",") { text += text.isEmpty ? "0," : "," }
+            if (field == .weight || field == .weight2) && !text.contains(",") { text += text.isEmpty ? "0," : "," }
         case .back:
             if !text.isEmpty { text.removeLast() }
         }
@@ -960,6 +986,8 @@ private struct Dock: View {
         let parsed = text.replacingOccurrences(of: ",", with: ".")
         if field == .weight {
             if let v = Double(parsed) { model.setCurrentValues(w: v, r: nil) } else if text.isEmpty { model.setCurrentValues(w: 0, r: nil) }
+        } else if field == .weight2 {
+            if let v = Double(parsed) { model.setCurrentValues(w: nil, r: nil, w2: v) } else if text.isEmpty { model.setCurrentValues(w: nil, r: nil, w2: 0) }
         } else if field == .reps2 {
             if let v = Int(parsed) { model.setCurrentValues(w: nil, r: nil, r2: v) } else if text.isEmpty { model.setCurrentValues(w: nil, r: nil, r2: 0) }
         } else if let v = Int(parsed) {
@@ -974,9 +1002,15 @@ private struct Dock: View {
         return normal
     }
 
-    private func weightBox(_ kind: ExerciseKind) -> some View {
-        valueBox(field: .weight, text: shown(.weight, weightText(kind)), unit: kind == .cardio ? " km" : " kg",
-                 minus: "Minder gewicht", plus: "Meer gewicht",
+    /// side 0 = één gewicht, 1 = links, 2 = rechts (bij eigen gewicht per kant).
+    private func weightBox(_ kind: ExerciseKind, side: Int = 0) -> some View {
+        if side == 2 {
+            return valueBox(field: .weight2, text: shown(.weight2, Format.weight(set.w2 ?? set.w)), unit: " kg R",
+                            minus: "Minder gewicht rechts", plus: "Meer gewicht rechts",
+                            onMinus: { buffer = nil; model.stepWeight(-1, second: true) }, onPlus: { buffer = nil; model.stepWeight(1, second: true) })
+        }
+        return valueBox(field: .weight, text: shown(.weight, weightText(kind)), unit: kind == .cardio ? " km" : (side == 1 ? " kg L" : " kg"),
+                 minus: side == 1 ? "Minder gewicht links" : "Minder gewicht", plus: side == 1 ? "Meer gewicht links" : "Meer gewicht",
                  onMinus: { buffer = nil; model.stepWeight(-1) }, onPlus: { buffer = nil; model.stepWeight(1) })
     }
 
@@ -1041,10 +1075,13 @@ private struct Numpad: View {
         [.comma, .digit(0), .back]
     ]
 
+    /// Op kleine schermen lagere toetsen, zodat de oefeningen erboven zichtbaar blijven.
+    private var keyHeight: CGFloat { UIScreen.main.bounds.height < 700 ? 34 : 40 }
+
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             ForEach(0..<rows.count, id: \.self) { r in
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     ForEach(0..<3, id: \.self) { c in
                         keyButton(rows[r][c])
                     }
@@ -1063,7 +1100,7 @@ private struct Numpad: View {
                 }
             }
             .foregroundColor(Tokens.text)
-            .frame(maxWidth: .infinity).frame(height: 48)
+            .frame(maxWidth: .infinity).frame(height: keyHeight)
             .card(Tokens.raised, radius: Radius.field)
         }
         .buttonStyle(.plain)

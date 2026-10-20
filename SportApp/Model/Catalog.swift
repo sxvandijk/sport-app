@@ -44,6 +44,17 @@ enum Catalog {
         return ["one arm", "one-arm", "single arm", "single-arm", "one leg", "single leg", "bayesian", "concentration"].contains { n.contains($0) }
     }
 
+    /// Telt het gewicht dubbel (twee losse armen of benen tegelijk)? Eén handvat met twee handen telt niet dubbel.
+    static func defaultTwoSides(_ name: String, acc: String?, last: LoggedExercise?) -> Bool {
+        let n = name.lowercased()
+        if ["one arm", "one-arm", "single arm", "single-arm", "one leg", "single leg", "bayesian", "concentration"].contains(where: { n.contains($0) }) { return false }
+        if info(name).equipment == "Kabel" {
+            // Alleen bij twee losse handgrepen ga je met beide kanten tegelijk.
+            return acc == "Losse handgreep" && last?.two == true
+        }
+        return last?.two ?? (info(name).equipment == "Dumbbells")
+    }
+
     static let all: [(name: String, info: ExerciseInfo)] = [
         ("Incline dumbbell press", ExerciseInfo("Borst", "Dumbbells", step: 2, d: 20)),
         ("Dumbbell bench press", ExerciseInfo("Borst", "Dumbbells", step: 2, d: 24)),

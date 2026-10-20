@@ -130,8 +130,10 @@ private struct SheetBody: View {
                 }
                 .padding(.top, 8)
                 Spacer(minLength: 0)
-                Button { model.closeSheet() } label: {
-                    if kind == .machineadd || kind == .machineedit {
+                Button {
+                    if kind == .superset && model.selected.count + model.selectedNew.count > 0 { model.linkSelected() } else { model.closeSheet() }
+                } label: {
+                    if kind == .machineadd || kind == .machineedit || (kind == .superset && model.selected.count + model.selectedNew.count > 0) {
                         Icon.check(20, 2.6).foregroundColor(ac.onAccent).frame(width: 36, height: 36)
                             .background(Circle().fill(ac.accentLine))
                             .frame(width: 44, height: 44).contentShape(Rectangle())
@@ -140,7 +142,7 @@ private struct SheetBody: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(kind == .machineadd || kind == .machineedit ? "Klaar" : "Sluiten")
+                .accessibilityLabel(kind == .machineadd || kind == .machineedit ? "Klaar" : (kind == .superset && model.selected.count + model.selectedNew.count > 0 ? "Koppelen" : "Sluiten"))
             }
             .padding(.top, 0).padding(.leading, 20).padding(.trailing, 12).padding(.bottom, 4)
             .contentShape(Rectangle())
@@ -646,9 +648,6 @@ private struct SupersetSheet: View {
         if candidates.isEmpty {
             Text("Geen andere oefeningen in dit schema.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 4)
         }
-        SectionLabel(text: "Nieuwe oefening zoeken").padding(.top, 20).padding(.bottom, 8)
-        SearchList(mode: .superset)
-
         Button { model.linkSelected() } label: {
             Text(count > 0 ? "Koppelen (\(count))" : "Kies minstens één oefening").sa(17, .bold)
                 .foregroundColor(ac.onAccent)
@@ -658,7 +657,10 @@ private struct SupersetSheet: View {
         }
         .buttonStyle(.plain)
         .disabled(count == 0)
-        .padding(.top, 16)
+        .padding(.top, 12)
+
+        SectionLabel(text: "Nieuwe oefening zoeken").padding(.top, 20).padding(.bottom, 8)
+        SearchList(mode: .superset)
     }
 }
 
@@ -1498,16 +1500,36 @@ private struct SideModeSheet: View {
         }
     }
 
+    private static func choice(_ m: SideMode) -> (String, String) {
+        switch m {
+        case .single: return ("Eén gewicht", "Eén handvat met twee handen, of één arm of been. Volume = gewicht \u{00D7} reps.")
+        case .perSide: return ("Per arm of been tegelijk", "Twee losse armen of benen die tegelijk bewegen. Het gewicht is van één kant en het volume telt 2\u{00D7}.")
+        case .separate: return ("Links en rechts apart", "Eerst de ene kant, dan de andere, met eigen reps en eventueel eigen gewicht.")
+        }
+    }
+
     var body: some View {
         if let ex = exercise {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(Self.title(ex.sideMode)).sa(17, .semibold).foregroundColor(Tokens.text)
-                Text(Self.info(ex.sideMode)).sa(15).foregroundColor(Tokens.text2).lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
+            ForEach([SideMode.single, .perSide, .separate], id: \.self) { m in
+                let c = Self.choice(m)
+                SheetRowButton(action: {
+                    if let id = model.sheetEx { model.setSideMode(id, m) }
+                    model.closeSheet()
+                }) {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(c.0).sa(17, .semibold).foregroundColor(Tokens.text)
+                            Text(c.1).sa(13).foregroundColor(Tokens.text2).fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                        if ex.sideMode == m { CheckMark() }
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .frame(minHeight: 60)
+                }
+                .padding(.bottom, 6)
+                .accessibilityAddTraits(ex.sideMode == m ? .isSelected : [])
             }
-            .padding(.horizontal, 16).padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassCard(radius: Radius.button)
         }
     }
 }

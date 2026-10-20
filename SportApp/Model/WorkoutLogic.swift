@@ -49,10 +49,17 @@ struct LiveSet: Identifiable, Codable, Hashable {
     var rmin: Int? = nil
     /// Rechterarm/-been als je los traint (dan is `r` de linkerkant). `nil` = beide kanten samen.
     var r2: Int? = nil
+    /// Gewicht van de rechterkant als links en rechts een ander gewicht hebben. `nil` = zelfde als links (`w`).
+    var w2: Double? = nil
 
     var totalReps: Int { r + (r2 ?? 0) }
     /// Reps voor het volume: links + rechts, of bij gewicht per arm/been het aantal keer twee.
     func volumeReps(twoSides: Bool) -> Int { r2 != nil ? r + (r2 ?? 0) : (twoSides ? 2 * r : r) }
+    /// Volume van deze set: links en rechts elk met hun eigen gewicht en reps, of gewicht \u{00D7} reps (dubbel bij gewicht per arm/been).
+    func volume(twoSides: Bool) -> Double {
+        if let r2 = r2 { return w * Double(r) + (w2 ?? w) * Double(r2) }
+        return w * Double(twoSides ? 2 * r : r)
+    }
     var repsText: String { r2 == nil ? String(r) : "\(r)/\(r2 ?? 0)" }
 }
 
@@ -72,6 +79,8 @@ struct LiveExercise: Identifiable, Codable, Hashable {
     var uni: Bool? = nil
     /// Gewicht per arm of been (twee losse armen met hetzelfde aantal): het volume telt dubbel.
     var two: Bool? = nil
+    /// Links en rechts een eigen gewicht (alleen bij links en rechts apart). `nil` = één gewicht voor beide kanten.
+    var splitW: Bool? = nil
     /// Gekozen opzetstuk (touw, rechte stang...) en de eigen stap daarvan.
     var acc: String? = nil
     var accStep: Double? = nil
@@ -199,11 +208,22 @@ struct LiveSession: Codable, Hashable {
             }
         }
         if !isWarmupBlock, kind == .weights {
-            if last?.two ?? Catalog.isOneSided(name) { ex.two = true }
+            ex.two = Catalog.defaultTwoSides(name, acc: ex.acc, last: last) ? true : nil
         }
         if last?.uni == true && !isWarmupBlock {
             ex.uni = true
-            for i in ex.sets.indices where ex.sets[i].type != .warmup { ex.sets[i].r2 = ex.sets[i].r2 ?? ex.sets[i].r }
+            ex.two = nil
+            let split = lastWork.contains(where: { $0.w2 != nil })
+            if split { ex.splitW = true }
+            var k = 0
+            for i in ex.sets.indices where ex.sets[i].type != .warmup {
+                ex.sets[i].r2 = ex.sets[i].r2 ?? ex.sets[i].r
+                if split {
+                    let prev = lastWork.isEmpty ? nil : lastWork[min(k, lastWork.count - 1)]
+                    ex.sets[i].w2 = prev?.w2 ?? ex.sets[i].w
+                }
+                k += 1
+            }
         }
         return ex
     }
@@ -344,16 +364,28 @@ struct LiveSession: Codable, Hashable {
 
     // MARK: Acties
 
-    mutating func stepWeight(set setID: UUID, exID: UUID, dir: Int) {
+    mutating func stepWeight(set setID: UUID, exID: UUID, dir: Int, second: Bool = false) {
         guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
+        if second {
+            let cur = exercises[e].sets[s].w2 ?? exercises[e].sets[s].w
+            exercises[e].sets[s].w2 = Catalog.step(exercises[e].name, weight: cur, dir: dir, fixed: exercises[e].accStep)
+            return
+        }
         exercises[e].sets[s].w = Catalog.step(exercises[e].name, weight: exercises[e].sets[s].w, dir: dir, fixed: exercises[e].accStep)
     }
 
-    mutating func setValues(set setID: UUID, exID: UUID, w: Double?, r: Int?, r2: Int? = nil) {
+    mutating func setValues(set setID: UUID, exID: UUID, w: Double?, r: Int?, r2: Int? = nil, w2: Double? = nil) {
         guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
         if let w = w { exercises[e].sets[s].w = max(0, (w * 100).rounded() / 100) }
+        if let w2 = w2 { exercises[e].sets[s].w2 = max(0, (w2 * 100).rounded() / 100) }
         if let r = r { exercises[e].sets[s].r = max(0, r) }
         if let r2 = r2 { exercises[e].sets[s].r2 = max(0, r2) }
+    }
+
+    /// Zet het vinkje van een set weer terug (ongedaan maken van `uncomplete`).
+    mutating func redoComplete(set setID: UUID, exID: UUID) {
+        guard let e = index(of: exID), let s = exercises[e].sets.firstIndex(where: { $0.id == setID }) else { return }
+        exercises[e].sets[s].done = true
     }
 
     /// Haalt het vinkje van een gedane set weg.
@@ -432,8 +464,22 @@ struct LiveSession: Codable, Hashable {
         exercises[e].two = mode == .perSide ? true : nil
         let uni = mode == .separate
         exercises[e].uni = uni ? true : nil
+        if !uni {
+            exercises[e].splitW = nil
+            for i in exercises[e].sets.indices { exercises[e].sets[i].w2 = nil }
+        }
         for i in exercises[e].sets.indices where exercises[e].sets[i].type != .warmup {
             exercises[e].sets[i].r2 = uni ? (exercises[e].sets[i].r2 ?? exercises[e].sets[i].r) : nil
+        }
+    }
+
+    /// Links en rechts een eigen gewicht aan of uit. Aan: de rechterkant start gelijk aan links.
+    mutating func toggleSplitWeights(_ exID: UUID) {
+        guard let e = index(of: exID) else { return }
+        let on = exercises[e].splitW != true
+        exercises[e].splitW = on ? true : nil
+        for i in exercises[e].sets.indices where exercises[e].sets[i].type != .warmup && !exercises[e].sets[i].done {
+            exercises[e].sets[i].w2 = on ? exercises[e].sets[i].w : nil
         }
     }
 
@@ -446,6 +492,10 @@ struct LiveSession: Codable, Hashable {
         guard let e = index(of: exID) else { return }
         let on = exercises[e].uni != true
         exercises[e].uni = on ? true : nil
+        if !on {
+            exercises[e].splitW = nil
+            for i in exercises[e].sets.indices { exercises[e].sets[i].w2 = nil }
+        }
         for i in exercises[e].sets.indices where exercises[e].sets[i].type != .warmup {
             exercises[e].sets[i].r2 = on ? (exercises[e].sets[i].r2 ?? exercises[e].sets[i].r) : nil
         }
@@ -458,7 +508,8 @@ struct LiveSession: Codable, Hashable {
         let r = last?.r ?? 10
         let r2 = exercises[e].uni == true ? (last?.r2 ?? r) : nil
         let onlyWarmups = !exercises[e].sets.isEmpty && exercises[e].sets.allSatisfy { $0.type == .warmup }
-        exercises[e].sets.append(LiveSet(type: onlyWarmups ? .warmup : .work, w: w, r: r, r2: onlyWarmups ? nil : r2))
+        let w2 = exercises[e].splitW == true && !onlyWarmups ? (last?.w2 ?? w) : nil
+        exercises[e].sets.append(LiveSet(type: onlyWarmups ? .warmup : .work, w: w, r: r, r2: onlyWarmups ? nil : r2, w2: w2))
     }
 
     /// Nieuwe warming-up: ongeveer de helft van je eerste werkset, 12 herhalingen, na de laatste bestaande warming-up.
@@ -618,7 +669,7 @@ struct LiveSession: Codable, Hashable {
         for e in exercises {
             for s in e.sets where s.done {
                 workDone += 1
-                if Catalog.kind(e.name) != .cardio { volume += s.w * Double(s.volumeReps(twoSides: e.two == true)) }
+                if Catalog.kind(e.name) != .cardio { volume += s.volume(twoSides: e.two == true) }
             }
         }
         var lines: [SummaryLine] = []

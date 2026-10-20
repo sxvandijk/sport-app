@@ -114,7 +114,7 @@ struct WorkoutDetailScreen: View {
 
     private func setText(_ s: LoggedSet, _ kind: ExerciseKind) -> String {
         if kind == .cardio || kind == .timed { return "\(s.repsText)" }
-        if s.w > 0 { return Format.weight(s.w) + " kg \u{00D7} " + s.repsText }
+        if s.w > 0 { return s.weightText + " kg \u{00D7} " + s.repsText }
         return s.repsText + " reps"
     }
 }
