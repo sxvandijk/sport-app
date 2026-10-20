@@ -837,14 +837,35 @@ struct SummaryScreen: View {
                         if !model.summaryAdded.isEmpty, let tpl = model.summaryTemplate {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Erbij in deze training").sa(15, .semibold).foregroundColor(Tokens.text)
-                                Text(model.summaryAdded.map { $0.name }.joined(separator: ", ") + " staat nog niet in je schema " + tpl + ".")
+                                Text("Kies wat je in je schema " + tpl + " wilt zetten.")
                                     .sa(14).foregroundColor(Tokens.text2).lineSpacing(2)
+                                ForEach(model.summaryAdded, id: \.name) { item in
+                                    let on = !model.summaryUnpicked.contains(item.name)
+                                    Button { model.toggleSummaryPick(item.name) } label: {
+                                        HStack(spacing: 12) {
+                                            ZStack {
+                                                Circle().fill(on ? ac.accentLine : Color.clear)
+                                                Circle().stroke(on ? Color.clear : Tokens.line, lineWidth: 2)
+                                                if on { Icon.check(14, 3).foregroundColor(ac.onAccent) }
+                                            }
+                                            .frame(width: 26, height: 26)
+                                            Text(item.name).sa(16, .medium).foregroundColor(on ? Tokens.text : Tokens.text2).lineLimit(1)
+                                            Spacer(minLength: 0)
+                                        }
+                                        .frame(minHeight: 44).contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityAddTraits(on ? .isSelected : [])
+                                }
+                                let pickedCount = model.summaryAdded.filter { !model.summaryUnpicked.contains($0.name) }.count
                                 Button { model.saveSummaryToSchema() } label: {
-                                    Text("Zet in mijn schema").sa(15, .semibold).foregroundColor(ac.accentText)
+                                    Text(pickedCount > 0 ? "Zet in mijn schema (\(pickedCount))" : "Kies minstens één oefening").sa(15, .semibold).foregroundColor(ac.accentText)
                                         .padding(.horizontal, 14).frame(height: 44)
                                         .background(Capsule().fill(ac.accentSoft)).contentShape(Capsule())
+                                        .opacity(pickedCount > 0 ? 1 : 0.5)
                                 }
                                 .buttonStyle(.plain)
+                                .disabled(pickedCount == 0)
                             }
                             .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                             .glassCard(radius: Radius.button).padding(.top, 16)

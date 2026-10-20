@@ -94,6 +94,28 @@ struct LaunchConfig {
                 }
                 model.session = s
             }
+        case "workout-numpad":
+            model.screen = .workout
+            model.editField = .weight
+        case "workout-split":
+            model.screen = .workout
+            if var s = model.session, let i = s.exercises.firstIndex(where: { Catalog.kind($0.name) == .weights && $0.sets.contains(where: { $0.type != .warmup }) }) {
+                s.exercises[i].uni = true
+                s.exercises[i].splitW = true
+                for k in s.exercises[i].sets.indices where s.exercises[i].sets[k].type != .warmup {
+                    s.exercises[i].sets[k].r2 = s.exercises[i].sets[k].r - 1
+                    s.exercises[i].sets[k].w2 = s.exercises[i].sets[k].w - 2.5
+                    s.exercises[i].sets[k].done = false
+                }
+                model.focusID = s.exercises[i].id
+                model.session = s
+            }
+        case "summary-added":
+            model.summary = ScreenshotScenario.summary(templates: model.templates, now: now)
+            model.summaryAdded = ["Lopen", "Cable crunch", "Face pull"].map { PlanItem(name: $0, group: 0, sets: [PlanSet(w: 20, r: 10, rmax: nil)]) }
+            model.summaryUnpicked = ["Cable crunch"]
+            model.summaryTemplate = "Push"
+            model.screen = .summary
         case "workout-select":
             model.screen = .workout
             if let s = model.session, let ex = s.exercises.first, let set = ex.sets.first {

@@ -24,7 +24,7 @@ enum SheetKind: String {
 }
 
 enum SwapScope { case now, schema, prefOnly }
-enum EditField { case weight, reps, reps2 }
+enum EditField { case weight, weight2, reps, reps2 }
 
 struct DraftItem: Identifiable, Hashable {
     var id = UUID()
@@ -134,6 +134,13 @@ struct Toast: Equatable {
     var text: String
     var removed: RemovedSetBox?
     var until: Date
+    /// Set waarvan het vinkje net is weggehaald: "Ongedaan maken" zet het terug.
+    var redo: RedoRef? = nil
+}
+
+struct RedoRef: Equatable {
+    var exID: UUID
+    var setID: UUID
 }
 
 /// Maakt `RemovedSet` vergelijkbaar voor `Toast`.
@@ -248,6 +255,8 @@ final class AppModel: ObservableObject {
     @Published var detailID: UUID?
     /// Oefeningen die je in deze training erbij deed en die nog niet in het schema staan.
     @Published var summaryAdded: [PlanItem] = []
+    /// Namen van erbij gedane oefeningen die je níet in je schema wilt zetten.
+    @Published var summaryUnpicked: Set<String> = []
     @Published var summaryTemplate: String?
     @Published var summarySaved = false
 
@@ -472,11 +481,29 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    /// Heb je deze training vandaag al afgerond?
+    func didWorkoutToday(_ name: String, now: Date = Date()) -> Bool {
+        history.contains { $0.name == name && Calendar.current.isDate($0.date, inSameDayAs: now) }
+    }
+
+    /// De ingeplande training van vandaag, als je die al hebt afgerond.
+    func plannedDoneToday(now: Date = Date()) -> String? {
+        guard let p = plannedWorkout(now: now), didWorkoutToday(p, now: now) else { return nil }
+        return p
+    }
+
     /// Welke training volgt in de rotatie van het gekozen schema.
     func nextWorkoutName(now: Date = Date()) -> String? {
         let names = program.workouts
         if names.isEmpty { return nil }
-        if let planned = plannedWorkout(now: now) { return planned }
+        if let planned = plannedWorkout(now: now) {
+            if !didWorkoutToday(planned, now: now) { return planned }
+            // Vandaag al gedaan: de eerstvolgende ingeplande training, anders de volgende in je schema.
+            let cal = Calendar.current
+            for d in 1...7 {
+                if let day = cal.date(byAdding: .day, value: d, to: now), let n = plan(for: day).name, n != planned { return n }
+            }
+        }
         let sorted = history.sorted { $0.date > $1.date }
         if let last = sorted.first(where: { names.contains($0.name) }), let i = names.firstIndex(of: last.name) {
             if weekReset {
@@ -543,7 +570,7 @@ final class AppModel: ObservableObject {
             let minutes = max(1, Int((now.timeIntervalSince(s.startAt) / 60).rounded()))
             var logged: [LoggedExercise] = []
             for e in s.exercises {
-                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.two == true && $0.type != .warmup ? 2 : nil) }
+                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.two == true && $0.type != .warmup ? 2 : nil, w2: $0.type != .warmup ? $0.w2 : nil) }
                 if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two, acc: e.acc, blk: e.blk)) }
             }
             let entry = HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged)
@@ -553,6 +580,7 @@ final class AppModel: ObservableObject {
             summaryFreeID = nil
         }
         summaryAdded = []
+        summaryUnpicked = []
         summaryTemplate = nil
         summarySaved = false
         if let plan = templates[s.name] {
@@ -589,25 +617,33 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    func toggleSummaryPick(_ name: String) {
+        if summaryUnpicked.contains(name) { summaryUnpicked.remove(name) } else { summaryUnpicked.insert(name) }
+        Haptics.light()
+    }
+
     func goHome() {
         screen = .home
         summary = nil
         summaryFreeID = nil
         summaryAdded = []
+        summaryUnpicked = []
         summaryTemplate = nil
         summarySaved = false
     }
 
     /// Zet de oefeningen die je erbij deed in het schema (vóór een eventuele cooling-down).
     func saveSummaryToSchema() {
-        guard let name = summaryTemplate, var items = templates[name], !summaryAdded.isEmpty else { return }
+        let picked = summaryAdded.filter { !summaryUnpicked.contains($0.name) }
+        guard let name = summaryTemplate, var items = templates[name], !picked.isEmpty else { return }
         var g = (items.map { $0.group }.max() ?? 0)
         let at = items.firstIndex(where: { $0.isCooldown == true }) ?? items.count
         var add: [PlanItem] = []
-        for var p in summaryAdded { g += 1; p.group = g; add.append(p) }
+        for var p in picked { g += 1; p.group = g; add.append(p) }
         items.insert(contentsOf: add, at: at)
         templates[name] = items
         summaryAdded = []
+        summaryUnpicked = []
         summarySaved = true
         save()
     }
@@ -627,10 +663,19 @@ final class AppModel: ObservableObject {
         return s.current(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst)
     }
 
-    func stepWeight(_ dir: Int) {
+    func stepWeight(_ dir: Int, second: Bool = false) {
         guard var s = session, let c = current().cur else { return }
-        s.stepWeight(set: c.setID, exID: c.exID, dir: dir)
+        s.stepWeight(set: c.setID, exID: c.exID, dir: dir, second: second)
         session = s
+        save()
+    }
+
+    func toggleSplitWeights(_ exID: UUID) {
+        guard var s = session else { return }
+        s.toggleSplitWeights(exID)
+        session = s
+        editField = nil
+        Haptics.light()
         save()
     }
 
@@ -721,15 +766,24 @@ final class AppModel: ObservableObject {
         session = s
         focusSetID = nil
         focusID = exID
-        restEnd = nil
+        // De rusttimer blijft lopen: per ongeluk een vinkje weghalen mag je terugdraaien zonder tijd te verliezen.
         Haptics.light()
+        let until = Date().addingTimeInterval(6)
+        toast = Toast(text: "Vinkje weggehaald", removed: nil, until: until, redo: RedoRef(exID: exID, setID: setID))
+        toastWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            if let t = self.toast, t.until <= Date().addingTimeInterval(0.2) { self.toast = nil }
+        }
+        toastWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.1, execute: work)
         save()
     }
 
     /// Cijfers die je met het toetsenbord intikt voor de huidige set.
-    func setCurrentValues(w: Double?, r: Int?, r2: Int? = nil) {
+    func setCurrentValues(w: Double?, r: Int?, r2: Int? = nil, w2: Double? = nil) {
         guard var s = session, let c = current().cur else { return }
-        s.setValues(set: c.setID, exID: c.exID, w: w, r: r, r2: r2)
+        s.setValues(set: c.setID, exID: c.exID, w: w, r: r, r2: r2, w2: w2)
         session = s
         save()
     }
@@ -921,6 +975,17 @@ final class AppModel: ObservableObject {
     }
 
     func undo() {
+        if let t = toast, let redo = t.redo, var s = session {
+            s.redoComplete(set: redo.setID, exID: redo.exID)
+            session = s
+            toast = nil
+            focusSetID = nil
+            focusID = nil
+            editField = nil
+            Haptics.light()
+            save()
+            return
+        }
         guard let t = toast, let r = t.removed, var s = session else { return }
         s.restore(r.value)
         session = s
