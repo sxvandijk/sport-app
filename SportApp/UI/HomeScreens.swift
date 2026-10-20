@@ -424,10 +424,9 @@ struct ProgressTab: View {
             }
             .padding(.top, 12)
 
-            CalendarCard(expandable: true, openKey: \.calOpenProgress).padding(.top, 12)
-            volumeCard(stats).padding(.top, 12)
-            radarCard(stats).padding(.top, 12)
-            recordsSection(stats).padding(.top, 12)
+            volumeCard(stats).padding(.top, 16)
+            radarCard(stats).padding(.top, 16)
+            recordsSection(stats).padding(.top, 16)
         }
         .onAppear {
             guard !shown else { return }
