@@ -9,11 +9,11 @@ struct WorkoutDetailScreen: View {
         VStack(spacing: 0) {
             HStack {
                 Button {
-                    model.screen = .allWorkouts
+                    model.screen = model.detailReturn
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)
-                        Text("Alle trainingen").sa(17)
+                        Text(model.detailReturn == .home ? "Logboek" : "Alle trainingen").sa(17)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.leading, 4).padding(.trailing, 10).frame(height: 44)

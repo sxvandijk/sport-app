@@ -2,19 +2,18 @@ name: SportApp
 
 options:
   bundleIdPrefix: com.sxvandijk
+  # Minimaal iOS 26: de app wordt op GitHub gebouwd met Xcode 26 (Liquid Glass en nieuwe SwiftUI-API's mogen).
   deploymentTarget:
-    iOS: "16.0"
-  # Laat XcodeGen een projectbestand schrijven dat ook met Xcode 14.2 te openen is.
-  xcodeVersion: "1420"
+    iOS: "26.0"
   createIntermediateGroups: true
   generateEmptyDirectories: true
 
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
-    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
 
 targets:
   SportApp:
@@ -43,7 +42,7 @@ targets:
   SetWidgets:
     type: app-extension
     platform: iOS
-    deploymentTarget: "16.1"
+    deploymentTarget: "26.0"
     sources:
       - path: SportAppWidgets
       - path: Shared
@@ -57,7 +56,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sxvandijk.sportapp.widgets
         TARGETED_DEVICE_FAMILY: "1"
-        IPHONEOS_DEPLOYMENT_TARGET: "16.1"
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
         SKIP_INSTALL: "YES"
 
   SportAppTests:

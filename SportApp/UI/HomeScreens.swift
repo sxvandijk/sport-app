@@ -5,14 +5,15 @@ import SwiftUI
 struct AppTabBar: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private func icon(_ tab: HomeTab) -> Icon {
         switch tab {
+        case .nutrition: return Icon.tabNutrition
+        case .logbook: return Icon.tabLogbook
         case .start: return Icon.tabStart
         case .training: return Icon.tabTraining
         case .progress: return Icon.tabProgress
-        case .gym: return Icon.tabGym
-        case .profile: return Icon.tabProfile
         }
     }
 
@@ -20,9 +21,11 @@ struct AppTabBar: View {
 
     var body: some View {
         GeometryReader { geo in
-            let count = CGFloat(HomeTab.allCases.count)
+            let tabs = model.visibleTabs
+            let count = CGFloat(max(tabs.count, 1))
             let slot = (geo.size.width - 10) / count
-            let rest = 5 + CGFloat(model.tab.rawValue) * slot
+            let index = CGFloat(tabs.firstIndex(of: model.tab) ?? 0)
+            let rest = 5 + index * slot
             let lensX = dragX.map { min(max($0 - slot / 2, 5), 5 + slot * (count - 1)) } ?? rest
             ZStack(alignment: .leading) {
                 // De "lens": volgt je vinger vloeiend en veert daarna in het gekozen tabblad.
@@ -35,14 +38,25 @@ struct AppTabBar: View {
                                             : .spring(response: 0.38, dampingFraction: 0.74), value: lensX)
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: dragX != nil)
                 HStack(spacing: 0) {
-                    ForEach(HomeTab.allCases) { tab in
+                    ForEach(tabs) { tab in
                         let on = model.tab == tab
                         VStack(spacing: 3) {
-                            icon(tab)
-                            Text(tab.title).sa(11, .semibold)
+                            if tab == .start {
+                                // Start is de hoofdactie: altijd een gevulde accentcirkel.
+                                icon(tab).foregroundColor(ac.onAccent)
+                                    .frame(width: 30, height: 30)
+                                    .background(Circle().fill(ac.accent))
+                                    .scaleEffect(on ? 1.1 : 1)
+                                    .padding(.top, -3)
+                            } else {
+                                icon(tab).scaleEffect(on && !reduceMotion ? 1.12 : 1)
+                            }
+                            Text(tab.title).sa(11, .semibold).lineLimit(1).minimumScaleFactor(0.8)
                         }
+                        .animation(reduceMotion ? nil : Motion.pop, value: on)
                         .foregroundColor(on ? ac.accentText : Tokens.text2)
                         .frame(width: slot, height: 54)
+                        .transition(.scale(scale: 0.4).combined(with: .opacity))
                         .accessibilityElement(children: .combine)
                         .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
                         .accessibilityAction { model.tab = tab }
@@ -58,10 +72,10 @@ struct AppTabBar: View {
                     model.barDragging = true
                     dragX = v.location.x
                     let i = Int(((v.location.x - 5) / slot).rounded(.down))
-                    let clamped = min(max(i, 0), HomeTab.allCases.count - 1)
-                    if let t = HomeTab(rawValue: clamped), t != model.tab {
-                        Haptics.light()
-                        model.tab = t
+                    let clamped = min(max(i, 0), tabs.count - 1)
+                    if tabs.indices.contains(clamped), tabs[clamped] != model.tab {
+                        Haptics.selection()
+                        model.tab = tabs[clamped]
                     }
                 }
                 .onEnded { _ in
@@ -137,11 +151,11 @@ struct HomeContainer: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     switch model.tab {
+                    case .nutrition: NutritionTab()
+                    case .logbook: LogbookTab()
                     case .start: StartTab()
                     case .training: TrainingTab()
                     case .progress: ProgressTab()
-                    case .gym: GymTab()
-                    case .profile: ProfileTab()
                     }
                 }
                 .padding(.horizontal, Spacing.screenMargin)
@@ -149,6 +163,10 @@ struct HomeContainer: View {
                 .padding(.bottom, model.session == nil ? 100 : 180)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            // Elke tab begint bovenaan en komt zacht in beeld.
+            .id(model.tab)
+            .transition(.opacity)
+            .animation(Motion.tabContent, value: model.tab)
             VStack(spacing: 8) {
                 MiniBar()
                 AppTabBar()
@@ -158,16 +176,14 @@ struct HomeContainer: View {
         .simultaneousGesture(DragGesture(minimumDistance: 40)
             .onEnded { v in
                 guard !model.barDragging, abs(v.translation.width) > abs(v.translation.height) * 1.8, abs(v.translation.width) > 70 else { return }
-                let next = model.tab.rawValue + (v.translation.width < 0 ? 1 : -1)
-                if let t = HomeTab(rawValue: next) {
-                    Haptics.light()
-                    withAnimation(.easeOut(duration: 0.2)) { model.tab = t }
+                withAnimation(.easeOut(duration: 0.2)) {
+                    if model.moveTab(by: v.translation.width < 0 ? 1 : -1) { Haptics.light() }
                 }
             })
     }
 }
 
-private struct ScreenTitle: View {
+struct ScreenTitle: View {
     let text: String
     var body: some View {
         Text(text).sa(34, .bold, tracking: -0.6).foregroundColor(Tokens.text)
@@ -363,39 +379,136 @@ struct TrainingTab: View {
 struct ProgressTab: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var volumeInfo = false
     @State private var selectedWeek: Int?
     @State private var openWorkout: UUID?
+    /// Wordt `true` bij openen: ringen, getallen en balken lopen dan vanaf nul op.
+    @State private var shown = false
+    @State private var compareLastWeek = true
+
+    private var profileLine: String {
+        let n = model.history.count
+        guard let first = model.history.map({ $0.date }).min() else { return "Nog geen trainingen" }
+        return "\(n) \(n == 1 ? "training" : "trainingen") \u{00B7} sinds " + DateText.month(first)
+    }
+
+    /// Weekdoel: het aantal ingeplande dagen, of anders het aantal trainingen in je schema.
+    private var weeklyGoal: Int {
+        let planned = model.weekPlan.values.filter { !$0.isEmpty }.count
+        return max(planned > 0 ? planned : model.program.workouts.count, 1)
+    }
 
     var body: some View {
         let stats = ProgressStats.make(history: model.history, now: Date())
         VStack(alignment: .leading, spacing: 0) {
-            Text("Laatste 4 weken").sa(13, .medium).foregroundColor(Tokens.text2)
-                .frame(height: 44, alignment: .leading)
-            Text("Progressie").sa(34, .bold, tracking: -0.6).foregroundColor(Tokens.text)
-                .accessibilityAddTraits(.isHeader)
-
-            HStack(alignment: .top, spacing: 12) {
-                statView(String(stats.trainings), "trainingen")
-                statView(Format.thousands(stats.volume), "kg volume")
-                statView(String(stats.newRecords), "nieuwe PR\u{2019}s")
+            HStack {
+                Text("Laatste 4 weken").sa(13, .medium).foregroundColor(Tokens.text2)
+                Spacer(minLength: 0)
+                Button {
+                    model.profileSub = .overview
+                    model.screen = .settings
+                } label: {
+                    Icon.gear(22)
+                        .foregroundColor(Tokens.text)
+                        .frame(width: 44, height: 44)
+                        .glassSurface(Circle(), interactive: true, fallback: Tokens.raised)
+                        .contentShape(Circle())
+                }
+                .buttonStyle(PressScaleStyle(scale: 0.9))
+                .accessibilityLabel("Instellingen")
             }
-            .padding(.top, 18)
+            .frame(height: 48)
 
-            CalendarCard(expandable: true, openKey: \.calOpenProgress).padding(.top, 20)
+            profileHeader.padding(.top, 4)
+
+            goalCard(stats).padding(.top, 20)
+
+            HStack(alignment: .top, spacing: 8) {
+                statTile(shown ? Double(stats.trainings) : 0, "trainingen")
+                statTile(shown ? stats.volume : 0, "kg volume")
+                statTile(shown ? Double(stats.newRecords) : 0, "nieuwe PR\u{2019}s")
+            }
+            .padding(.top, 12)
+
+            CalendarCard(expandable: true, openKey: \.calOpenProgress).padding(.top, 12)
             volumeCard(stats).padding(.top, 12)
-            muscleCard(stats).padding(.top, 12)
-            allWorkoutsLink().padding(.top, 12)
+            radarCard(stats).padding(.top, 12)
             recordsSection(stats).padding(.top, 12)
+        }
+        .onAppear {
+            guard !shown else { return }
+            withAnimation(reduceMotion ? nil : Motion.reveal) { shown = true }
         }
     }
 
-    private func statView(_ value: String, _ label: String) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value).sa(26, .semibold, tracking: -0.4, mono: true).foregroundColor(Tokens.text)
-            Text(label).sa(13).foregroundColor(Tokens.text2)
+    // MARK: Profiel
+
+    private var profileHeader: some View {
+        HStack(spacing: 14) {
+            Text("S").sa(24, .bold).foregroundColor(ac.onAccent)
+                .frame(width: 60, height: 60).background(Circle().fill(ac.accent))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Stan").sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text)
+                    .accessibilityAddTraits(.isHeader)
+                Text(profileLine).sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
+            }
+            Spacer(minLength: 0)
         }
+    }
+
+    // MARK: Weekdoel
+
+    private func goalCard(_ stats: ProgressStats) -> some View {
+        let done = stats.trainingsThisWeek
+        let goal = weeklyGoal
+        let fraction = min(Double(done) / Double(goal), 1)
+        return HStack(spacing: 20) {
+            ZStack {
+                Circle().stroke(Tokens.track, lineWidth: 12)
+                Circle()
+                    .trim(from: 0, to: shown ? max(fraction, 0.001) : 0)
+                    .stroke(ac.accentLine, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                VStack(spacing: 0) {
+                    Text("\(shown ? done : 0)/\(goal)").sa(24, .bold, mono: true).foregroundColor(Tokens.text)
+                        .rollingNumber()
+                    Text("trainingen").sa(11).foregroundColor(Tokens.text2)
+                }
+            }
+            .frame(width: 104, height: 104)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Weekdoel: \(done) van \(goal) trainingen")
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Weekdoel").sa(13, .semibold).foregroundColor(Tokens.text2)
+                Text(done >= goal ? "Gehaald. Sterk." : "Nog \(goal - done) te gaan")
+                    .sa(20, .bold, tracking: -0.3).foregroundColor(Tokens.text)
+                if stats.streakWeeks > 0 {
+                    HStack(spacing: 5) {
+                        Icon.flame(16)
+                        Text("\(stats.streakWeeks) \(stats.streakWeeks == 1 ? "week" : "weken") op rij").sa(13, .semibold)
+                    }
+                    .foregroundColor(ac.accentText)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(radius: Radius.card)
+    }
+
+    private func statTile(_ value: Double, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(Format.thousands(value)).sa(22, .semibold, tracking: -0.4, mono: true).foregroundColor(Tokens.text)
+                .lineLimit(1).minimumScaleFactor(0.6)
+                .rollingNumber()
+            Text(label).sa(12).foregroundColor(Tokens.text2).lineLimit(1)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(radius: Radius.button)
     }
 
     private func volumeCard(_ stats: ProgressStats) -> some View {
@@ -429,13 +542,17 @@ struct ProgressTab: View {
                             .fill(i == volumes.count - 1 || selectedWeek == i ? ac.accentLine : ac.accentSoft)
                             .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .stroke(selectedWeek == i ? Tokens.text : Color.clear, lineWidth: 2))
-                            .frame(height: max(4, CGFloat((volumes[i] / top * 100).rounded())))
+                            .frame(height: shown ? max(4, CGFloat((volumes[i] / top * 100).rounded())) : 4)
+                            .animation(reduceMotion ? nil : Motion.stagger(i), value: shown)
                     }
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        selectedWeek = selectedWeek == i ? nil : i
-                        openWorkout = nil
+                        Haptics.selection()
+                        withAnimation(Motion.pop) {
+                            selectedWeek = selectedWeek == i ? nil : i
+                            openWorkout = nil
+                        }
                     }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("Week \(stats.weekLabels[i]), \(Format.weight(volumes[i])) duizend kg")
@@ -511,57 +628,46 @@ struct ProgressTab: View {
         }
     }
 
-    private func allWorkoutsLink() -> some View {
-        let n = model.history.count
-        return Button {
-            model.screen = .allWorkouts
-        } label: {
-            HStack(spacing: 14) {
-                Icon.tabTraining.foregroundColor(ac.accentText)
-                    .frame(width: 48, height: 48).background(Circle().fill(ac.accentSoft))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Alle trainingen").sa(17, .semibold).foregroundColor(Tokens.text)
-                    Text(n == 0 ? "Nog geen trainingen" : "\(n) \(n == 1 ? "training" : "trainingen") \u{00B7} filter per training").sa(13).foregroundColor(Tokens.text2).lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                Icon.chevronRight(18).foregroundColor(Tokens.text2)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 12)
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-            .glassCard(radius: Radius.card)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
+    // MARK: Radardiagram
 
-    private func muscleCard(_ stats: ProgressStats) -> some View {
-        let rows = Array(stats.muscleSets.prefix(8))
-        let top = max(rows.map { $0.sets }.max() ?? 1, 1)
+    private func radarCard(_ stats: ProgressStats) -> some View {
+        let values = ProgressStats.radarValues(stats.muscleSets)
+        let last = ProgressStats.radarValues(stats.muscleSetsLastWeek)
+        let hasLast = last.contains { $0 > 0 }
+        let total = values.reduce(0, +)
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Sets per spiergroep").sa(17, .semibold).foregroundColor(Tokens.text)
                 Spacer()
-                Text("deze week").sa(13).foregroundColor(Tokens.text2)
+                Text("deze week \u{00B7} \(total) sets").sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
             }
-            .padding(.bottom, 8)
-            if rows.isEmpty {
-                Text("Nog geen sets deze week.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 6)
-            }
-            ForEach(0..<rows.count, id: \.self) { i in
-                HStack(spacing: 12) {
-                    Text(rows[i].muscle).sa(15).foregroundColor(Tokens.text).frame(width: 92, alignment: .leading)
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Tokens.track)
-                            Capsule().fill(ac.accentLine)
-                                .frame(width: geo.size.width * CGFloat(rows[i].sets) / CGFloat(top))
+            if total == 0 && !hasLast {
+                Text("Nog geen sets deze week. Na je eerste training zie je hier hoe evenwichtig je traint.")
+                    .sa(15).foregroundColor(Tokens.text2).lineSpacing(3).padding(.vertical, 10)
+            } else {
+                RadarChart(labels: ProgressStats.radarAxes.map { $0.label },
+                           values: values,
+                           compare: hasLast && compareLastWeek ? last : nil)
+                    .frame(height: 300)
+                    .padding(.top, 4)
+                if hasLast {
+                    Button {
+                        Haptics.selection()
+                        withAnimation(Motion.pop) { compareLastWeek.toggle() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            RoundedRectangle(cornerRadius: 1)
+                                .stroke(Tokens.text3, style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+                                .frame(width: 18, height: 2)
+                            Text(compareLastWeek ? "Vorige week (verberg)" : "Vergelijk met vorige week").sa(13, .medium)
+                                .foregroundColor(Tokens.text2)
                         }
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                     }
-                    .frame(height: 8)
-                    Text("\(rows[i].sets)").sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
-                        .frame(width: 24, alignment: .trailing)
+                    .buttonStyle(.plain)
                 }
-                .frame(height: 30)
+                Text("Hoe ronder de vorm, hoe evenwichtiger je traint.").sa(13).foregroundColor(Tokens.text3)
             }
         }
         .padding(16)
@@ -596,9 +702,10 @@ struct ProgressTab: View {
     }
 }
 
-// MARK: - Gym
+// MARK: - Gym (in Instellingen)
 
-struct GymTab: View {
+/// Apparaten en opzetstukken van je gym. Staat in Instellingen › Gym.
+struct GymSettingsContent: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
     @State private var showAccessories = false
@@ -616,11 +723,6 @@ struct GymTab: View {
     var body: some View {
         let gym = model.gym
         VStack(alignment: .leading, spacing: 0) {
-            Text("Apparaten en opzetstukken").sa(13, .medium).foregroundColor(Tokens.text2)
-                .frame(height: 44, alignment: .leading)
-            Text("Gym").sa(34, .bold, tracking: -0.6).foregroundColor(Tokens.text)
-                .accessibilityAddTraits(.isHeader)
-
             Button {
                 model.openSheet(.gym)
             } label: {
@@ -646,7 +748,6 @@ struct GymTab: View {
                 .glassCard(radius: Radius.button)
             }
             .buttonStyle(.plain)
-            .padding(.top, 16)
 
             HStack(spacing: 4) {
                 segment("Apparaten", on: !showAccessories) { showAccessories = false }
@@ -759,68 +860,6 @@ struct GymTab: View {
 
             Text("Tik op een apparaat om de stappen aan te passen. De waarden uit de lijst zijn standaarden; controleer ze bij jouw machines.")
                 .sa(13).foregroundColor(Tokens.text3).lineSpacing(3).padding(.top, 10)
-        }
-    }
-}
-
-// MARK: - Profiel
-
-struct ProfileTab: View {
-    private var profileLine: String {
-        let n = model.history.count
-        guard let first = model.history.map({ $0.date }).min() else { return "Nog geen trainingen" }
-        return "\(n) \(n == 1 ? "training" : "trainingen") \u{00B7} sinds " + DateText.month(first)
-    }
-
-    @EnvironmentObject private var model: AppModel
-    @Environment(\.accentColors) private var ac
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Spacer().frame(height: 44)
-            Text("Profiel").sa(34, .bold, tracking: -0.6).foregroundColor(Tokens.text)
-                .accessibilityAddTraits(.isHeader)
-
-            HStack(spacing: 14) {
-                Text("S").sa(20, .bold).foregroundColor(ac.onAccent)
-                    .frame(width: 52, height: 52).background(Circle().fill(ac.accent))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Stan").sa(19, .semibold).foregroundColor(Tokens.text)
-                    Text(profileLine).sa(13, .regular, mono: true)
-                        .foregroundColor(Tokens.text2)
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassCard(radius: Radius.button)
-            .padding(.top, 16)
-
-            SectionLabel(text: "Weergave").padding(.top, 24).padding(.bottom, 10)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Accentkleur").sa(16, .medium).foregroundColor(Tokens.text)
-                    Spacer()
-                    Text(model.accent.displayName).sa(14).foregroundColor(Tokens.text2)
-                }
-                AccentPicker().padding(.top, 8)
-                Text("Modus").sa(16, .medium).foregroundColor(Tokens.text).padding(.top, 16).padding(.bottom, 8)
-                ModePicker()
-            }
-            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .glassCard(radius: Radius.button)
-
-            SectionLabel(text: "Instellingen").padding(.top, 24).padding(.bottom, 10)
-            VStack(spacing: 0) {
-                SettingsLink(title: "Training", sub: "Rusttijd, warming-up, weekplanning", page: .training)
-                Divider().background(Tokens.line)
-                SettingsLink(title: "Meldingen", sub: "Vergeten workout, creatine", page: .notifications)
-                Divider().background(Tokens.line)
-                SettingsLink(title: "Persoonlijk", sub: "Binnenkort: kg of lb, exporteren, back-up", page: .personal)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 4)
-            .glassCard(radius: Radius.button)
         }
     }
 }

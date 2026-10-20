@@ -1,8 +1,8 @@
 import SwiftUI
 
-enum ProfileSub: String { case training, notifications, personal }
+enum ProfileSub: String { case overview, training, gym, notifications, personal }
 
-/// Rij in Profiel die naar een subscherm met instellingen gaat.
+/// Rij in Instellingen die naar een subscherm gaat.
 struct SettingsLink: View {
     @EnvironmentObject private var model: AppModel
     let title: String
@@ -11,7 +11,7 @@ struct SettingsLink: View {
 
     var body: some View {
         Button {
-            model.profileSub = page
+            withAnimation(Motion.tabContent) { model.profileSub = page }
             model.screen = .settings
         } label: {
             HStack(spacing: 12) {
@@ -29,14 +29,16 @@ struct SettingsLink: View {
     }
 }
 
-/// Subscherm van Profiel: Training, Meldingen of Persoonlijk.
+/// Instellingen (via het tandwiel op Progressie) en de subschermen Training, Gym, Meldingen en Persoonlijk.
 struct SettingsScreen: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
 
     private var title: String {
         switch model.profileSub {
+        case .overview: return "Instellingen"
         case .training: return "Training"
+        case .gym: return "Gym"
         case .notifications: return "Meldingen"
         case .personal: return "Persoonlijk"
         }
@@ -46,11 +48,16 @@ struct SettingsScreen: View {
         VStack(spacing: 0) {
             HStack {
                 Button {
-                    model.screen = .home
+                    if model.profileSub == .overview {
+                        model.tab = .progress
+                        model.screen = .home
+                    } else {
+                        withAnimation(Motion.tabContent) { model.profileSub = .overview }
+                    }
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)
-                        Text("Profiel").sa(17)
+                        Text(model.profileSub == .overview ? "Progressie" : "Instellingen").sa(17)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.leading, 4).padding(.trailing, 10).frame(height: 44)
@@ -67,7 +74,9 @@ struct SettingsScreen: View {
                         .accessibilityAddTraits(.isHeader)
                         .padding(.bottom, 16)
                     switch model.profileSub {
+                    case .overview: overviewPage
                     case .training: trainingPage
+                    case .gym: GymSettingsContent()
                     case .notifications: notificationsPage
                     case .personal: personalPage
                     }
@@ -75,6 +84,56 @@ struct SettingsScreen: View {
                 }
                 .padding(.horizontal, 20)
             }
+        }
+    }
+
+    private var overviewPage: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionLabel(text: "Weergave").padding(.bottom, 10)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Accentkleur").sa(16, .medium).foregroundColor(Tokens.text)
+                    Spacer()
+                    Text(model.accent.displayName).sa(14).foregroundColor(Tokens.text2)
+                }
+                AccentPicker().padding(.top, 8)
+                Text("Modus").sa(16, .medium).foregroundColor(Tokens.text).padding(.top, 16).padding(.bottom, 8)
+                ModePicker()
+            }
+            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassCard(radius: Radius.button)
+
+            SectionLabel(text: "Functionaliteiten").padding(.top, 24).padding(.bottom, 10)
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Voeding").sa(16, .medium).foregroundColor(Tokens.text)
+                        Text("Eigen tab voor maaltijden, je doel (cutten, onderhouden, bulken) en supplementen").sa(13).foregroundColor(Tokens.text2)
+                    }
+                    Spacer(minLength: 0)
+                    SAToggle(isOn: model.nutritionTab, onColor: ac.accentLine, label: "Voeding-tab") {
+                        Haptics.selection()
+                        model.setNutritionTab(!model.nutritionTab)
+                    }
+                }
+                .frame(minHeight: 72)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 4)
+            .glassCard(radius: Radius.button)
+
+            SectionLabel(text: "Instellingen").padding(.top, 24).padding(.bottom, 10)
+            VStack(spacing: 0) {
+                SettingsLink(title: "Training", sub: "Rusttijd, warming-up, weekplanning", page: .training)
+                Divider().background(Tokens.line)
+                SettingsLink(title: "Gym", sub: model.gym.name + " \u{00B7} apparaten en opzetstukken", page: .gym)
+                Divider().background(Tokens.line)
+                SettingsLink(title: "Meldingen", sub: "Vergeten workout, creatine", page: .notifications)
+                Divider().background(Tokens.line)
+                SettingsLink(title: "Persoonlijk", sub: "Binnenkort: kg of lb, exporteren, back-up", page: .personal)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 4)
+            .glassCard(radius: Radius.button)
         }
     }
 

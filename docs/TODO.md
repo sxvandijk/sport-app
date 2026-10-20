@@ -1,6 +1,6 @@
 # Set — to-do lijst
 
-Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
+Status per 2026-10-20. Minimaal iOS 26 (bouwen op GitHub). Ronde 1 (training loggen) is klaar en getest.
 
 ## Klaar (wacht op test)
 - [x] Ronde 2a/2b: gym-tab met machine-database, eigen gyms, stappen per machine, apparaat in oefening, wisselen in schema
@@ -14,7 +14,7 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Profiel-tab opgeruimd (Ronde 12b): Weergave bovenaan, daaronder Instellingen met subschermen Training, Meldingen en Persoonlijk
 - [ ] Apple Watch-app, of een andere manier om te zien hoe lang je nog rust hebt
 - [x] Vergeten workout (Ronde 8a, wacht op test): na 1,5 uur geen set een melding, en bij openen vraagt de app "Workout sluiten?"
-- [ ] Open vraag: heeft de Gym-tab echt waarde? Blijft voor nu; later opnieuw bekijken
+- [x] Gym-tab is weg (Ronde 14a): apparaten en opzetstukken staan nu in Instellingen › Gym
 - [ ] Plaatje bij elke oefening (afbeelding/illustratie)
 - [ ] Instellingen: kopje "Fun features" voor speelse extra's
 - [x] Melding bij vergeten workout is nu een instelling (Profiel > Training, standaard aan)
@@ -24,15 +24,16 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [x] Live Activity en Dynamic Island (Ronde 6a, wacht op test met Sideloadly)
 - [~] Alle trainingen-pagina: tik op een training opent het detailscherm (Ronde 10a); mooier maken blijft open
 - [x] Vrije training een naam geven aan het einde (Ronde 10a)
-- [ ] Progressie-scherm in plaats van "sets per spiergroep": statistieken ook als cirkel (donut), menselijk lichaam met spieren (heatmap) en andere leuke extra's
-- [ ] Leuker statistiekenscherm
+- [x] Sets per spiergroep als radardiagram, met vorige week als stippellijn (Ronde 14a)
+- [ ] Menselijk lichaam met spieren (heatmap) en andere leuke extra's in Progressie
+- [~] Leuker statistiekenscherm: weekdoel-ring, weken op rij, oplopende getallen (Ronde 14a); verder uitbouwen
 - [x] Opzetstukken per oefening (Ronde 7a-7d): kiezen op de oefeningkaart, gewicht/stap per opzetstuk, beheren in Gym > Opzetstukken
 - [x] Nieuw startscherm (Ronde 4a): tab "Start", gecentreerd, volgende training in één tik, Ready-Set-Go
 - [x] Ronde 4b: kalender bovenaan, duidelijkere knoppen, Ready-Set-Go bij openen van de app (niet bij workout starten), tabvolgorde Gym > Progressie > Start > Training > Profiel
-- [ ] Design-ronde: moderner, nog minimalistisch (skills: ui-ux-pro-max, SwiftUI-expert, Apple HIG)
+- [~] Design-ronde (Ronde 14a: nieuwe tabs, Logboek-feed, animaties); verder: moderner, nog minimalistisch (skills: ui-ux-pro-max, SwiftUI-expert, Apple HIG)
 - [ ] Machine-database controleren met echte gegevens (Basic-Fit, jouw gym); geen openbare bron met stapgroottes gevonden
 
-## Gym-tab (vervolg)
+## Gym (in Instellingen)
 - [ ] Eigen machines/sportscholen toevoegen en bewerken
 - [ ] Sportschool-lijsten delen met anderen
 - [ ] Basic-Fit machinelijst controleren/aanvullen na bezoek (15-10)
@@ -50,7 +51,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - [ ] Week aantikken in de volumegrafiek
 
 ## App
-- [ ] Modern iOS 27-design (nieuwere Xcode op CI nodig)
+- [x] Minimaal iOS 26, bouwen op GitHub (Ronde 14a)
+- [ ] iOS 27-API's zodra GitHub een runner met Xcode 27 heeft
 - [ ] Regionale tijd-/eenhedeninstelling
 - [ ] Creatine-melding: acties en app-naam
 - [ ] Eerste-keer-onboarding
@@ -149,3 +151,12 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Het ⓘ-scherm is weer alleen uitleg (geen keuzemenu).
 - Links en rechts apart: de knop voor eigen gewicht per kant is weg. In plaats daarvan een knop om de reps links en rechts samen aan te passen (staat standaard aan, tik om ze los te zetten).
 
+## Ronde 14a (wacht op test)
+- Nieuwe tabs: Voeding (optioneel) · Logboek · Start · Training · Progressie. Start is een gevulde accentcirkel.
+- Instellingen › Functionaliteiten: Voeding aan/uit (standaard uit). Zet je hem uit, dan schuiven de andere tabs op.
+- Logboek: je trainingen als feed per week, met filter (Alles, PR's, per training), kaarten met volume/sets/minuten, top-oefeningen en spiergroepbalk. Tik = detailscherm.
+- Progressie & Profiel: profielkop, weekdoel-ring met weken op rij, oplopende getallen, staven die één voor één groeien, radardiagram voor sets per spiergroep. Tandwiel rechtsboven = Instellingen.
+- Instellingen: Weergave, Functionaliteiten, en subschermen Training, Gym (apparaten en opzetstukken), Meldingen, Persoonlijk.
+- Voeding (eerste versie): doel kiezen (cutten, onderhouden, bulken), maaltijden van vandaag met kcal en eiwit, creatine afvinken.
+- Animaties: vinkje ploept bij Set klaar, "sets te gaan" rolt omlaag, tabicoon veert, knoppen deuken in.
+- Minimaal iOS 26. De iPhone 8 Plus (iOS 16) kan de app niet meer installeren.

@@ -5,18 +5,49 @@ import AudioToolbox
 import Combine
 
 enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings }
+/// De tabs, in vaste volgorde. Voeding is optioneel (Instellingen › Functionaliteiten).
+/// Gebruik altijd de case, nooit een index: zonder Voeding schuiven de posities op.
 enum HomeTab: Int, CaseIterable, Identifiable {
-    case gym, progress, start, training, profile
+    case nutrition, logbook, start, training, progress
     var id: Int { rawValue }
     var title: String {
         switch self {
+        case .nutrition: return "Voeding"
+        case .logbook: return "Logboek"
         case .start: return "Start"
         case .training: return "Training"
         case .progress: return "Progressie"
-        case .gym: return "Gym"
-        case .profile: return "Profiel"
         }
     }
+}
+
+/// Doel van je voeding.
+enum NutritionPlan: String, Codable, CaseIterable, Identifiable {
+    case cut, maintain, bulk
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .cut: return "Cutten"
+        case .maintain: return "Onderhouden"
+        case .bulk: return "Bulken"
+        }
+    }
+    var explanation: String {
+        switch self {
+        case .cut: return "Iets minder eten dan je verbruikt, met veel eiwit om je spieren te houden."
+        case .maintain: return "Ongeveer evenveel eten als je verbruikt. Gewicht blijft gelijk."
+        case .bulk: return "Iets meer eten dan je verbruikt, om spiermassa op te bouwen."
+        }
+    }
+}
+
+/// Eén gelogde maaltijd.
+struct MealEntry: Codable, Hashable, Identifiable {
+    var id = UUID()
+    var date: Date
+    var name: String
+    var kcal: Int?
+    var protein: Int?
 }
 
 enum SheetKind: String {
@@ -184,6 +215,9 @@ struct PersistedState: Codable {
     var dataVersion: Int? = nil
     var notes: [String: String]? = nil          // oude opslag, alleen nog om te lezen
     var noteLog: [String: [NoteEntry]]? = nil
+    var nutritionTab: Bool? = nil               // Voeding-tab zichtbaar (standaard uit)
+    var nutritionPlan: NutritionPlan? = nil
+    var meals: [MealEntry]? = nil
 }
 
 /// De toestand van de hele app. De regels staan in `LiveSession`; dit is de laag die schermen en opslag verbindt.
@@ -232,6 +266,9 @@ final class AppModel: ObservableObject {
     @Published var weekOverrides: [String: String]
     @Published var accEditID: String?
     @Published var noteLog: [String: [NoteEntry]]
+    @Published private(set) var nutritionTab: Bool
+    @Published var nutritionPlan: NutritionPlan
+    @Published var meals: [MealEntry]
 
     // Werkscherm
     @Published var focusID: UUID?
@@ -280,7 +317,9 @@ final class AppModel: ObservableObject {
     @Published var calOpen = false
     /// Bij links en rechts apart: de reps van beide kanten samen aanpassen.
     @Published var pairReps = true
-    @Published var profileSub: ProfileSub = .training
+    @Published var profileSub: ProfileSub = .overview
+    /// Waar de terugknop van het detailscherm van een training naartoe gaat.
+    @Published var detailReturn: Screen = .allWorkouts
     var cameFromSettings = false
     @Published var calOpenProgress = false
     @Published var calSel: Int?
@@ -326,6 +365,9 @@ final class AppModel: ObservableObject {
             log[name] = [NoteEntry(date: now, text: text)]
         }
         noteLog = log
+        nutritionTab = state.nutritionTab ?? false
+        nutritionPlan = state.nutritionPlan ?? .maintain
+        meals = state.meals ?? []
         // Eerdere versies hadden 1:30 als standaard rusttijd; de nieuwe standaard is 3:00.
         if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
@@ -405,7 +447,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, weekOverrides: weekOverrides, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, weekOverrides: weekOverrides, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog, nutritionTab: nutritionTab, nutritionPlan: nutritionPlan, meals: meals)
     }
 
     func save() {
@@ -1123,6 +1165,53 @@ final class AppModel: ObservableObject {
 
     var barDragging = false
 
+    // MARK: Tabs
+
+    /// De tabs in de tabbalk. Voeding staat er alleen in als je hem hebt aangezet.
+    var visibleTabs: [HomeTab] {
+        HomeTab.allCases.filter { $0 != .nutrition || nutritionTab }
+    }
+
+    /// Zet de Voeding-tab aan of uit. Sta je op Voeding, dan ga je eerst naar Start,
+    /// zodat de tabbalk nooit naar een tab wijst die er niet meer is.
+    func setNutritionTab(_ on: Bool) {
+        guard on != nutritionTab else { return }
+        if !on && tab == .nutrition { tab = .start }
+        withAnimation(UIAccessibility.isReduceMotionEnabled ? nil : Motion.tabReflow) {
+            nutritionTab = on
+        }
+        save()
+    }
+
+    /// Naar de tab ernaast (vegen over het scherm), binnen de zichtbare tabs.
+    func moveTab(by step: Int) -> Bool {
+        let tabs = visibleTabs
+        guard let i = tabs.firstIndex(of: tab) else { return false }
+        let next = i + step
+        guard tabs.indices.contains(next) else { return false }
+        tab = tabs[next]
+        return true
+    }
+
+    // MARK: Voeding
+
+    var mealsToday: [MealEntry] {
+        let cal = Calendar.current
+        return meals.filter { cal.isDateInToday($0.date) }.sorted { $0.date < $1.date }
+    }
+
+    func addMeal(name: String, kcal: Int?, protein: Int?) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        meals.append(MealEntry(date: Date(), name: trimmed, kcal: kcal, protein: protein))
+        save()
+    }
+
+    func deleteMeal(_ id: UUID) {
+        meals.removeAll { $0.id == id }
+        save()
+    }
+
     func closeSheet() { sheet = nil }
 
     // MARK: Schema's en trainingen
@@ -1579,6 +1668,12 @@ final class AppModel: ObservableObject {
 
 /// Lichte trilling bij belangrijke momenten.
 enum Haptics {
+    static func selection() {
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+    static func medium() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
     static func light() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }

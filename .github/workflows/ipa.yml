@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       runner:
-        description: "Bouwomgeving: macos-26 (met Liquid Glass) of macos-15 (sneller beschikbaar, zonder glas)"
+        description: "Bouwomgeving (minimaal macos-26: de app vraagt iOS 26)"
         default: "macos-26"
 
 permissions:

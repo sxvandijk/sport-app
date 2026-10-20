@@ -1,6 +1,6 @@
 # Sport App
 
-Minimalistische gym-workout-tracker voor iPhone (SwiftUI, iOS 16+).
+Minimalistische gym-workout-tracker voor iPhone (SwiftUI, iOS 26+). App-naam: Set.
 
 - `docs/DESIGN.md`: ontwerpdocument, de bron voor uiterlijk en gedrag
 - `docs/prototype/`: klikbaar HTML-prototype
@@ -9,10 +9,15 @@ Minimalistische gym-workout-tracker voor iPhone (SwiftUI, iOS 16+).
 - `SportAppTests/`: unit tests
 - `project.yml`: beschrijving van het Xcode-project (XcodeGen)
 
-## Project openen in Xcode
+## Bouwen en testen op je iPhone
 
-Het Xcode-project (`SportApp.xcodeproj`) wordt door CI gemaakt en na elke merge op `main` in de repository gezet.
-Haal `main` binnen (Xcode: Source Control > Pull) en open `SportApp.xcodeproj`.
+De app vraagt iOS 26 en wordt daarom op GitHub gebouwd (macOS 26 met Xcode 26), niet op de iMac met Xcode 14.2.
+
+1. Ga naar **Actions › IPA › Run workflow**, kies de branch en start.
+2. Als de run klaar is (groen), download onderaan de run het artifact **Set-ipa** en pak de zip uit: daarin zit `Set.ipa`.
+3. Zet `Set.ipa` met Sideloadly op je iPhone (gratis Apple ID; na 7 dagen opnieuw ondertekenen).
+
+Blijft een run lang in de wachtrij staan en stopt hij met "not acquired by Runner", dan had GitHub even geen Mac vrij. Start hem dan later opnieuw.
 
 ## CI
 

@@ -61,8 +61,15 @@ struct LaunchConfig {
             model.screen = .workoutDetail
         case "creatine": model.screen = .creatine; model.crea = true
         case "training-empty": model.tab = .training
-        case "gym": model.tab = .gym
-        case "profile": model.tab = .profile
+        case "gym": model.profileSub = .gym; model.screen = .settings
+        case "profile": model.tab = .progress
+        case "settings": model.profileSub = .overview; model.screen = .settings
+        case "logbook": model.tab = .logbook
+        case "nutrition":
+            model.setNutritionTab(true)
+            model.tab = .nutrition
+            model.meals = [MealEntry(date: now.addingTimeInterval(-5 * 3600), name: "Havermout met kwark", kcal: 520, protein: 38),
+                           MealEntry(date: now.addingTimeInterval(-1 * 3600), name: "Kip met rijst", kcal: 680, protein: 52)]
         case "settings-training": model.profileSub = .training; model.screen = .settings
         case "settings-notifications": model.profileSub = .notifications; model.screen = .settings
         case "workout": model.screen = .workout

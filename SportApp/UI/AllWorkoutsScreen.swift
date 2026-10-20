@@ -90,6 +90,7 @@ struct AllWorkoutsScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
                 model.detailID = h.id
+                model.detailReturn = .allWorkouts
                 model.screen = .workoutDetail
             } label: {
                 HStack(spacing: 10) {

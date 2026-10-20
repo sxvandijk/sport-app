@@ -173,6 +173,8 @@ private struct WorkoutTopBar: View {
                     let left = session.estimatedMinutesLeft
                     stat(left > 0 ? "~\(left)" : "0", "min resterend")
                     stat(String(session.openWorkSets), "sets te gaan")
+                        // Het getal rolt omlaag na "Set klaar".
+                        .animation(Motion.pop, value: session.openWorkSets)
                 }
                 .frame(maxWidth: .infinity)
 
@@ -204,6 +206,7 @@ private struct WorkoutTopBar: View {
     private func stat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 0) {
             Text(value).sa(22, .semibold, tracking: -0.3, mono: true).foregroundColor(Tokens.text)
+                .rollingNumber()
                 .frame(height: 26)
             Text(label).sa(12, .medium).foregroundColor(Tokens.text2)
         }
@@ -652,12 +655,16 @@ private struct SetRow: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Haal vinkje weg")
+                        // Het vinkje "ploept" erin bij Set klaar.
+                        .transition(.scale(scale: 0.2).combined(with: .opacity))
                     } else if isCur {
                         Text("NU").sa(12, .bold, tracking: 0.48).foregroundColor(ac.accentText)
+                            .transition(.opacity)
                     } else {
                         Color.clear
                     }
                 }
+                .animation(Motion.pop, value: set.done)
                 .frame(width: 44, alignment: .trailing)
             }
             .padding(.leading, 16).padding(.trailing, 8)

@@ -11,7 +11,7 @@ on:
         description: "Schermen voor screenshots (spatiegescheiden), of 'alle'"
         default: "workout overview editor sheet-swap sheet-exmenu sheet-program profile training progress"
       runner:
-        description: "Bouwomgeving: macos-26 of macos-15 (sneller beschikbaar)"
+        description: "Bouwomgeving (minimaal macos-26: de app vraagt iOS 26)"
         default: "macos-26"
 
 concurrency:
@@ -38,11 +38,6 @@ jobs:
         run: |
           brew install xcodegen
           xcodegen generate
-          # Xcode 14.2 leest alleen projectformaat t/m 56; XcodeGen schrijft standaard 77.
-          sed -i '' -e 's/objectVersion = 77;/objectVersion = 56;/' \
-                    -e 's/preferredProjectObjectVersion = 77;/preferredProjectObjectVersion = 56;/' \
-                    SportApp.xcodeproj/project.pbxproj
-          grep -n "objectVersion\|preferredProjectObjectVersion\|compatibilityVersion" SportApp.xcodeproj/project.pbxproj
 
       - name: Simulator kiezen
         id: sim
@@ -133,7 +128,7 @@ jobs:
           git checkout main
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          # Info.plist en .xcodeproj horen bij het gegenereerde project; het project staat zo klaar voor Xcode 14.2.
+          # Info.plist en .xcodeproj horen bij het gegenereerde project.
           git add -f SportApp.xcodeproj SportApp/Info.plist
           if ! git diff --cached --quiet; then
             git commit -m "Gegenereerd Xcode-project bijwerken [skip ci]"

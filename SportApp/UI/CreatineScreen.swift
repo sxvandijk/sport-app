@@ -12,12 +12,11 @@ struct CreatineScreen: View {
         VStack(spacing: 0) {
             HStack {
                 Button {
-                    model.tab = .profile
                     model.screen = model.cameFromSettings ? .settings : .home; model.cameFromSettings = false
                 } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)
-                        Text("Profiel").sa(17)
+                        Text("Terug").sa(17)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.leading, 4).padding(.trailing, 10).frame(height: 44)

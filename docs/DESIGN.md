@@ -1,6 +1,6 @@
 # Sport App: ontwerpdocument
 
-Versie 1 · 13 oktober 2026 · voor SwiftUI, minimaal iOS 16 (Xcode 14.2)
+Versie 2 · 20 oktober 2026 · voor SwiftUI, minimaal iOS 26 (gebouwd op GitHub met Xcode 26)
 
 Dit document beschrijft hoe de app eruitziet en zich gedraagt. Het klikbare prototype (canvas "Sport App – ontwerp") laat dit zien. Bij twijfel geldt dit document.
 
@@ -8,13 +8,14 @@ Dit document beschrijft hoe de app eruitziet en zich gedraagt. Het klikbare prot
 
 ## 1. Uitgangspunten
 
-- De app draait alleen om trainen: snel een training starten, snel sets invullen, geen sociale feed.
+- De app draait om trainen: snel een training starten, snel sets invullen. Voeding is een optionele extra tab. Vrienden in het Logboek kunnen later, maar de app blijft geen sociaal netwerk.
 - Rustig en donker-eerst, met één accentkleur. De lichte modus heeft dezelfde opbouw.
 - Zo min mogelijk tikken. Alles wat je tijdens een set nodig hebt zit onderin, binnen duimbereik.
 - Grote cijfers met vaste cijferbreedte (`.monospacedDigit()`) voor gewicht, reps en timers.
-- Weinig lijnen, geen schaduwen, geen kaarten in kaarten. Vlakken onderscheiden zich alleen door kleur.
+- Weinig lijnen, geen schaduwen, geen kaarten in kaarten. Zwevende lagen (tabbalk, minibalk, sheets) en kaarten zijn Liquid Glass.
 - Aanraakvlakken zijn minimaal 44 × 44 pt, ook als het zichtbare element kleiner is.
-- **Niet gebruiken:** Liquid Glass, `.glassEffect`, `.sensoryFeedback`, `@Observable`, `ContentUnavailableView`, en verder alles wat iOS 17 of hoger nodig heeft. Haptiek gaat via `UIImpactFeedbackGenerator` / `UINotificationFeedbackGenerator`.
+- **Minimaal iOS 26.** Alles van iOS 17 tot en met 26 mag: Liquid Glass (`.glassEffect`), `@Observable`, `.sensoryFeedback`, `ContentUnavailableView`, `.symbolEffect`, Swift Charts. De app wordt op GitHub gebouwd (macOS 26-runner met Xcode 26), niet meer op de iMac met Xcode 14.2. Gevolg: de iPhone 8 Plus (iOS 16) kan de app niet meer installeren; testen gaat op de iPhone 16 Pro. Voor iOS 27-only API's is een runner met Xcode 27 nodig; gebruik die pas als die runner er is, en dan achter `if #available(iOS 27, *)`.
+- Bestaande code met `UIImpactFeedbackGenerator` en `ObservableObject` mag blijven; nieuwe code mag de moderne varianten gebruiken.
 - **Taal:** knoppen, uitleg en spiergroepen zijn in het Nederlands. Namen van oefeningen en machines zijn in het Engels.
 
 ---
@@ -129,27 +130,49 @@ Decimalen schrijf je met een komma (7,5 kg) en duizendtallen met een punt (48.23
 
 Er staan nergens schaduwen of lijnen tussen rijen. Rust en afstand doen het werk.
 
+### 4.1 Beweging
+
+Alle timings staan in `Design/Motion.swift`. Regel: wat je aanraakt veert (spring), wat verschijnt glijdt uit (easeOut). Nooit langer dan 0,7 s, en een animatie laat je nooit wachten.
+
+| Moment | Wat beweegt | Haptiek |
+|---|---|---|
+| Set klaar | Vinkje "ploept" erin (schaal 0,2 → 1, `Motion.pop`); "sets te gaan" rolt omlaag (`.numericText()`); voortgangslijn schuift mee | success |
+| Tab wisselen | Glazen lens glijdt mee; actief icoon veert naar 112 %; inhoud komt zacht in beeld (0,22 s) | selection |
+| Voeding aan/uit | Tab krimpt en vervaagt, de andere tabs schuiven op (`Motion.tabReflow`) | selection |
+| Knoppen en kaarten | Deuken in tot 97 % (`PressScaleStyle`) | – |
+| Progressie openen | Weekring vult, getallen rollen vanaf 0, staven groeien één voor één (50 ms per staaf), radardiagram bloeit open vanuit het midden | – |
+| Week aantikken | Gekozen staaf licht op | selection |
+| Maaltijd toevoegen | Rij schuift erin, totalen rollen omhoog | medium |
+
+Bij **Bewegingen beperken** (`accessibilityReduceMotion`) vallen deze animaties weg of worden het korte fades.
+
 ---
 
 ## 5. Navigatie
 
 ```
-TabView (4 tabs)
-├─ Training   (startscherm)
-├─ Progressie
-├─ Gym
-└─ Profiel
+Tabbalk (4 of 5 tabs, in deze volgorde)
+├─ Voeding     (optioneel, Instellingen › Functionaliteiten)
+├─ Logboek     (feed van je afgeronde trainingen)
+├─ Start       (hoofdknop: gevulde accentcirkel)
+├─ Training    (schema's, kalender, vrije training)
+└─ Progressie  (progressie + profiel; tandwiel rechtsboven = Instellingen)
 
-Los van de tabs (fullScreenCover of NavigationStack-push):
+Los van de tabs:
+├─ Instellingen         (via het tandwiel) › Training · Gym · Meldingen · Persoonlijk
 ├─ Training-overzicht   (vanaf een training in het schema)
 ├─ Schema-editor        (nieuwe training / training aanpassen)
-├─ Werkscherm           (fullScreenCover, zonder tabbalk)
+├─ Detail van een training (vanuit Logboek)
+├─ Werkscherm           (zonder tabbalk)
 └─ Afgerond             (na Workout afronden)
 ```
 
-- Tabicoon en -label van de actieve tab hebben de kleur `accentText`, de andere tabs `text3`.
+- Tabicoon en -label van de actieve tab hebben de kleur `accentText`, de andere tabs `text2`. Start heeft altijd een gevulde cirkel in `accent` met het icoon in `onAccent`.
+- **Zonder Voeding** heeft de balk 4 gelijke vakken: Logboek · Start · Training · Progressie. Start staat dan niet meer precies in het midden; dat is bewust. Start valt op door de gevulde cirkel, niet door de plek, en de volgorde blijft gelijk zodat je spiergeheugen klopt.
+- Sta je op Voeding terwijl je hem uitzet, dan ga je eerst naar Start en verdwijnt de tab daarna.
+- Tabs worden altijd met hun naam (`HomeTab`) aangewezen, nooit met een positie. Vegen over het scherm en slepen over de balk gebruiken de lijst met zichtbare tabs (`visibleTabs`).
 - Loopt er een training, dan staat de **minibalk** boven de tabbalk, op elke tab.
-- iOS 16 heeft `NavigationStack`, dus die mag je gebruiken. `NavigationSplitView` is niet nodig.
+- De app opent op Start.
 
 ---
 
@@ -333,33 +356,48 @@ Een sheet heeft `.presentationDetents([.medium, .large])`, de achtergrond `surfa
 - Per oefening een samenvattingsregel.
 - De knop **Klaar** → het startscherm. In de kalender is vandaag dan gevuld.
 
-### 6.8 Progressie
+### 6.8 Progressie & Profiel (tab 5)
 
-- De ondertitel "Laatste 4 weken" en de titel "Progressie".
-- Drie getallen: trainingen, kg volume en nieuwe PR's.
-- **Volume per week:** een staafdiagram met 8 weken. De huidige week is `accentLine`, eerdere weken `accentSoft`. Labels W35…W42, met eronder "Deze week tot nu toe 6.240 kg".
-- **Sets per spiergroep (deze week):** een horizontale balk per spiergroep (`track` met een vulling in `accentLine`), met het getal rechts.
-- **Persoonlijke records:** naam, "26 kg × 8 · geschat 1RM 33 kg" (Epley) en de datum.
-- Gebruik Swift Charts **niet**: het werkt op iOS 16, maar gewone `Rectangle`s zijn hier eenvoudiger en passen beter bij de stijl.
+Van boven naar beneden:
 
-### 6.9 Gym
+1. **Kopregel:** "Laatste 4 weken" en rechts de **tandwielknop** (44 pt, glas) → Instellingen.
+2. **Profiel:** accentcirkel met de initiaal, de naam (30 bold) en "48 trainingen · sinds juli 2026". Geen knoppen of instellingen hier.
+3. **Weekdoel:** ring (104 pt, lijn 12) met "3/4 trainingen". Het doel is het aantal ingeplande dagen in de weekplanning, of anders het aantal trainingen in je schema. Rechts "Nog 1 te gaan" of "Gehaald. Sterk." en, als je minstens één week op rij traint, een vlammetje met "5 weken op rij".
+4. **Drie tegels:** trainingen, kg volume en nieuwe PR's (laatste 4 weken).
+5. **Kalender** (zelfde blok als op Start en Training).
+6. **Volume per week:** staafdiagram met 8 weken. Huidige week `accentLine`, eerdere weken `accentSoft`. Tik op een week voor de trainingen in die week.
+7. **Sets per spiergroep (radardiagram):** acht assen: Borst, Schouders, Triceps, Core, Hams (hamstrings, billen, kuiten), Quads, Biceps (met onderarmen) en Rug (lats, bovenrug, traps, onderrug). Vulling `accentSoft`, rand `accentLine`, het getal staat bij elke as. Vorige week staat er als stippellijn (`text3`) overheen; die kun je verbergen. Onderschrift: "Hoe ronder de vorm, hoe evenwichtiger je traint."
+8. **Persoonlijke records** → eigen pagina.
 
-- De titel "Gym" en een blok met de huidige gym, "10 van 12 apparaten" en **Wissel**.
-- **Apparaten in deze gym:** per apparaat de naam, de gewichtsstappen (bijv. "25–85 kg · stappen van 10 kg") en een schakelaar. Een apparaat dat uit staat toont "Niet in deze gym", in `text2`.
-- **+ Apparaat toevoegen**, en de hint dat scannen met de camera later komt.
-- **Sheet *Kies je gym*:** de lijst met gyms en een vinkje bij de huidige, plus **+ Nieuwe gym**. De gekozen gym bepaalt de suggesties bij Machine bezet en de stappen van +/−.
+"Alle trainingen" staat hier niet meer: dat is nu de Logboek-tab.
 
-### 6.10 Profiel
+### 6.9 Instellingen (via het tandwiel)
 
-- Een kop met een accentcirkel met de initiaal, de naam en "48 trainingen · sinds juli 2026".
-- **Weergave:** accentkleur (zes ronde stalen van 34 pt in een raakvlak van 48; de gekozen kleur krijgt een ring van 2 pt in `text`) en een segmentknop Modus (Systeem / Donker / Licht).
-- **Training:**
-  - standaard rusttijd (stepper per 15 s, van 0:30 tot 5:00, standaard 1:30);
-  - schakelaar *Warming-up in superset*.
-- **Herinneringen:** Creatine (schakelaar, "Elke dag om 09:00").
-- Later: kg/lb, gegevens exporteren en een back-up.
+- **Weergave:** accentkleur (stalen van 34 pt in een raakvlak van 48, gekozen kleur met een ring van 2 pt in `text`) en de segmentknop Modus (Systeem / Donker / Licht).
+- **Functionaliteiten:** schakelaar **Voeding** ("Eigen tab voor maaltijden, je doel en supplementen"). Standaard uit.
+- **Instellingen**, elk een eigen subscherm:
+  - **Training:** standaard rusttijd, warming-up in superset, elke week opnieuw beginnen, weekplanning.
+  - **Gym:** huidige gym (wisselen), Apparaten en Opzetstukken (wat vroeger de Gym-tab was).
+  - **Meldingen:** vergeten workout, creatine. De creatine-herinnering staat hier en niet in Voeding, zodat hij blijft werken als Voeding uit staat.
+  - **Persoonlijk:** later kg/lb, exporteren en back-up.
+- Terug vanuit een subscherm gaat naar Instellingen; terug vanuit Instellingen gaat naar Progressie.
 
----
+### 6.10 Logboek (tab 2)
+
+- Kopregel "12 trainingen" en de titel "Logboek".
+- **Filterchips:** Alles · PR's · één chip per trainingsnaam.
+- **Per week gegroepeerd:** "Deze week", "Vorige week", daarna "Week 41 · ma 5 okt". Rechts het weektotaal ("3× · 31.400 kg").
+- **Kaart per training** (glas, hoek 24): naam (20 bold), datum en starttijd, rechts een PR-pil als je die dag een record zette. Daaronder drie getallen (kg, sets, min), de eerste drie oefeningen met "3 × 55 kg" (ster bij een record) en "+ 2 oefeningen", en onderaan een dunne balk met de verdeling over spiergroepen plus de twee grootste in tekst ("Borst 45% · Schouders 30%").
+- Tik op een kaart → het detailscherm van die training; terug gaat naar het Logboek.
+- Lege toestand: "Nog geen trainingen" met uitleg.
+- **Later:** trainingen van vrienden in dezelfde feed, met een avatar en hun naam, zonder PR-pil. Dat vraagt een server en accounts en staat daarom nog niet gepland.
+
+### 6.11 Voeding (tab 1, optioneel)
+
+- Kopregel met de datum en de titel "Voeding".
+- **Mijn doel:** segmentknop Cutten · Onderhouden · Bulken met één zin uitleg. Nog zonder getallen: een calorie-doel vraagt lichaamsgewicht en activiteit, en komt later.
+- **Vandaag:** totalen kcal, gram eiwit en aantal maaltijden; de lijst met maaltijden (naam, tijd, kcal, eiwit, prullenbak); invoer met naam, kcal en eiwit en de knop **Maaltijd toevoegen**. Alleen de naam is verplicht.
+- **Supplementen:** creatine afvinken voor vandaag, of openen voor de tijden.
 
 ## 7. Regels voor het gedrag
 
@@ -480,4 +518,7 @@ Na elke wijziging slaat `WorkoutStore` de training op, zoals nu al gebeurt. Een 
 - Een apparaat toevoegen en bewerken (min, max, stap, of een onregelmatige lijst), en de camera-scan met correctiestap.
 - Detail van een oefening in Progressie (grafiek per oefening, geschiedenis).
 - kg/lb, export en back-up.
-- Onboarding: eerste gym en eerste schema kiezen.
+- Onboarding: eerste gym en eerste schema kiezen (en vragen of je Voeding wilt gebruiken).
+- Voeding: calorie- en eiwitdoel uit gewicht en doel, favoriete maaltijden, andere supplementen.
+- Logboek: vrienden volgen.
+- Progressie: menselijk lichaam met spieren (heatmap) als alternatief voor het radardiagram.
