@@ -140,9 +140,12 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Superset tijdens de workout: bovenin staat een vinkje zodra je iets kiest, en de knop "Koppelen" staat boven de zoeklijst.
 - Superset: de lijst scrolt naar de oefening waar je nu mee bezig bent, niet naar het begin van het blok.
 - Invoer met toetsenblok is lager (kleinere toetsen), en de rustklok is weg tijdens het invullen.
-- Links en rechts apart: je kunt nu een eigen gewicht per kant instellen, met een knop om ze gelijk te zetten. Het volume rekent met beide gewichten.
-- Zijmodus-scherm is nu een keuze: Eén gewicht, Per arm of been tegelijk (2x), Links en rechts apart. Eén handvat met twee handen telt niet meer dubbel; kabel telt alleen dubbel bij "Losse handgreep".
 - Na afloop kun je per erbij gedane oefening kiezen of hij in je schema komt.
 - Na je geplande training van vandaag staat de volgende training op het startscherm, met een regel dat je de ingeplande hebt afgerond.
 - Creatine staat op het startscherm: vink hem daar af of open hem.
+
+## Ronde 13b (wacht op test)
+- Volume telt automatisch goed, zonder instelling: links en rechts apart = elke kant telt mee; twee dumbbells of kabel met "Losse handgreep" (twee handgrepen tegelijk) = dubbel; één handvat, stang, touw of machine = één keer.
+- Het ⓘ-scherm is weer alleen uitleg (geen keuzemenu).
+- Links en rechts apart: de knop voor eigen gewicht per kant is weg. In plaats daarvan een knop om de reps links en rechts samen aan te passen (staat standaard aan, tik om ze los te zetten).
 

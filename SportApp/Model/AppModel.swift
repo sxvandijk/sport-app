@@ -24,7 +24,7 @@ enum SheetKind: String {
 }
 
 enum SwapScope { case now, schema, prefOnly }
-enum EditField { case weight, weight2, reps, reps2 }
+enum EditField { case weight, reps, reps2 }
 
 struct DraftItem: Identifiable, Hashable {
     var id = UUID()
@@ -278,6 +278,8 @@ final class AppModel: ObservableObject {
 
     // Kalender
     @Published var calOpen = false
+    /// Bij links en rechts apart: de reps van beide kanten samen aanpassen.
+    @Published var pairReps = true
     @Published var profileSub: ProfileSub = .training
     var cameFromSettings = false
     @Published var calOpenProgress = false
@@ -570,8 +572,8 @@ final class AppModel: ObservableObject {
             let minutes = max(1, Int((now.timeIntervalSince(s.startAt) / 60).rounded()))
             var logged: [LoggedExercise] = []
             for e in s.exercises {
-                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.two == true && $0.type != .warmup ? 2 : nil, w2: $0.type != .warmup ? $0.w2 : nil) }
-                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.two, acc: e.acc, blk: e.blk)) }
+                let done = e.sets.filter { $0.done }.map { LoggedSet(w: $0.w, r: $0.r, type: $0.type, r2: $0.r2, m: e.doubles && $0.type != .warmup ? 2 : nil) }
+                if !done.isEmpty { logged.append(LoggedExercise(name: e.name, sets: done, uni: e.uni, two: e.doubles ? true : nil, acc: e.acc, blk: e.blk)) }
             }
             let entry = HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged)
             history.insert(entry, at: 0)
@@ -663,27 +665,10 @@ final class AppModel: ObservableObject {
         return s.current(focus: focusID, focusSet: focusSetID, warmFirst: warmFirst)
     }
 
-    func stepWeight(_ dir: Int, second: Bool = false) {
+    func stepWeight(_ dir: Int) {
         guard var s = session, let c = current().cur else { return }
-        s.stepWeight(set: c.setID, exID: c.exID, dir: dir, second: second)
+        s.stepWeight(set: c.setID, exID: c.exID, dir: dir)
         session = s
-        save()
-    }
-
-    func toggleSplitWeights(_ exID: UUID) {
-        guard var s = session else { return }
-        s.toggleSplitWeights(exID)
-        session = s
-        editField = nil
-        Haptics.light()
-        save()
-    }
-
-    func toggleTwoSides(_ exID: UUID) {
-        guard var s = session else { return }
-        s.toggleTwoSides(exID)
-        session = s
-        Haptics.light()
         save()
     }
 
@@ -735,7 +720,7 @@ final class AppModel: ObservableObject {
 
     func stepReps(_ dir: Int, second: Bool = false) {
         guard var s = session, let c = current().cur else { return }
-        s.stepReps(set: c.setID, exID: c.exID, dir: dir, second: second)
+        s.stepReps(set: c.setID, exID: c.exID, dir: dir, second: second, both: pairReps)
         session = s
         save()
     }
@@ -781,9 +766,16 @@ final class AppModel: ObservableObject {
     }
 
     /// Cijfers die je met het toetsenbord intikt voor de huidige set.
-    func setCurrentValues(w: Double?, r: Int?, r2: Int? = nil, w2: Double? = nil) {
+    func setCurrentValues(w: Double?, r: Int?, r2: Int? = nil) {
         guard var s = session, let c = current().cur else { return }
-        s.setValues(set: c.setID, exID: c.exID, w: w, r: r, r2: r2, w2: w2)
+        var left = r
+        var right = r2
+        // Links en rechts samen: wat je bij de ene kant invult geldt voor beide.
+        if pairReps, s.findSet(c.setID)?.r2 != nil {
+            if let v = r { right = v }
+            if let v = r2 { left = v }
+        }
+        s.setValues(set: c.setID, exID: c.exID, w: w, r: left, r2: right)
         session = s
         save()
     }
@@ -1373,15 +1365,6 @@ final class AppModel: ObservableObject {
             }
         }
         if changed { session = s }
-    }
-
-    func setSideMode(_ exID: UUID, _ mode: SideMode) {
-        guard var s = session else { return }
-        s.setSideMode(exID, mode)
-        session = s
-        editField = nil
-        Haptics.light()
-        save()
     }
 
     func chooseAccessory(_ exID: UUID, _ acc: GymAccessory) {

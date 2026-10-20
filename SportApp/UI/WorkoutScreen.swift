@@ -597,7 +597,7 @@ private struct SetRow: View {
         case .timed: return ""
         case .bodyweight: return set.w == 0 ? "\u{2013}" : Format.weight(set.w)
         case .cardio: return Format.km(set.w)
-        case .weights: return set.w2 != nil && set.w2 != set.w && set.type != .warmup ? Format.weight(set.w) + "/" + Format.weight(set.w2 ?? set.w) : Format.weight(set.w)
+        case .weights: return Format.weight(set.w)
         }
     }
 
@@ -846,11 +846,11 @@ private struct Dock: View {
             .padding(.horizontal, 4)
             Text(prevText).sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
                 .padding(.horizontal, 4).padding(.top, 1)
-            if kind == .weights || kind == .bodyweight, set.type != .warmup, exercise.uni == true || exercise.two == true || Catalog.sidesAmbiguous(exercise.name) {
+            if kind == .weights || kind == .bodyweight, set.type != .warmup, exercise.uni == true || exercise.doubles || Catalog.sidesAmbiguous(exercise.name) {
                 let caption: String = {
                     switch exercise.sideMode {
                     case .separate: return "Links en rechts apart \u{00B7} volume telt beide kanten"
-                    case .perSide: return "Gewicht per arm of been \u{00B7} volume telt 2\u{00D7}"
+                    case .perSide: return "Twee handgrepen tegelijk \u{00B7} volume telt 2\u{00D7}"
                     case .single: return "1 arm of totaalgewicht \u{00B7} volume = gewicht \u{00D7} reps"
                     }
                 }()
@@ -873,33 +873,22 @@ private struct Dock: View {
 
             if exercise.uni == true && set.r2 != nil && set.type != .warmup {
                 VStack(spacing: 8) {
-                    if kind != .timed {
-                        if exercise.splitW == true {
-                            HStack(spacing: 10) {
-                                weightBox(kind, side: 1)
-                                weightBox(kind, side: 2)
-                            }
-                        } else {
-                            weightBox(kind)
-                        }
-                    }
+                    if kind != .timed { weightBox(kind) }
                     HStack(spacing: 10) {
                         repsBox(kind, left: true)
                         repsBox(kind, left: false)
                     }
-                    if kind != .timed {
-                        Button { model.toggleSplitWeights(exercise.id) } label: {
-                            HStack(spacing: 6) {
-                                Icon.link(14, 2)
-                                Text(exercise.splitW == true ? "Links en rechts een eigen gewicht \u{00B7} tik om gelijk te zetten" : "Zelfde gewicht links en rechts \u{00B7} tik voor eigen gewicht")
-                                    .sa(12, .medium).lineLimit(1).minimumScaleFactor(0.8)
-                            }
-                            .foregroundColor(ac.accentText)
-                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading).contentShape(Rectangle())
+                    Button { model.pairReps.toggle(); model.editField = nil; Haptics.light() } label: {
+                        HStack(spacing: 6) {
+                            Icon.link(14, 2)
+                            Text(model.pairReps ? "Reps links en rechts samen \u{00B7} tik om los te zetten" : "Reps links en rechts los \u{00B7} tik om samen te zetten")
+                                .sa(12, .medium).lineLimit(1).minimumScaleFactor(0.8)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(exercise.splitW == true ? "Gewicht links en rechts gelijk zetten" : "Links en rechts een eigen gewicht")
+                        .foregroundColor(ac.accentText)
+                        .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading).contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(model.pairReps ? "Reps links en rechts los zetten" : "Reps links en rechts samen zetten")
                 }
                 .padding(.top, 10)
             } else {
@@ -978,7 +967,7 @@ private struct Dock: View {
         case .digit(let d):
             if text.count < 6 { text += String(d) }
         case .comma:
-            if (field == .weight || field == .weight2) && !text.contains(",") { text += text.isEmpty ? "0," : "," }
+            if field == .weight && !text.contains(",") { text += text.isEmpty ? "0," : "," }
         case .back:
             if !text.isEmpty { text.removeLast() }
         }
@@ -986,8 +975,6 @@ private struct Dock: View {
         let parsed = text.replacingOccurrences(of: ",", with: ".")
         if field == .weight {
             if let v = Double(parsed) { model.setCurrentValues(w: v, r: nil) } else if text.isEmpty { model.setCurrentValues(w: 0, r: nil) }
-        } else if field == .weight2 {
-            if let v = Double(parsed) { model.setCurrentValues(w: nil, r: nil, w2: v) } else if text.isEmpty { model.setCurrentValues(w: nil, r: nil, w2: 0) }
         } else if field == .reps2 {
             if let v = Int(parsed) { model.setCurrentValues(w: nil, r: nil, r2: v) } else if text.isEmpty { model.setCurrentValues(w: nil, r: nil, r2: 0) }
         } else if let v = Int(parsed) {
@@ -1002,15 +989,9 @@ private struct Dock: View {
         return normal
     }
 
-    /// side 0 = één gewicht, 1 = links, 2 = rechts (bij eigen gewicht per kant).
-    private func weightBox(_ kind: ExerciseKind, side: Int = 0) -> some View {
-        if side == 2 {
-            return valueBox(field: .weight2, text: shown(.weight2, Format.weight(set.w2 ?? set.w)), unit: " kg R",
-                            minus: "Minder gewicht rechts", plus: "Meer gewicht rechts",
-                            onMinus: { buffer = nil; model.stepWeight(-1, second: true) }, onPlus: { buffer = nil; model.stepWeight(1, second: true) })
-        }
-        return valueBox(field: .weight, text: shown(.weight, weightText(kind)), unit: kind == .cardio ? " km" : (side == 1 ? " kg L" : " kg"),
-                 minus: side == 1 ? "Minder gewicht links" : "Minder gewicht", plus: side == 1 ? "Meer gewicht links" : "Meer gewicht",
+    private func weightBox(_ kind: ExerciseKind) -> some View {
+        valueBox(field: .weight, text: shown(.weight, weightText(kind)), unit: kind == .cardio ? " km" : " kg",
+                 minus: "Minder gewicht", plus: "Meer gewicht",
                  onMinus: { buffer = nil; model.stepWeight(-1) }, onPlus: { buffer = nil; model.stepWeight(1) })
     }
 
