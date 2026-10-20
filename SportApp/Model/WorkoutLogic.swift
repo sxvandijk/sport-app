@@ -205,7 +205,8 @@ struct LiveSession: Codable, Hashable {
         }
         if !isWarmupBlock, kind == .weights {
         }
-        if last?.uni == true && !isWarmupBlock {
+        // One-arm oefeningen staan standaard op links en rechts apart: je doet nooit alleen één kant.
+        if (last?.uni == true || (Catalog.isOneArm(name) && kind == .weights)) && !isWarmupBlock {
             ex.uni = true
             for i in ex.sets.indices where ex.sets[i].type != .warmup { ex.sets[i].r2 = ex.sets[i].r2 ?? ex.sets[i].r }
         }

@@ -160,7 +160,7 @@ struct GymAccessory: Codable, Hashable, Identifiable {
     /// Eigen stap van de plus/min-knop in kg. 0 = de stap van de oefening zelf.
     var step: Double = 0
 
-    static let defaults: [GymAccessory] = ["Touw", "Rechte stang", "V-stang", "EZ-stang", "Losse handgreep"].map {
+    static let defaults: [GymAccessory] = ["Touw", "Rechte stang", "V-stang", "EZ-stang", "Losse handgreep", "Lat-stang (breed)", "Parallelle greep", "Smalle greep (triangel)", "Enkelband"].map {
         GymAccessory(id: "std-" + $0.lowercased().replacingOccurrences(of: " ", with: "-"), name: $0)
     }
 }
