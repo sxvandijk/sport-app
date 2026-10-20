@@ -149,3 +149,8 @@ Status per 2026-10-14. Ronde 1 (training loggen) is klaar en getest.
 - Het ⓘ-scherm is weer alleen uitleg (geen keuzemenu).
 - Links en rechts apart: de knop voor eigen gewicht per kant is weg. In plaats daarvan een knop om de reps links en rechts samen aan te passen (staat standaard aan, tik om ze los te zetten).
 
+
+## Ronde 13c (wacht op test)
+- Meer opzetstukken in de standaardlijst (o.a. lat-stang, parallelle greep, smalle greep, enkelband). Gyms waar je de lijst zelf hebt aangepast houden hun eigen lijst; voeg nieuwe zelf toe.
+- One-arm oefeningen staan standaard op links en rechts apart.
+- Test: rechte stang, 12 x 25 kg telt als 300 kg volume.
