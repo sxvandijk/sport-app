@@ -1479,57 +1479,30 @@ private struct AccessoryUseSheet: View {
 }
 
 
-/// Uitleg en keuze: één totaalgewicht, gewicht per arm of been, of links en rechts apart.
+/// Alleen uitleg: hoe de app het volume van deze oefening telt. Dat gaat automatisch, je stelt hier niets in.
 private struct SideModeSheet: View {
     @EnvironmentObject private var model: AppModel
     private var exercise: LiveExercise? { model.session?.exercise(model.sheetEx) }
 
-    static func title(_ m: SideMode) -> String {
+    private static func text(_ m: SideMode) -> (String, String) {
         switch m {
-        case .single: return "Zo logt de app dit"
-        case .perSide: return "Zo logt de app dit: per arm of been"
-        case .separate: return "Zo logt de app dit: links en rechts apart"
-        }
-    }
-
-    private static func info(_ m: SideMode) -> String {
-        switch m {
-        case .single: return "De app logt het gewicht dat je invult en je reps. Volume = gewicht \u{00D7} reps."
-        case .perSide: return "Het gewicht dat je invult is van één kant. Bij 2 \u{00D7} 5 kg tegelijk is dat 5 kg: de app telt je volume als 10 kg \u{00D7} reps."
-        case .separate: return "Eerst de ene kant, dan de andere, met eigen reps (bijvoorbeeld 10 links en 9 rechts). Het gewicht is van één kant en je volume telt beide kanten."
-        }
-    }
-
-    private static func choice(_ m: SideMode) -> (String, String) {
-        switch m {
-        case .single: return ("Eén gewicht", "Eén handvat met twee handen, of één arm of been. Volume = gewicht \u{00D7} reps.")
-        case .perSide: return ("Per arm of been tegelijk", "Twee losse armen of benen die tegelijk bewegen. Het gewicht is van één kant en het volume telt 2\u{00D7}.")
-        case .separate: return ("Links en rechts apart", "Eerst de ene kant, dan de andere, met eigen reps en eventueel eigen gewicht.")
+        case .single: return ("Zo logt de app dit", "Het gewicht dat je invult wordt één keer verplaatst. Volume = gewicht \u{00D7} reps.")
+        case .perSide: return ("Zo logt de app dit: twee tegelijk", "Je beweegt twee handgrepen of dumbbells tegelijk, dus het gewicht wordt twee keer verplaatst. De app telt het volume daarom dubbel. Dat gaat vanzelf.")
+        case .separate: return ("Zo logt de app dit: links en rechts apart", "Eerst de ene kant, dan de andere, met eigen reps (bijvoorbeeld 10 links en 9 rechts). Elke kant verplaatst het gewicht, dus beide tellen mee in je volume.")
         }
     }
 
     var body: some View {
         if let ex = exercise {
-            ForEach([SideMode.single, .perSide, .separate], id: \.self) { m in
-                let c = Self.choice(m)
-                SheetRowButton(action: {
-                    if let id = model.sheetEx { model.setSideMode(id, m) }
-                    model.closeSheet()
-                }) {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(c.0).sa(17, .semibold).foregroundColor(Tokens.text)
-                            Text(c.1).sa(13).foregroundColor(Tokens.text2).fixedSize(horizontal: false, vertical: true)
-                        }
-                        Spacer(minLength: 0)
-                        if ex.sideMode == m { CheckMark() }
-                    }
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    .frame(minHeight: 60)
-                }
-                .padding(.bottom, 6)
-                .accessibilityAddTraits(ex.sideMode == m ? .isSelected : [])
+            let t = Self.text(ex.sideMode)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(t.0).sa(17, .semibold).foregroundColor(Tokens.text)
+                Text(t.1).sa(15).foregroundColor(Tokens.text2).lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassCard(radius: Radius.button)
         }
     }
 }

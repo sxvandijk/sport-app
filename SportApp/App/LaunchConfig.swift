@@ -101,10 +101,8 @@ struct LaunchConfig {
             model.screen = .workout
             if var s = model.session, let i = s.exercises.firstIndex(where: { Catalog.kind($0.name) == .weights && $0.sets.contains(where: { $0.type != .warmup }) }) {
                 s.exercises[i].uni = true
-                s.exercises[i].splitW = true
                 for k in s.exercises[i].sets.indices where s.exercises[i].sets[k].type != .warmup {
-                    s.exercises[i].sets[k].r2 = s.exercises[i].sets[k].r - 1
-                    s.exercises[i].sets[k].w2 = s.exercises[i].sets[k].w - 2.5
+                    s.exercises[i].sets[k].r2 = s.exercises[i].sets[k].r
                     s.exercises[i].sets[k].done = false
                 }
                 model.focusID = s.exercises[i].id

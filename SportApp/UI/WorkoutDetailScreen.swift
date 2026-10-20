@@ -86,7 +86,7 @@ struct WorkoutDetailScreen: View {
         return VStack(alignment: .leading, spacing: 0) {
             Text(e.name).sa(17, .semibold).foregroundColor(Tokens.text)
             Text(Catalog.info(e.name).muscle + (e.acc.map { " \u{00B7} " + $0 } ?? "")
-                 + (e.uni == true ? " \u{00B7} links en rechts apart" : (e.two == true ? " \u{00B7} per arm of been" : "")))
+                 + (e.uni == true ? " \u{00B7} links en rechts apart" : (e.two == true ? " \u{00B7} twee tegelijk" : "")))
                 .sa(13).foregroundColor(Tokens.text2).padding(.top, 2).padding(.bottom, 8)
             ForEach(Array(e.sets.enumerated()), id: \.offset) { _, s in
                 let label: String = {
@@ -114,7 +114,7 @@ struct WorkoutDetailScreen: View {
 
     private func setText(_ s: LoggedSet, _ kind: ExerciseKind) -> String {
         if kind == .cardio || kind == .timed { return "\(s.repsText)" }
-        if s.w > 0 { return s.weightText + " kg \u{00D7} " + s.repsText }
+        if s.w > 0 { return Format.weight(s.w) + " kg \u{00D7} " + s.repsText }
         return s.repsText + " reps"
     }
 }
