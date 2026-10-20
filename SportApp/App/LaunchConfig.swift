@@ -105,6 +105,7 @@ struct LaunchConfig {
                 for k in s.exercises[i].sets.indices where s.exercises[i].sets[k].type != .warmup {
                     s.exercises[i].sets[k].r2 = s.exercises[i].sets[k].r - 1
                     s.exercises[i].sets[k].w2 = s.exercises[i].sets[k].w - 2.5
+                    s.exercises[i].sets[k].done = false
                 }
                 model.focusID = s.exercises[i].id
                 model.session = s
