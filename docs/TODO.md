@@ -199,3 +199,13 @@ Redesign
 - Uitleg-scherm toont een illustratie in zijn geheel (niet bijgesneden).
 - GIF/video-animaties: bewust uitgesteld (1,5 MB per GIF; later eventueel als MP4 ~170 kB).
 - Nog niet gebouwd of getest op CI; eerstvolgende IPA bevat dit.
+
+## Ronde 14f (notities van Stan, wacht op test, branch ronde-14b, geen IPA gemaakt)
+- Geschiedenis: klokknop naast de drie puntjes in de open oefening. Toont de laatste 8 keren met alle sets.
+- Cooling-down: knop "Cooling-down" naast "Oefening" onderaan de workout. Blauw blok achteraan, telt mee.
+- Eigen oefeningen bewerken: naam (wordt overal doorgevoerd), soort (nu ook "Op tijd", dus trilplaat is geen cardio meer), spiergroep, verwijderen. Bij Instellingen en via nieuwe oefening-aanmaken.
+- Instellingen: "Gym" heet nu "Apparaten & oefeningen" met tabs Apparaten / Opzetstukken / Oefeningen. Wissel gym staat bovenaan. Oefeningen-tab: zoeken, "Zelf toegevoegd" bovenaan, rest per spiergroep.
+- Eindscherm: nieuw ontwerp (gradient-vink, statistieken in een kaart, oefenlijst met afbeeldingen).
+- CI groen (macos-15, 76 tests) op de versie vóór de laatste kleine tekstwijziging op het eindscherm (dubbele kop weg).
+- Nog niet getest op toestel. Let op: bestaande trilplaat staat nog als cardio; zet hem via Instellingen > Apparaten & oefeningen > Oefeningen op "Op tijd".
+- Wacht op: Stans Gemini-afbeeldingen (met zijn eigen hoofd), zip met namen uit docs/gemini-oefenafbeeldingen.md.
