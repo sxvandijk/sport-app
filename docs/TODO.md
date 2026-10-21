@@ -209,3 +209,10 @@ Redesign
 - CI groen (macos-15, 76 tests) op de versie vóór de laatste kleine tekstwijziging op het eindscherm (dubbele kop weg).
 - Nog niet getest op toestel. Let op: bestaande trilplaat staat nog als cardio; zet hem via Instellingen > Apparaten & oefeningen > Oefeningen op "Op tijd".
 - Wacht op: Stans Gemini-afbeeldingen (met zijn eigen hoofd), zip met namen uit docs/gemini-oefenafbeeldingen.md.
+
+## Ronde 14g (wacht op test, branch ronde-14b, IPA gebouwd van 9c9cd0b)
+- Klokknop in de workout opent nu een volledig scherm per oefening: grote afbeelding (wisselt begin/eind), aantal keer gedaan, beste set, laatste keer, "Vandaag" en alle vorige keren met hun sets.
+- Training verwijderen: knop op het detailscherm van een training in het Logboek (met bevestiging) en "Deze training niet bewaren" op het eindscherm.
+- Supersets in de workout: geen streep meer, maar een ronde omlijnde kaart met "SUPERSET A · n oefeningen" bovenin. Ook in overzicht en editor.
+- Setrijen: nummer als ronde knop (huidige set in accentkleur), vinkje als gevulde cirkel, huidige rij met gloed.
+- Open: lange oefeningnamen in een superset breken af op 3 regels (info-, klok- en puntjesknop nemen ruimte). Setrijen/invoerbalk verder verfijnen, editorvelden.
