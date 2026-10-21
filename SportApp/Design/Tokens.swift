@@ -81,6 +81,12 @@ struct AccentColors: Equatable {
         accentSoft = color(palette.accentSoft, opacity: palette.accentSoftAlpha)
     }
 
+    /// Kleurverloop voor hoofdknoppen en grote vlakken: iets lichter bovenin, iets dieper onderin.
+    var gradient: LinearGradient {
+        LinearGradient(colors: [accent.mix(with: .white, by: 0.16), accent.mix(with: .black, by: 0.24)],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
     static func make(accent id: AccentID, scheme: ColorScheme) -> AccentColors {
         AccentColors(AccentPalette.make(accent: id, isDarkMode: scheme == .dark))
     }
@@ -103,6 +109,7 @@ extension View {
     /// Standaardvlak van de app: Liquid Glass op iOS 26, rustig matglas op oudere iOS.
     func glassCard(radius: CGFloat) -> some View {
         glassSurface(RoundedRectangle(cornerRadius: radius, style: .continuous), fallback: Tokens.surface)
+            .modifier(CardRim(radius: radius))
     }
 
     /// Zelfde als glassCard maar voor lichtere vlakken binnen een blad.
@@ -112,5 +119,31 @@ extension View {
 
     func card(_ fill: Color, radius: CGFloat) -> some View {
         background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
+    }
+}
+
+/// Dunne lichtrand met een zweem accentkleur linksboven: geeft kaarten diepte zonder druk te worden.
+struct CardRim: ViewModifier {
+    let radius: CGFloat
+    @Environment(\.accentColors) private var ac
+
+    func body(content: Content) -> some View {
+        content.overlay(
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(colors: [ac.accent.opacity(0.45), Tokens.line.opacity(0.5), Tokens.line.opacity(0.15)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: 1)
+                .allowsHitTesting(false)
+        )
+    }
+}
+
+extension View {
+    /// Hoofdknop-achtergrond: kleurverloop met een zachte gloed.
+    func primaryFill<S: Shape>(_ shape: S, _ ac: AccentColors) -> some View {
+        background(ac.gradient, in: shape)
+            .overlay(shape.strokeBorder(Color.white.opacity(0.22), lineWidth: 0.8))
+            .shadow(color: ac.accent.opacity(0.35), radius: 14, y: 6)
     }
 }

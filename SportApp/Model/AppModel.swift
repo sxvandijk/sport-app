@@ -4,7 +4,7 @@ import UserNotifications
 import AudioToolbox
 import Combine
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings, supplement }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings, supplement, nutritionSetup }
 /// De tabs, in vaste volgorde. Voeding is optioneel (Instellingen › Functionaliteiten).
 /// Gebruik altijd de case, nooit een index: zonder Voeding schuiven de posities op.
 enum HomeTab: Int, CaseIterable, Identifiable {
@@ -48,6 +48,116 @@ struct MealEntry: Codable, Hashable, Identifiable {
     var name: String
     var kcal: Int?
     var protein: Int?
+    var carbs: Int?
+    var fat: Int?
+    var kind: String?     // MealKind.rawValue; nil = oude invoer, telt als snack
+}
+
+/// Het moment van de dag waar een maaltijd bij hoort.
+enum MealKind: String, CaseIterable, Identifiable {
+    case breakfast, lunch, dinner, snack
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .breakfast: return "Ontbijt"
+        case .lunch: return "Lunch"
+        case .dinner: return "Diner"
+        case .snack: return "Snacks"
+        }
+    }
+    /// Verdeling van het dagdoel, voor de regel "ruimte" onder elk moment.
+    var share: Double {
+        switch self {
+        case .breakfast: return 0.25
+        case .lunch: return 0.30
+        case .dinner: return 0.35
+        case .snack: return 0.10
+        }
+    }
+    static func now(_ date: Date = Date()) -> MealKind {
+        let h = Calendar.current.component(.hour, from: date)
+        if h < 11 { return .breakfast }
+        if h < 15 { return .lunch }
+        if h < 21 { return .dinner }
+        return .snack
+    }
+}
+
+enum Sex: String, Codable, CaseIterable, Identifiable {
+    case male, female
+    var id: String { rawValue }
+    var title: String { self == .male ? "Man" : "Vrouw" }
+}
+
+enum Activity: Int, Codable, CaseIterable, Identifiable {
+    case low = 0, light, moderate, high
+    var id: Int { rawValue }
+    var title: String {
+        switch self {
+        case .low: return "Weinig actief"
+        case .light: return "Licht actief"
+        case .moderate: return "Actief"
+        case .high: return "Heel actief"
+        }
+    }
+    var detail: String {
+        switch self {
+        case .low: return "Zittend werk, weinig bewegen buiten het trainen"
+        case .light: return "Af en toe wandelen of een staand werk"
+        case .moderate: return "Veel op je benen of fysiek werk"
+        case .high: return "Zwaar fysiek werk en veel sport"
+        }
+    }
+    var factor: Double { [1.2, 1.375, 1.55, 1.725][rawValue] }
+}
+
+/// Wat de app nodig heeft om je doelen uit te rekenen (zoals andere voedingsapps het vragen).
+struct NutritionProfile: Codable, Hashable {
+    var sex: Sex = .male
+    var age: Int = 25
+    var heightCm: Int = 180
+    var weightKg: Double = 75
+    var activity: Activity = .light
+}
+
+/// Welke onderdelen je op het Voeding-scherm wilt zien.
+struct NutritionLayout: Codable, Hashable {
+    var carbs = true
+    var fat = true
+    var water = false
+    var supplements = true
+}
+
+/// Alles rond je Voeding-doelen en -scherm dat later is toegevoegd; één optioneel veld in de opslag.
+struct NutritionExtra: Codable, Hashable {
+    var profile: NutritionProfile? = nil
+    var carbsGoal: Int? = nil
+    var fatGoal: Int? = nil
+    var layout = NutritionLayout()
+    var water: [String: Int] = [:]   // dayKey -> ml
+}
+
+/// Dagdoelen, berekend uit je profiel (Mifflin-St Jeor) en je doel.
+struct NutritionTargets: Equatable {
+    var kcal: Int
+    var protein: Int
+    var carbs: Int
+    var fat: Int
+
+    static func calculate(profile p: NutritionProfile, plan: NutritionPlan) -> NutritionTargets {
+        let base = 10 * p.weightKg + 6.25 * Double(p.heightCm) - 5 * Double(p.age) + (p.sex == .male ? 5 : -161)
+        var kcal = base * p.activity.factor
+        switch plan {
+        case .cut: kcal -= 450
+        case .maintain: break
+        case .bulk: kcal += 300
+        }
+        kcal = max(1200, (kcal / 10).rounded() * 10)
+        let protein = Int((p.weightKg * (plan == .cut ? 2.2 : 1.8)).rounded())
+        let fat = Int((p.weightKg * 0.9).rounded())
+        let carbs = max(0, Int(((kcal - Double(protein) * 4 - Double(fat) * 9) / 4).rounded()))
+        return NutritionTargets(kcal: Int(kcal), protein: protein, carbs: carbs, fat: fat)
+    }
 }
 
 /// Een supplement met een eigen dagelijkse herinnering (creatine heeft een eigen, uitgebreider scherm).
@@ -237,6 +347,7 @@ struct PersistedState: Codable {
     var nutritionKcalGoal: Int? = nil           // dagdoel in kcal (nil = standaard bij je doel)
     var nutritionProteinGoal: Int? = nil        // dagdoel eiwit in gram
     var supplements: [Supplement]? = nil        // naast creatine
+    var nutritionExtra: NutritionExtra? = nil
 }
 
 /// De toestand van de hele app. De regels staan in `LiveSession`; dit is de laag die schermen en opslag verbindt.
@@ -292,6 +403,11 @@ final class AppModel: ObservableObject {
     @Published var nutritionProteinGoal: Int?
     @Published var supplements: [Supplement]
     @Published var supplementEditID: String?
+    @Published var nutritionExtra: NutritionExtra
+    /// Dag die op Voeding getoond wordt (niet opgeslagen: je start altijd op vandaag).
+    @Published var nutritionDay = Date()
+    /// Gekopieerde maaltijden, klaar om op een andere dag te plakken.
+    @Published var mealClipboard: [MealEntry] = []
 
     // Werkscherm
     @Published var focusID: UUID?
@@ -394,6 +510,7 @@ final class AppModel: ObservableObject {
         nutritionKcalGoal = state.nutritionKcalGoal
         nutritionProteinGoal = state.nutritionProteinGoal
         supplements = state.supplements ?? Supplement.defaults
+        nutritionExtra = state.nutritionExtra ?? NutritionExtra()
         // Eerdere versies hadden 1:30 als standaard rusttijd; de nieuwe standaard is 3:00.
         if state.restMigrated != true && state.restDefault == 90 { restDefault = 180 }
         Catalog.setCustom(customExercises)
@@ -473,7 +590,7 @@ final class AppModel: ObservableObject {
                        history: history, session: session, accent: accent, themeMode: themeMode,
                        restDefault: restDefault, warmFirst: warmFirst, crea: crea, links: links, prefs: prefs,
                        customExercises: customExercises, restMigrated: true, creaTime: creaTime, creaLateOn: creaLateOn, creaLateTime: creaLateTime,
-                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, weekOverrides: weekOverrides, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog, nutritionTab: nutritionTab, nutritionPlan: nutritionPlan, meals: meals, nutritionKcalGoal: nutritionKcalGoal, nutritionProteinGoal: nutritionProteinGoal, supplements: supplements)
+                       creaDone: creaDone, creaDayOff: creaDayOff, creaDayTime: creaDayTime, creaDayLate: creaDayLate, creaDayLateOff: creaDayLateOff, exAcc: exAcc, weekReset: weekReset, staleReminder: staleReminder, weekPlan: weekPlan, weekOverrides: weekOverrides, dataVersion: AppModel.dataVersion, notes: nil, noteLog: noteLog, nutritionTab: nutritionTab, nutritionPlan: nutritionPlan, meals: meals, nutritionKcalGoal: nutritionKcalGoal, nutritionProteinGoal: nutritionProteinGoal, supplements: supplements, nutritionExtra: nutritionExtra)
     }
 
     func save() {
@@ -1239,11 +1356,90 @@ final class AppModel: ObservableObject {
     }
 
     /// Dagdoel in kcal: je eigen keuze, anders een beginwaarde bij je doel (pas hem aan naar jezelf).
-    var kcalGoal: Int {
-        nutritionKcalGoal ?? (nutritionPlan == .cut ? 2200 : (nutritionPlan == .bulk ? 3000 : 2600))
+    var calculatedTargets: NutritionTargets? {
+        nutritionExtra.profile.map { NutritionTargets.calculate(profile: $0, plan: nutritionPlan) }
     }
 
-    var proteinGoal: Int { nutritionProteinGoal ?? 140 }
+    var kcalGoal: Int {
+        nutritionKcalGoal ?? calculatedTargets?.kcal ?? (nutritionPlan == .cut ? 2200 : (nutritionPlan == .bulk ? 3000 : 2600))
+    }
+
+    var proteinGoal: Int { nutritionProteinGoal ?? calculatedTargets?.protein ?? 140 }
+
+    var fatGoal: Int {
+        nutritionExtra.fatGoal ?? calculatedTargets?.fat ?? Int((Double(kcalGoal) * 0.27 / 9).rounded())
+    }
+
+    var carbsGoal: Int {
+        nutritionExtra.carbsGoal ?? max(0, Int((Double(kcalGoal - proteinGoal * 4 - fatGoal * 9) / 4).rounded()))
+    }
+
+    /// Opslaan vanuit het instelscherm: profiel, doel en (eventueel aangepaste) dagdoelen.
+    func saveNutritionSetup(profile: NutritionProfile, plan: NutritionPlan, targets: NutritionTargets, layout: NutritionLayout) {
+        nutritionPlan = plan
+        nutritionExtra.profile = profile
+        nutritionExtra.layout = layout
+        nutritionKcalGoal = targets.kcal
+        nutritionProteinGoal = targets.protein
+        nutritionExtra.carbsGoal = targets.carbs
+        nutritionExtra.fatGoal = targets.fat
+        save()
+    }
+
+    // MARK: Dagen en kopiëren
+
+    func meals(on date: Date) -> [MealEntry] {
+        let cal = Calendar.current
+        return meals.filter { cal.isDate($0.date, inSameDayAs: date) }.sorted { $0.date < $1.date }
+    }
+
+    func meals(on date: Date, kind: MealKind) -> [MealEntry] {
+        meals(on: date).filter { ($0.kind ?? MealKind.snack.rawValue) == kind.rawValue }
+    }
+
+    /// Tijdstip op de gekozen dag: nu als het vandaag is, anders rond het moment van de dag.
+    private func stamp(on day: Date, kind: MealKind) -> Date {
+        let cal = Calendar.current
+        if cal.isDateInToday(day) { return Date() }
+        let hour: Int
+        switch kind {
+        case .breakfast: hour = 8
+        case .lunch: hour = 12
+        case .dinner: hour = 18
+        case .snack: hour = 15
+        }
+        return cal.date(bySettingHour: hour, minute: 0, second: 0, of: day) ?? day
+    }
+
+    func addMeal(name: String, kcal: Int?, protein: Int?, carbs: Int? = nil, fat: Int? = nil, kind: MealKind, on day: Date) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        meals.append(MealEntry(date: stamp(on: day, kind: kind), name: trimmed, kcal: kcal, protein: protein, carbs: carbs, fat: fat, kind: kind.rawValue))
+        save()
+    }
+
+    /// Plakt de gekopieerde maaltijden op de gekozen dag, elk bij hetzelfde moment van de dag.
+    func pasteMeals(on day: Date) {
+        for m in mealClipboard {
+            let kind = MealKind(rawValue: m.kind ?? "") ?? .snack
+            meals.append(MealEntry(date: stamp(on: day, kind: kind), name: m.name, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat, kind: kind.rawValue))
+        }
+        mealClipboard = []
+        save()
+    }
+
+    func waterMl(on day: Date) -> Int { nutritionExtra.water[AppModel.dayKey(day)] ?? 0 }
+
+    func addWater(_ ml: Int, on day: Date) {
+        let key = AppModel.dayKey(day)
+        nutritionExtra.water[key] = max(0, (nutritionExtra.water[key] ?? 0) + ml)
+        save()
+    }
+
+    var waterGoalMl: Int {
+        let kg = nutritionExtra.profile?.weightKg ?? 75
+        return Int((kg * 35 / 250).rounded()) * 250
+    }
 
     func setNutritionGoals(kcal: Int? = nil, protein: Int? = nil) {
         if let k = kcal { nutritionKcalGoal = min(6000, max(1000, k)) }

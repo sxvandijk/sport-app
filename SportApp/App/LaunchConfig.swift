@@ -65,11 +65,25 @@ struct LaunchConfig {
         case "profile": model.tab = .progress
         case "settings": model.profileSub = .overview; model.screen = .settings
         case "logbook": model.tab = .logbook
-        case "nutrition":
+        case "nutrition", "nutrition-day", "nutrition-setup", "nutrition-empty":
             model.setNutritionTab(true)
             model.tab = .nutrition
-            model.meals = [MealEntry(date: now.addingTimeInterval(-5 * 3600), name: "Havermout met kwark", kcal: 520, protein: 38),
-                           MealEntry(date: now.addingTimeInterval(-1 * 3600), name: "Kip met rijst", kcal: 680, protein: 52)]
+            if screen != "nutrition-empty" {
+                model.nutritionExtra.profile = NutritionProfile(sex: .male, age: 22, heightCm: 183, weightKg: 76, activity: .light)
+                model.nutritionExtra.layout.water = true
+                model.nutritionPlan = .maintain
+                model.meals = [
+                    MealEntry(date: now.addingTimeInterval(-5 * 3600), name: "Havermout met kwark", kcal: 520, protein: 38, carbs: 62, fat: 11, kind: MealKind.breakfast.rawValue),
+                    MealEntry(date: now.addingTimeInterval(-3 * 3600), name: "Kip met rijst", kcal: 680, protein: 52, carbs: 78, fat: 14, kind: MealKind.lunch.rawValue),
+                    MealEntry(date: now.addingTimeInterval(-1 * 3600), name: "Skyr met banaan", kcal: 240, protein: 25, carbs: 30, fat: 1, kind: MealKind.snack.rawValue),
+                    MealEntry(date: now.addingTimeInterval(-26 * 3600), name: "Wraps met gehakt", kcal: 740, protein: 46, carbs: 70, fat: 28, kind: MealKind.dinner.rawValue)]
+                model.nutritionExtra.water[AppModel.dayKey(now)] = 750
+            }
+            if screen == "nutrition-day" {
+                model.nutritionDay = now.addingTimeInterval(-24 * 3600)
+                model.mealClipboard = [model.meals[0], model.meals[1]]
+            }
+            if screen == "nutrition-setup" { model.screen = .nutritionSetup }
         case "supplement":
             model.setNutritionTab(true)
             model.tab = .nutrition

@@ -121,7 +121,7 @@ struct MiniBar: View {
                 } label: {
                     Text("Hervat").sa(16, .bold).foregroundColor(ac.onAccent)
                         .padding(.horizontal, 20).frame(height: 44)
-                        .background(Capsule().fill(ac.accent))
+                        .primaryFill(Capsule(), ac)
                 }
                 .buttonStyle(.plain)
             }
@@ -439,7 +439,7 @@ struct ProgressTab: View {
     private var profileHeader: some View {
         HStack(spacing: 14) {
             Text("S").sa(24, .bold).foregroundColor(ac.onAccent)
-                .frame(width: 60, height: 60).background(Circle().fill(ac.accent))
+                .frame(width: 60, height: 60).primaryFill(Circle(), ac)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Stan").sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text)
                     .accessibilityAddTraits(.isHeader)

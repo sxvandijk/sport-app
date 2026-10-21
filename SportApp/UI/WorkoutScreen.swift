@@ -269,7 +269,7 @@ private struct WorkoutList: View {
             } label: {
                 Text("Oefening toevoegen").sa(17, .bold).foregroundColor(ac.onAccent)
                     .padding(.horizontal, 24).frame(height: 52)
-                    .card(ac.accent, radius: Radius.button)
+                    .primaryFill(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), ac)
             }
             .buttonStyle(.plain)
         }
@@ -1140,7 +1140,7 @@ private struct NotePopup: View {
                     Button { NotePopup.closeKeyboard(); model.saveNoteEdit() } label: {
                         Text("Bewaar").sa(16, .bold).foregroundColor(ac.onAccent)
                             .frame(maxWidth: .infinity).frame(height: 48)
-                            .card(ac.accent, radius: Radius.button)
+                            .primaryFill(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), ac)
                             .opacity(empty ? 0.4 : 1)
                     }
                     .buttonStyle(.plain)

@@ -652,7 +652,7 @@ private struct SupersetSheet: View {
             Text(count > 0 ? "Koppelen (\(count))" : "Kies minstens één oefening").sa(17, .bold)
                 .foregroundColor(ac.onAccent)
                 .frame(maxWidth: .infinity).frame(height: 56)
-                .card(ac.accent, radius: Radius.button)
+                .primaryFill(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), ac)
                 .opacity(count > 0 ? 1 : 0.45)
         }
         .buttonStyle(.plain)

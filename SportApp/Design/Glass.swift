@@ -37,8 +37,12 @@ struct AppBackground: View {
         ZStack {
             Tokens.bg
             if scheme == .dark {
-                LinearGradient(colors: [ac.accentSoft.opacity(0.55), Color.clear],
-                               startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.42))
+                LinearGradient(colors: [ac.accentSoft.opacity(0.75), Color.clear],
+                               startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.5))
+                RadialGradient(colors: [ac.accent.opacity(0.28), Color.clear],
+                               center: UnitPoint(x: 0.1, y: 0.0), startRadius: 10, endRadius: 420)
+                RadialGradient(colors: [ac.accent.opacity(0.16), Color.clear],
+                               center: UnitPoint(x: 1.0, y: 0.95), startRadius: 10, endRadius: 380)
             } else {
                 // Lichte modus: een duidelijker kleurvlak bovenin en een zweem onderin.
                 LinearGradient(colors: [ac.accent.opacity(0.34), ac.accent.opacity(0.10), Color.clear],

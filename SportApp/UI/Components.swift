@@ -96,7 +96,7 @@ struct PrimaryButton: View {
             .foregroundColor(ac.onAccent)
             .frame(maxWidth: .infinity)
             .frame(height: height)
-            .glassSurface(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), tint: ac.accent, interactive: true, fallback: ac.accent)
+            .primaryFill(RoundedRectangle(cornerRadius: Radius.button, style: .continuous), ac)
             .contentShape(RoundedRectangle(cornerRadius: Radius.button, style: .continuous))
             .opacity(enabled ? 1 : 0.45)
         }
@@ -150,7 +150,7 @@ struct GlassButton: View {
             }
             .foregroundColor(textColor)
             .frame(maxWidth: .infinity).frame(height: height)
-            .glassSurface(shape, tint: tint, interactive: true, fallback: fallback)
+            .modifier(GlassRoleFill(shape: shape, role: role, tint: tint, fallback: fallback))
             .contentShape(shape)
         }
         .buttonStyle(.plain)
@@ -506,6 +506,23 @@ struct NameOverlay: View {
             }
             .transition(.opacity)
             .onAppear { focused = true }
+        }
+    }
+}
+
+/// Hoofdknop = kleurverloop; de andere rollen blijven glas.
+struct GlassRoleFill: ViewModifier {
+    let shape: RoundedRectangle
+    let role: GlassRole
+    let tint: Color?
+    let fallback: Color
+    @Environment(\.accentColors) private var ac
+
+    func body(content: Content) -> some View {
+        if role == .primary {
+            content.primaryFill(shape, ac)
+        } else {
+            content.glassSurface(shape, tint: tint, interactive: true, fallback: fallback)
         }
     }
 }
