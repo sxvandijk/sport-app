@@ -826,11 +826,29 @@ struct SummaryScreen: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        Icon.check(32, 2.6).foregroundColor(ac.onAccent)
-                            .frame(width: 64, height: 64).background(Circle().fill(ac.accent))
-                        Text(sm.title).sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text).padding(.top, 20)
+                        Icon.check(30, 2.8).foregroundColor(.white)
+                            .frame(width: 68, height: 68)
+                            .background(Circle().fill(ac.gradient))
+                            .overlay(Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 1))
+                            .background(Circle().fill(ac.accent.opacity(0.35)).blur(radius: 22).scaleEffect(1.5))
+                        Text("Training afgerond").sa(13, .semibold, tracking: 0.6).textCase(.uppercase)
+                            .foregroundColor(ac.accentText).padding(.top, 22)
+                        Text(sm.title).sa(32, .bold, tracking: -0.6).foregroundColor(Tokens.text).padding(.top, 4)
+                            .lineLimit(2).minimumScaleFactor(0.75)
                             .accessibilityAddTraits(.isHeader)
                         Text(sm.note).sa(15).foregroundColor(Tokens.text2).padding(.top, 4)
+
+                        HStack(spacing: 0) {
+                            stat(sm.time, "duur")
+                            Rectangle().fill(Tokens.line).frame(width: 1, height: 40)
+                            stat(sm.sets, "sets")
+                            Rectangle().fill(Tokens.line).frame(width: 1, height: 40)
+                            stat(sm.volume, "kg volume")
+                        }
+                        .padding(.vertical, 18)
+                        .frame(maxWidth: .infinity)
+                        .glassCard(radius: Radius.card)
+                        .padding(.top, 24)
                         if let fid = model.summaryFreeID {
                             Button {
                                 model.nameEdit = NameEdit(title: "Naam van je training", subtitle: "Zo vind je hem later terug",
@@ -886,19 +904,24 @@ struct SummaryScreen: View {
                         } else if model.summarySaved {
                             Text("Toegevoegd aan je schema.").sa(14).foregroundColor(ac.accentText).padding(.top, 16)
                         }
-                        HStack(alignment: .top, spacing: 12) {
-                            stat(sm.time, "duur", flex: 1)
-                            stat(sm.sets, "sets", flex: 1)
-                            stat(sm.volume, "kg volume", flex: 1.3)
-                        }
-                        .padding(.top, 28).padding(.bottom, 24)
-                        ForEach(sm.lines) { ln in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(ln.name).sa(16, .medium).foregroundColor(Tokens.text)
-                                Text(ln.summary).sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
+                        if !sm.lines.isEmpty {
+                            SectionLabel(text: "Wat je deed").padding(.top, 28).padding(.bottom, 10)
+                            VStack(spacing: 0) {
+                                ForEach(sm.lines) { ln in
+                                    HStack(spacing: 12) {
+                                        ExerciseThumb(name: ln.name, size: 46, radius: 12)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(ln.name).sa(16, .medium).foregroundColor(Tokens.text).lineLimit(2)
+                                            Text(ln.summary).sa(13, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
+                                        }
+                                        Spacer(minLength: 0)
+                                    }
+                                    .padding(.horizontal, 14).padding(.vertical, 10)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    if ln.id != sm.lines.last?.id { Divider().background(Tokens.line).padding(.leading, 72) }
+                                }
                             }
-                            .padding(.vertical, 9)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .glassCard(radius: Radius.card)
                         }
                     }
                     .padding(.horizontal, 24).padding(.top, 48).padding(.bottom, 24)
@@ -910,11 +933,11 @@ struct SummaryScreen: View {
         }
     }
 
-    private func stat(_ value: String, _ label: String, flex: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value).sa(28, .semibold, mono: true).foregroundColor(Tokens.text).lineLimit(1)
+    private func stat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).sa(26, .semibold, mono: true).foregroundColor(Tokens.text).lineLimit(1).minimumScaleFactor(0.7)
             Text(label).sa(13).foregroundColor(Tokens.text2)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
     }
 }

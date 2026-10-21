@@ -38,7 +38,7 @@ struct SettingsScreen: View {
         switch model.profileSub {
         case .overview: return "Instellingen"
         case .training: return "Training"
-        case .gym: return "Gym"
+        case .gym: return "Apparaten & oefeningen"
         case .notifications: return "Meldingen"
         case .personal: return "Persoonlijk"
         }
@@ -71,6 +71,7 @@ struct SettingsScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(title).sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text)
+                        .lineLimit(1).minimumScaleFactor(0.7)
                         .accessibilityAddTraits(.isHeader)
                         .padding(.bottom, 16)
                     switch model.profileSub {
@@ -126,7 +127,7 @@ struct SettingsScreen: View {
             VStack(spacing: 0) {
                 SettingsLink(title: "Training", sub: "Rusttijd, warming-up, weekplanning", page: .training)
                 Divider().background(Tokens.line)
-                SettingsLink(title: "Gym", sub: model.gym.name + " \u{00B7} apparaten en opzetstukken", page: .gym)
+                SettingsLink(title: "Apparaten & oefeningen", sub: model.gym.name + " \u{00B7} apparaten, opzetstukken, eigen oefeningen", page: .gym)
                 Divider().background(Tokens.line)
                 SettingsLink(title: "Meldingen", sub: "Vergeten workout en supplementen", page: .notifications)
                 Divider().background(Tokens.line)

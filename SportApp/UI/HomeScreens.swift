@@ -704,7 +704,7 @@ struct ProgressTab: View {
 struct GymSettingsContent: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.accentColors) private var ac
-    @State private var showAccessories = false
+    private var page: Int { model.gymPage }   // 0 apparaten, 1 opzetstukken, 2 oefeningen
 
     private func segment(_ title: String, on: Bool, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -746,17 +746,18 @@ struct GymSettingsContent: View {
             .buttonStyle(.plain)
 
             HStack(spacing: 4) {
-                segment("Apparaten", on: !showAccessories) { showAccessories = false }
-                segment("Opzetstukken", on: showAccessories) { showAccessories = true }
+                segment("Apparaten", on: page == 0) { model.gymPage = 0 }
+                segment("Opzetstukken", on: page == 1) { model.gymPage = 1 }
+                segment("Oefeningen", on: page == 2) { model.gymPage = 2 }
             }
             .padding(4)
             .glassSurface(Capsule(), interactive: false, fallback: Tokens.surface)
             .padding(.top, 14)
 
-            if showAccessories {
-                accessoriesSection
-            } else {
-                machinesSection
+            switch page {
+            case 1: accessoriesSection
+            case 2: ExercisesSettingsList().padding(.top, 14)
+            default: machinesSection
             }
         }
     }
@@ -987,5 +988,109 @@ struct CreatineRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Alle oefeningen in de app. Zelf toegevoegde oefeningen staan bovenaan en zijn te bewerken.
+struct ExercisesSettingsList: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+    @State private var query = ""
+
+    private func row(_ name: String, editable: Bool) -> some View {
+        let info = Catalog.info(name)
+        let content = HStack(spacing: 12) {
+            ExerciseThumb(name: name, size: 44, radius: 12)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).sa(16, .medium).foregroundColor(Tokens.text).lineLimit(1)
+                Text(info.muscle + " \u{00B7} " + info.kind.title).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            if editable { Icon.chevronRight(16).foregroundColor(Tokens.text3) }
+        }
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+        .contentShape(Rectangle())
+        return Group {
+            if editable {
+                Button {
+                    model.customEditName = name
+                    model.openSheet(.customedit)
+                    model.customEditName = name
+                } label: { content }
+                .buttonStyle(.plain)
+            } else {
+                content
+            }
+        }
+    }
+
+    private func uniqueCatalog() -> [(name: String, info: ExerciseInfo)] {
+        var seen = Set<String>()
+        var out: [(name: String, info: ExerciseInfo)] = []
+        for item in Catalog.all where matches(item.name) {
+            if seen.insert(item.name.lowercased()).inserted { out.append(item) }
+        }
+        return out
+    }
+
+    private func matches(_ name: String) -> Bool {
+        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
+        return q.isEmpty || name.lowercased().contains(q) || Catalog.info(name).muscle.lowercased().contains(q)
+    }
+
+    var body: some View {
+        let custom = model.customExercises.map { $0.name }.sorted().filter(matches)
+        let catalog = uniqueCatalog()
+        let groups = Dictionary(grouping: catalog) { $0.info.muscle }
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Icon.search(18).foregroundColor(Tokens.text3)
+                TextField("Zoek oefening", text: $query).sa(16).foregroundColor(Tokens.text)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+            }
+            .padding(.horizontal, 14).frame(height: 46)
+            .background(Capsule().fill(Tokens.raised))
+
+            Button {
+                model.nameEdit = NameEdit(title: "Nieuwe oefening", subtitle: "Je stelt daarna soort en spiergroep in", placeholder: "Naam van de oefening", text: "", confirmTitle: "Voeg toe") { n in
+                    if let name = model.addCustomExercise(name: n, muscle: "Overig", equipment: "Eigen", kind: .weights) {
+                        model.customEditName = name
+                        model.openSheet(.customedit)
+                        model.customEditName = name
+                    }
+                }
+            } label: {
+                Text("+ Eigen oefening toevoegen").sa(16, .semibold).foregroundColor(ac.accentText)
+                    .frame(maxWidth: .infinity).frame(height: 52)
+                    .card(Tokens.raised, radius: Radius.button)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 12)
+
+            if !custom.isEmpty {
+                SectionLabel(text: "Zelf toegevoegd").padding(.top, 22).padding(.bottom, 8)
+                VStack(spacing: 0) {
+                    ForEach(custom, id: \.self) { n in
+                        row(n, editable: true)
+                        if n != custom.last { Divider().background(Tokens.line).padding(.leading, 72) }
+                    }
+                }
+                .glassCard(radius: Radius.button)
+            }
+
+            ForEach(Catalog.muscleGroups.filter { groups[$0] != nil }, id: \.self) { muscle in
+                SectionLabel(text: muscle).padding(.top, 22).padding(.bottom, 8)
+                let items = groups[muscle] ?? []
+                VStack(spacing: 0) {
+                    ForEach(items, id: \.name) { item in
+                        row(item.name, editable: false)
+                        if item.name != items.last?.name { Divider().background(Tokens.line).padding(.leading, 72) }
+                    }
+                }
+                .glassCard(radius: Radius.button)
+            }
+        }
     }
 }

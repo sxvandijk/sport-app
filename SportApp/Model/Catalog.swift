@@ -226,13 +226,27 @@ enum Catalog {
     /// Merk en type van het apparaat in de gekozen gym, per oefening (bv. "Matrix Ab crunch").
     static var gymLabels: [String: String] = [:]
 
+    /// Spiergroepen om uit te kiezen bij een eigen oefening.
+    static let muscleOptions: [String] = ["Borst", "Schouders", "Triceps", "Biceps", "Onderarmen", "Lats", "Bovenrug", "Traps",
+                                          "Quadriceps", "Hamstrings", "Billen", "Kuiten", "Core", "Cardio", "Overig"]
+
+    /// Apparaatnaam die bij een soort oefening past.
+    static func defaultEquipment(for kind: ExerciseKind) -> String {
+        switch kind {
+        case .weights: return "Eigen"
+        case .bodyweight: return "Lichaamsgewicht"
+        case .cardio: return "Cardio"
+        case .timed: return "Vrij"
+        }
+    }
+
     /// Zelf toegevoegde oefeningen (door `AppModel` gevuld).
     static var custom: [String: ExerciseInfo] = [:]
 
     static func setCustom(_ list: [CustomExercise]) {
         var d: [String: ExerciseInfo] = [:]
         for c in list {
-            d[c.name] = ExerciseInfo(c.muscle, c.equipment, step: c.kind == .cardio ? 0.1 : 2.5, d: c.kind == .weights ? 20 : (c.kind == .cardio ? 2 : 0), kind: c.kind)
+            d[c.name] = ExerciseInfo(c.muscle, c.equipment, step: c.kind == .cardio ? 0.1 : (c.kind == .timed ? 1 : 2.5), d: c.kind == .weights ? 20 : (c.kind == .cardio ? 2 : 0), kind: c.kind)
         }
         custom = d
     }

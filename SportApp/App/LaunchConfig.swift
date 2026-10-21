@@ -62,6 +62,9 @@ struct LaunchConfig {
         case "creatine": model.screen = .creatine; model.crea = true
         case "training-empty": model.tab = .training
         case "gym": model.profileSub = .gym; model.screen = .settings
+        case "gym-exercises":
+            _ = model.addCustomExercise(name: "Trilplaat", muscle: "Cardio", equipment: "Cardio", kind: .cardio)
+            model.profileSub = .gym; model.screen = .settings; model.gymPage = 2
         case "profile": model.tab = .progress
         case "settings": model.profileSub = .overview; model.screen = .settings
         case "logbook": model.tab = .logbook
@@ -192,6 +195,18 @@ struct LaunchConfig {
         case "exmenu":
             model.screen = .workout
             model.openSheet(.exmenu, exID: exID)
+        case "exhistory":
+            model.screen = .workout
+            model.openSheet(.exhistory, exID: exID)
+        case "cooldown":
+            model.screen = .workout
+            model.openSheet(.add)
+            model.addToSessionCooldown = true
+        case "customedit":
+            _ = model.addCustomExercise(name: "Trilplaat", muscle: "Cardio", equipment: "Cardio", kind: .cardio)
+            model.customEditName = "Trilplaat"
+            model.openSheet(.customedit)
+            model.customEditName = "Trilplaat"
         case "accuse", "accpick":
             model.screen = .workout
             let target = model.session?.exercises.first(where: { $0.name == "Cable One Arm Tricep Extension" })?.id

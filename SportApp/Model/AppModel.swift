@@ -177,7 +177,7 @@ struct Supplement: Codable, Hashable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode, exhistory, customedit
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -450,6 +450,11 @@ final class AppModel: ObservableObject {
     @Published var addToDraft = false
     @Published var addToDraftWarmup = false
     @Published var addToDraftCooldown = false
+    /// De Toevoegen-lijst voegt een cooling-down toe aan de lopende workout.
+    @Published var addToSessionCooldown = false
+    @Published var customEditName: String?
+    /// Tabblad in Apparaten & oefeningen: 0 apparaten, 1 opzetstukken, 2 oefeningen.
+    @Published var gymPage = 0
     @Published var swapScope = SwapScope.now
 
     // Kalender
@@ -1240,6 +1245,14 @@ final class AppModel: ObservableObject {
         save()
     }
 
+    func addSessionCooldown(_ name: String) {
+        guard var s = session else { return }
+        s.addCooldown(name, history: history)
+        session = s
+        sheet = nil
+        save()
+    }
+
     func linkSelected() {
         guard var s = session, let ex = sheetEx else { return }
         s.link(base: ex, existing: selected, newNames: selectedNew, history: history)
@@ -1302,6 +1315,7 @@ final class AppModel: ObservableObject {
         addToDraft = false
         addToDraftWarmup = false
         addToDraftCooldown = false
+        addToSessionCooldown = false
         swapScope = .now
         if kind == .explain { linkDraft = "" }
     }
@@ -1841,6 +1855,62 @@ final class AppModel: ObservableObject {
         Catalog.setCustom(customExercises)
         save()
         return n
+    }
+
+    /// Past een eigen oefening aan. Een nieuwe naam wordt overal doorgevoerd (schema's, geschiedenis, lopende workout, notities).
+    func updateCustomExercise(_ name: String, newName: String? = nil, muscle: String? = nil, kind: ExerciseKind? = nil) {
+        guard let i = customExercises.firstIndex(where: { $0.name == name }) else { return }
+        if let k = kind, k != customExercises[i].kind {
+            customExercises[i].kind = k
+            customExercises[i].equipment = Catalog.defaultEquipment(for: k)
+            if k == .cardio { customExercises[i].muscle = "Cardio" }
+        }
+        if let m = muscle { customExercises[i].muscle = m }
+        if let n = newName?.trimmingCharacters(in: .whitespaces), !n.isEmpty, n != name {
+            if Catalog.allNames.contains(where: { $0.lowercased() == n.lowercased() && $0 != name }) {
+                toast = Toast(text: "Die naam bestaat al", removed: nil, until: Date().addingTimeInterval(3))
+            } else {
+                customExercises[i].name = n
+                renameEverywhere(from: name, to: n)
+                if customEditName == name { customEditName = n }
+            }
+        }
+        Catalog.setCustom(customExercises)
+        save()
+    }
+
+    private func renameEverywhere(from old: String, to new: String) {
+        for key in templates.keys {
+            for j in templates[key]!.indices where templates[key]![j].name == old { templates[key]![j].name = new }
+        }
+        for h in history.indices {
+            guard var list = history[h].exercises else { continue }
+            var changed = false
+            for e in list.indices where list[e].name == old { list[e].name = new; changed = true }
+            if changed { history[h].exercises = list }
+        }
+        if var s = session {
+            for e in s.exercises.indices {
+                if s.exercises[e].name == old { s.exercises[e].name = new }
+                if s.exercises[e].from == old { s.exercises[e].from = new }
+            }
+            session = s
+        }
+        if let v = links[old] { links[new] = v; links[old] = nil }
+        if let v = noteLog[old] { noteLog[new] = v; noteLog[old] = nil }
+        if let v = exAcc[old] { exAcc[new] = v; exAcc[old] = nil }
+        var np: [String: String] = [:]
+        for (k, v) in prefs { np[k == old ? new : k] = (v == old ? new : v) }
+        prefs = np
+    }
+
+    /// Verwijdert een eigen oefening, ook uit je schema's. Je geschiedenis blijft staan.
+    func deleteCustomExercise(_ name: String) {
+        customExercises.removeAll { $0.name == name }
+        for key in templates.keys { templates[key]!.removeAll { $0.name == name } }
+        Catalog.setCustom(customExercises)
+        sheet = nil
+        save()
     }
 
     // MARK: Uitleg-links

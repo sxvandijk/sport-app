@@ -243,16 +243,33 @@ private struct WorkoutList: View {
                 blockView(members, blockIndex: bi, blocks: blocks, openID: openID)
             }
             if !session.exercises.isEmpty {
-                Button { model.openSheet(.add) } label: {
-                    HStack(spacing: 6) {
-                        Icon.plus(18, 2.4)
-                        Text("Oefening toevoegen").sa(16, .semibold)
+                HStack(spacing: 8) {
+                    Button { model.openSheet(.add) } label: {
+                        HStack(spacing: 6) {
+                            Icon.plus(18, 2.4)
+                            Text("Oefening").sa(16, .semibold)
+                        }
+                        .foregroundColor(ac.accentText)
+                        .frame(maxWidth: .infinity).frame(height: 52)
+                        .card(Tokens.raised, radius: Radius.button)
                     }
-                    .foregroundColor(ac.accentText)
-                    .frame(maxWidth: .infinity).frame(height: 52)
-                    .card(Tokens.raised, radius: Radius.button)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Oefening toevoegen")
+                    Button {
+                        model.openSheet(.add)
+                        model.addToSessionCooldown = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Icon.plus(18, 2.4)
+                            Text("Cooling-down").sa(16, .semibold)
+                        }
+                        .foregroundColor(Tokens.cool)
+                        .frame(maxWidth: .infinity).frame(height: 52)
+                        .card(Tokens.raised, radius: Radius.button)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Cooling-down toevoegen")
                 }
-                .buttonStyle(.plain)
                 .padding(.top, 14)
             }
         }
@@ -534,6 +551,12 @@ private struct OpenExerciseCard: View {
                     .padding(.top, -8).padding(.trailing, -14)
                     .accessibilityLabel("Hoe houdt de app dit bij?")
                 }
+                Button { model.openSheet(.exhistory, exID: exercise.id) } label: {
+                    Icon.clock(21).foregroundColor(Tokens.text2).frame(width: 38, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, -8).padding(.trailing, -6)
+                .accessibilityLabel("Vorige keren van \(exercise.name)")
                 Button { model.openSheet(.exmenu, exID: exercise.id) } label: {
                     Icon.more(22).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
                 }

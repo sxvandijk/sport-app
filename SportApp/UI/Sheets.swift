@@ -59,6 +59,7 @@ private struct SheetBody: View {
         case .add:
             if model.addToDraftWarmup { return ("Warming-up toevoegen", "Komt vooraan in deze training") }
             if model.addToDraftCooldown { return ("Cooling-down toevoegen", "Komt achteraan in deze training") }
+            if model.addToSessionCooldown { return ("Cooling-down toevoegen", "Komt achteraan in je workout") }
             return ("Oefening toevoegen", model.addToDraft ? "Wordt onderaan je schema gezet" : "Wordt onderaan je workout gezet")
         case .program: return ("Kies je schema", "Je schema bepaalt welke trainingen je op het startscherm ziet.")
         case .tplmenu: return (model.tmName ?? "", "Opties voor deze training")
@@ -73,6 +74,8 @@ private struct SheetBody: View {
         case .accpick: return ("Opzetstukken", name.isEmpty ? "" : "Welke gebruik je bij \(name)?" + (exercise?.acc.map { " Nu: \($0)." } ?? ""))
         case .accuse: return ("Opzetstuk", exercise?.acc.map { "Nu: \($0). Houd een opzetstuk ingedrukt om het te verwijderen." } ?? "")
         case .sidemode: return ("Hoe houdt de app dit bij?", name)
+        case .exhistory: return ("Vorige keren", name)
+        case .customedit: return (model.customEditName ?? "Eigen oefening", "Naam, soort en spiergroep")
         }
     }
 
@@ -189,6 +192,8 @@ private struct SheetBody: View {
         case .accpick: AccessoryPickSheet()
         case .accuse: AccessoryUseSheet()
         case .sidemode: SideModeSheet()
+        case .exhistory: ExerciseHistorySheet()
+        case .customedit: CustomEditSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
         case .exmenu: ExerciseMenuSheet()
@@ -696,7 +701,7 @@ private struct SearchList: View {
             if let m = muscleFilter, item.info.muscle != m { return false }
             return q.isEmpty || item.name.lowercased().contains(q) || item.info.muscle.lowercased().contains(q)
         }
-        if (model.addToDraftWarmup || model.addToDraftCooldown) && q.isEmpty && muscleFilter == nil {
+        if (model.addToDraftWarmup || model.addToDraftCooldown || model.addToSessionCooldown) && q.isEmpty && muscleFilter == nil {
             let first = names.filter { Catalog.warmupNames.contains($0.name) }
             names = first + names.filter { !Catalog.warmupNames.contains($0.name) }
         } else if (mode == .swap || mode == .preference) && q.isEmpty && muscleFilter == nil, let c = current {
@@ -868,16 +873,21 @@ private struct SearchList: View {
             .buttonStyle(.plain)
             if creating {
                 VStack(alignment: .leading, spacing: 10) {
-                    Picker("Soort", selection: $newKind) {
-                        ForEach([ExerciseKind.weights, .bodyweight, .cardio], id: \.self) { k in Text(k.title).tag(k) }
+                    HStack {
+                        Text("Soort").sa(15).foregroundColor(Tokens.text2)
+                        Spacer()
+                        Picker("Soort", selection: $newKind) {
+                            ForEach(ExerciseKind.allCases, id: \.self) { k in Text(k.title).tag(k) }
+                        }
+                        .pickerStyle(.menu)
+                        .accentColor(ac.accentText)
                     }
-                    .pickerStyle(.segmented)
                     if newKind != .cardio {
                         HStack {
                             Text("Spiergroep").sa(15).foregroundColor(Tokens.text2)
                             Spacer()
                             Picker("Spiergroep", selection: $newMuscle) {
-                                ForEach(SearchList.muscles, id: \.self) { m in Text(m).tag(m) }
+                                ForEach(Catalog.muscleOptions, id: \.self) { m in Text(m).tag(m) }
                             }
                             .pickerStyle(.menu)
                             .accentColor(ac.accentText)
@@ -893,7 +903,7 @@ private struct SearchList: View {
 
     private func createAndPick() {
         let muscle = newKind == .cardio ? "Cardio" : newMuscle
-        let equipment = newKind == .bodyweight ? "Lichaamsgewicht" : (newKind == .cardio ? "Cardio" : "Eigen")
+        let equipment = Catalog.defaultEquipment(for: newKind)
         if let name = model.addCustomExercise(name: queryName, muscle: muscle, equipment: equipment, kind: newKind) {
             pick(name)
         }
@@ -914,6 +924,8 @@ private struct SearchList: View {
                 model.addDraftWarmup(name)
             } else if model.addToDraftCooldown {
                 model.addDraftCooldown(name)
+            } else if model.addToSessionCooldown {
+                model.addSessionCooldown(name)
             } else if model.addToDraft {
                 guard var d = model.draft else { return }
                 let w = Catalog.info(name).defaultWeight
@@ -932,6 +944,122 @@ private struct SearchList: View {
         case .superset:
             if let i = model.selectedNew.firstIndex(of: name) { model.selectedNew.remove(at: i) } else { model.selectedNew.append(name) }
         }
+    }
+}
+
+// MARK: - Vorige keren en eigen oefening bewerken
+
+private struct ExerciseHistorySheet: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+
+    private func line(_ kind: ExerciseKind, _ s: LoggedSet) -> String {
+        switch kind {
+        case .weights: return Format.weight(s.w) + " \u{00D7} " + s.repsText
+        case .bodyweight: return s.w == 0 ? s.repsText + " reps" : "+" + Format.weight(s.w) + " \u{00D7} " + s.repsText
+        case .cardio, .timed: return Format.setText(kind, s.w, s.r)
+        }
+    }
+
+    var body: some View {
+        let name = model.session?.exercise(model.sheetEx)?.name ?? ""
+        let kind = Catalog.kind(name)
+        let list = LiveSession.performances(of: name, in: model.history)
+        if list.isEmpty {
+            Text("Je hebt deze oefening nog niet eerder gedaan.").sa(15).foregroundColor(Tokens.text2)
+                .padding(.vertical, 18)
+        } else {
+            VStack(spacing: 8) {
+                ForEach(0..<list.count, id: \.self) { i in
+                    let p = list[i]
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(DateText.short(p.date)).sa(15, .semibold).foregroundColor(Tokens.text)
+                            Text(p.workout).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
+                            Spacer(minLength: 0)
+                            if let acc = p.exercise.acc { Text(acc).sa(12, .medium).foregroundColor(ac.accentText) }
+                        }
+                        let sets = p.exercise.sets
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(0..<sets.count, id: \.self) { j in
+                                HStack(spacing: 10) {
+                                    Text(sets[j].type == .warmup ? "W" : (sets[j].type == .drop ? "D" : String(sets[0..<j].filter { $0.type != .warmup && $0.type != .drop }.count + 1)))
+                                        .sa(12, .bold).foregroundColor(Tokens.text3).frame(width: 18, alignment: .leading)
+                                    Text(line(kind, sets[j])).sa(15, .regular, mono: true).foregroundColor(Tokens.text)
+                                }
+                            }
+                        }
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .card(i == 0 ? ac.accentSoft.opacity(0.5) : Tokens.raised, radius: Radius.field)
+                }
+            }
+            .padding(.bottom, 6)
+        }
+    }
+}
+
+private struct CustomEditSheet: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.accentColors) private var ac
+
+    private var current: CustomExercise? { model.customExercises.first(where: { $0.name == model.customEditName }) }
+
+    var body: some View {
+        if let c = current {
+            VStack(spacing: 0) {
+                SheetRowButton(action: {
+                    let old = c.name
+                    model.nameEdit = NameEdit(title: "Naam wijzigen", subtitle: "", placeholder: "Naam van de oefening", text: old, confirmTitle: "Bewaar") {
+                        model.updateCustomExercise(old, newName: $0)
+                    }
+                }) {
+                    HStack(spacing: 12) {
+                        Text("Naam").sa(16).foregroundColor(Tokens.text2)
+                        Spacer(minLength: 8)
+                        Text(c.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
+                        Icon.chevronRight(14).foregroundColor(Tokens.text3)
+                    }
+                    .padding(.horizontal, 16).frame(minHeight: 56)
+                }
+                .padding(.bottom, 6)
+
+                pickerRow("Soort") {
+                    Picker("Soort", selection: Binding(get: { c.kind }, set: { model.updateCustomExercise(c.name, kind: $0) })) {
+                        ForEach(ExerciseKind.allCases, id: \.self) { k in Text(k.title).tag(k) }
+                    }
+                }
+                pickerRow("Spiergroep") {
+                    Picker("Spiergroep", selection: Binding(get: { c.muscle }, set: { model.updateCustomExercise(c.name, muscle: $0) })) {
+                        ForEach(Catalog.muscleOptions, id: \.self) { m in Text(m).tag(m) }
+                    }
+                }
+                Text("Wijzig je de naam, dan verandert hij ook in je schema\u{2019}s en je geschiedenis.")
+                    .sa(13).foregroundColor(Tokens.text2).lineSpacing(2).padding(.horizontal, 4).padding(.top, 6)
+
+                GlassButton(title: "Oefening verwijderen", role: .danger) {
+                    let name = c.name
+                    model.confirm = ConfirmRequest(title: "\(name) verwijderen?", message: "De oefening verdwijnt uit je schema\u{2019}s. Je geschiedenis blijft bewaard.", confirmTitle: "Verwijder") {
+                        model.deleteCustomExercise(name)
+                    }
+                }
+                .padding(.top, 20)
+            }
+        } else {
+            Text("Deze oefening bestaat niet meer.").sa(15).foregroundColor(Tokens.text2).padding(.vertical, 18)
+        }
+    }
+
+    private func pickerRow<P: View>(_ title: String, @ViewBuilder _ picker: () -> P) -> some View {
+        HStack(spacing: 12) {
+            Text(title).sa(16).foregroundColor(Tokens.text2)
+            Spacer(minLength: 8)
+            picker().pickerStyle(.menu).accentColor(ac.accentText)
+        }
+        .padding(.horizontal, 16).frame(minHeight: 56)
+        .glassRaised(radius: Radius.row)
+        .padding(.bottom, 6)
     }
 }
 

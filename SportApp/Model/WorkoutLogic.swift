@@ -501,6 +501,29 @@ struct LiveSession: Codable, Hashable {
                                                   last: LiveSession.lastLogged(name, in: history)))
     }
 
+    /// Voegt een cooling-down-oefening toe aan het eind van de training (blauw blok, telt mee voor sets en volume).
+    mutating func addCooldown(_ name: String, history: [HistoryEntry] = []) {
+        nextGroup += 1
+        let kind = Catalog.kind(name)
+        let strength = kind == .weights || kind == .bodyweight
+        let set = PlanSet(w: Catalog.info(name).defaultWeight, r: strength ? 15 : 5)
+        var plan = PlanItem(name: name, group: nextGroup, sets: Array(repeating: set, count: strength ? 2 : 1))
+        plan.isCooldown = true
+        exercises.append(LiveSession.makeExercise(name: name, group: nextGroup, plan: plan,
+                                                  last: LiveSession.lastLoggedWarmup(name, in: history)))
+    }
+
+    /// Alle keren dat je een oefening deed, nieuwste eerst (voor de geschiedenis in de workout).
+    static func performances(of name: String, in history: [HistoryEntry], limit: Int = 8) -> [(date: Date, workout: String, exercise: LoggedExercise)] {
+        var out: [(date: Date, workout: String, exercise: LoggedExercise)] = []
+        for h in history.sorted(by: { $0.date > $1.date }) {
+            guard let e = h.exercises?.first(where: { $0.name == name && !$0.sets.isEmpty }) else { continue }
+            out.append((date: h.date, workout: h.name, exercise: e))
+            if out.count >= limit { break }
+        }
+        return out
+    }
+
     /// "Machine bezet": de open sets gaan naar de nieuwe oefening, gedane sets blijven staan.
     /// Wisselt een oefening. Gedane sets blijven bij de oude oefening; de open sets gaan naar de nieuwe.
     /// Geeft het id van de oefening terug waar je nu mee verder gaat.
