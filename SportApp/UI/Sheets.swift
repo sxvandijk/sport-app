@@ -432,6 +432,9 @@ private struct ExplainSheet: View {
         let yt = URL(string: "https://www.youtube.com/results?search_query=" + query)
         let saved = model.links[name].flatMap { URL(string: $0) }
 
+        if ExerciseImageStore.has(name) {
+            ExerciseHero(name: name, height: 200).padding(.bottom, 12)
+        }
         if let yt = yt {
             Link(destination: yt) {
                 HStack(spacing: 12) {
@@ -774,6 +777,7 @@ private struct SearchList: View {
         HStack(spacing: 4) {
             Button { pick(item.name) } label: {
                 HStack(spacing: 12) {
+                    ExerciseThumb(name: item.name, size: 46, radius: 12)
                     TitleSub(title: item.name, sub: Catalog.meta(item.name), titleSize: 17, titleWeight: .medium)
                     Spacer(minLength: 0)
                     if mode != .preference {

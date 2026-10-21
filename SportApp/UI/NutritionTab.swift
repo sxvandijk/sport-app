@@ -7,30 +7,6 @@ private enum Macro {
     static let fat = Color(red: 0.93, green: 0.45, blue: 0.60)
 }
 
-/// Bovenste helft van een cirkel, als meter. Voortgang loopt van links naar rechts.
-private struct GaugeArc: View {
-    let progress: Double
-    let width: CGFloat
-    let line: CGFloat
-    let fill: LinearGradient
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        ZStack(alignment: .top) {
-            Circle().trim(from: 0.5, to: 1)
-                .stroke(Tokens.track, style: StrokeStyle(lineWidth: line, lineCap: .round))
-                .frame(width: width, height: width)
-            Circle().trim(from: 0.5, to: 0.5 + 0.5 * max(0.001, min(1, progress)))
-                .stroke(fill, style: StrokeStyle(lineWidth: line, lineCap: .round))
-                .frame(width: width, height: width)
-                .opacity(progress > 0 ? 1 : 0)
-                .animation(reduceMotion ? nil : Motion.reveal, value: progress)
-        }
-        .frame(width: width, height: width / 2 + line / 2, alignment: .top)
-        .clipped()
-    }
-}
-
 /// Tab Voeding: een dagstrook om dagen terug te kijken, een meter met wat je nog mag eten, de cirkels met je
 /// voedingswaarden, je maaltijden per moment van de dag en je supplementen. Eten log je met naam en eigen cijfers.
 struct NutritionTab: View {
@@ -44,6 +20,7 @@ struct NutritionTab: View {
     @State private var mealCarbs = ""
     @State private var mealFat = ""
     @State private var newSupplement = ""
+    @State private var showCalendar = false
     @FocusState private var focused: Bool
 
     private var day: Date { model.nutritionDay }
@@ -55,13 +32,12 @@ struct NutritionTab: View {
         let kcal = meals.compactMap { $0.kcal }.reduce(0, +)
         VStack(alignment: .leading, spacing: 0) {
             header
-            weekStrip.padding(.top, 8)
+            weekStrip.padding(.top, 2)
 
-            if model.nutritionExtra.profile == nil { setupPrompt.padding(.top, 16) }
+            if model.nutritionExtra.profile == nil { setupPrompt.padding(.top, 12) }
 
-            gaugeCard(kcal: kcal, meals: meals).padding(.top, 16)
-            macroRow(meals).padding(.top, 12)
-            if layout.water { waterCard.padding(.top, 12) }
+            summaryCard(kcal: kcal).padding(.top, 10)
+            macroRow(meals).padding(.top, 10)
 
             if !model.mealClipboard.isEmpty { pasteBar.padding(.top, 16) }
 
@@ -82,55 +58,93 @@ struct NutritionTab: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.top, 20)
+            .padding(.top, 12)
             VStack(spacing: 10) {
                 ForEach(MealKind.allCases) { kind in mealCard(kind) }
             }
+
+            if layout.water { waterCard.padding(.top, 12) }
 
             if layout.supplements && isToday {
                 SectionLabel(text: "Supplementen").padding(.top, 24).padding(.bottom, 10)
                 supplementsCard
             }
         }
+        .sheet(isPresented: $showCalendar) { calendarSheet }
     }
 
     // MARK: Kop en dagstrook
 
+    private var dateTitle: String {
+        let t = DateText.long(day)
+        return t.prefix(1).uppercased() + t.dropFirst()
+    }
+
     private var header: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text(isToday ? "Vandaag" : DateText.long(day)).sa(13, .medium).foregroundColor(Tokens.text2)
-                Spacer(minLength: 0)
-                if !isToday {
-                    Button {
-                        Haptics.selection()
-                        withAnimation(Motion.tabContent) { model.nutritionDay = Date() }
-                    } label: {
-                        Text("Naar vandaag").sa(13, .semibold).foregroundColor(ac.accentText)
-                            .padding(.horizontal, 12).frame(height: 32)
-                            .background(Capsule().fill(ac.accentSoft))
-                            .frame(minHeight: 44).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
+        HStack(spacing: 8) {
+            Button {
+                Haptics.selection()
+                showCalendar = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text(dateTitle).sa(24, .bold, tracking: -0.5).foregroundColor(Tokens.text)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    Icon.chevronDown(14, 2.8).foregroundColor(ac.accentText)
                 }
+                .frame(minHeight: 44).contentShape(Rectangle())
             }
-            .frame(height: 44)
-            HStack {
-                ScreenTitle(text: "Voeding")
-                Spacer(minLength: 0)
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(dateTitle), open kalender")
+            Spacer(minLength: 0)
+            if !isToday {
                 Button {
                     Haptics.selection()
-                    model.screen = .nutritionSetup
+                    withAnimation(Motion.tabContent) { model.nutritionDay = Date() }
                 } label: {
-                    Icon.gear(22).foregroundColor(Tokens.text)
-                        .frame(width: 44, height: 44)
-                        .glassSurface(Circle(), interactive: true, fallback: Tokens.raised)
-                        .contentShape(Circle())
+                    Text("Vandaag").sa(13, .semibold).foregroundColor(ac.accentText)
+                        .padding(.horizontal, 12).frame(height: 32)
+                        .background(Capsule().fill(ac.accentSoft))
+                        .frame(minHeight: 44).contentShape(Rectangle())
                 }
-                .buttonStyle(PressScaleStyle(scale: 0.9))
-                .accessibilityLabel("Voeding instellen")
+                .buttonStyle(.plain)
             }
+            Button {
+                Haptics.selection()
+                model.screen = .nutritionSetup
+            } label: {
+                Icon.gear(20).foregroundColor(Tokens.text)
+                    .frame(width: 44, height: 44)
+                    .glassSurface(Circle(), interactive: true, fallback: Tokens.raised)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(PressScaleStyle(scale: 0.9))
+            .accessibilityLabel("Voeding instellen")
         }
+        .frame(height: 56)
+    }
+
+    private var calendarSheet: some View {
+        VStack(spacing: 8) {
+            DatePicker("Dag", selection: Binding(get: { model.nutritionDay }, set: { model.nutritionDay = $0 }),
+                       displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+                .tint(ac.accentText)
+                .environment(\.locale, Locale(identifier: "nl_NL"))
+            Button {
+                Haptics.selection()
+                model.nutritionDay = Date()
+                showCalendar = false
+            } label: {
+                Text("Naar vandaag").sa(16, .semibold).foregroundColor(ac.accentText)
+                    .frame(maxWidth: .infinity).frame(height: 48)
+                    .background(Capsule().fill(ac.accentSoft))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 12)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
     private var weekDays: [Date] {
@@ -144,7 +158,7 @@ struct NutritionTab: View {
     private var weekStrip: some View {
         let days = weekDays
         let letters = ["M", "D", "W", "D", "V", "Z", "Z"]
-        return VStack(spacing: 4) {
+        return VStack(spacing: 0) {
             HStack {
                 stripArrow("chevron.left", label: "Vorige week") { shift(-7) }
                 Spacer(minLength: 0)
@@ -173,7 +187,7 @@ struct NutritionTab: View {
                             }
                             .frame(width: 22, height: 22)
                         }
-                        .frame(maxWidth: .infinity).frame(height: 84)
+                        .frame(maxWidth: .infinity).frame(height: 76)
                         .background(
                             RoundedRectangle(cornerRadius: 22, style: .continuous)
                                 .fill(sel ? ac.accentSoft : Color.clear)
@@ -195,8 +209,8 @@ struct NutritionTab: View {
             Haptics.selection()
             action()
         } label: {
-            Image(systemName: symbol).font(.system(size: 14, weight: .bold)).foregroundColor(Tokens.text2)
-                .frame(width: 44, height: 36).contentShape(Rectangle())
+            Image(systemName: symbol).font(.system(size: 13, weight: .bold)).foregroundColor(Tokens.text2)
+                .frame(width: 44, height: 28).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -241,39 +255,39 @@ struct NutritionTab: View {
 
     // MARK: Meter en cirkels
 
-    private func gaugeCard(kcal: Int, meals: [MealEntry]) -> some View {
+    private func summaryCard(kcal: Int) -> some View {
         let goal = model.kcalGoal
         let left = goal - kcal
         let over = left < 0
-        return VStack(spacing: 0) {
-            ZStack(alignment: .bottom) {
-                GaugeArc(progress: Double(kcal) / Double(max(1, goal)), width: 280, line: 16,
-                         fill: over ? LinearGradient(colors: [Tokens.danger, Tokens.danger], startPoint: .leading, endPoint: .trailing) : ac.gradient)
-                VStack(spacing: 0) {
-                    Text(Format.thousands(Double(abs(left)))).sa(52, .bold, tracking: -1.5, mono: true)
+        let frac = Double(kcal) / Double(max(1, goal))
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(Format.thousands(Double(abs(left)))).sa(38, .bold, tracking: -1, mono: true)
                         .foregroundColor(over ? Tokens.danger : Tokens.text)
                         .rollingNumber()
+                    Text(over ? "kcal boven je doel" : "kcal kun je nog eten").sa(14).foregroundColor(Tokens.text2)
                 }
-                .offset(y: 6)
-            }
-            .frame(height: 150)
-            Text(over ? "kcal boven je doel" : "kcal kun je nog eten").sa(15).foregroundColor(Tokens.text2).padding(.top, 8)
-            Button {
-                Haptics.selection()
-                model.screen = .nutritionSetup
-            } label: {
-                HStack(spacing: 4) {
-                    Text("\(Format.thousands(Double(kcal))) van \(Format.thousands(Double(goal))) gegeten").sa(14, .semibold)
-                    Icon.chevronRight(11)
+                Spacer(minLength: 0)
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(Format.thousands(Double(kcal))).sa(20, .semibold, mono: true).foregroundColor(ac.accentText).rollingNumber()
+                    Text("van \(Format.thousands(Double(goal))) gegeten").sa(13).foregroundColor(Tokens.text2)
                 }
-                .foregroundColor(ac.accentText)
-                .frame(minHeight: 44).contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .accessibilityHint("Pas je doel aan")
+            GeometryReader { g in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Tokens.track)
+                    Capsule()
+                        .fill(over ? AnyShapeStyle(Tokens.danger) : AnyShapeStyle(ac.gradient))
+                        .frame(width: max(14, g.size.width * CGFloat(min(1, frac))))
+                        .opacity(kcal > 0 ? 1 : 0)
+                        .animation(Motion.reveal, value: kcal)
+                }
+            }
+            .frame(height: 14)
         }
-        .padding(.top, 20).padding(.horizontal, 16).padding(.bottom, 4)
-        .frame(maxWidth: .infinity)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard(radius: Radius.card)
     }
 
@@ -290,27 +304,27 @@ struct NutritionTab: View {
 
     private func ring(_ title: String, value: Int, goal: Int, color: Color) -> some View {
         let frac = Double(value) / Double(max(1, goal))
-        return VStack(spacing: 10) {
-            Text(title).sa(14, .semibold).foregroundColor(Tokens.text).lineLimit(1).minimumScaleFactor(0.7)
+        return VStack(spacing: 6) {
             ZStack {
-                Circle().stroke(Tokens.track, lineWidth: 9)
+                Circle().stroke(Tokens.track, lineWidth: 7)
                 Circle().trim(from: 0, to: max(0.001, min(1, frac)))
-                    .stroke(color, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                    .stroke(color, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .opacity(value > 0 ? 1 : 0)
                     .animation(Motion.reveal, value: value)
                 HStack(alignment: .top, spacing: 1) {
-                    Text("\(Int((frac * 100).rounded()))").sa(24, .bold, mono: true).foregroundColor(color).rollingNumber()
-                    Text("%").sa(11, .bold).foregroundColor(color).padding(.top, 3)
+                    Text("\(Int((frac * 100).rounded()))").sa(17, .bold, mono: true).foregroundColor(color).rollingNumber()
+                    Text("%").sa(9, .bold).foregroundColor(color).padding(.top, 2)
                 }
             }
-            .frame(width: 84, height: 84)
+            .frame(width: 60, height: 60)
+            Text(title).sa(12, .semibold).foregroundColor(Tokens.text).lineLimit(1).minimumScaleFactor(0.7)
             HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text("\(value)").sa(17, .bold, mono: true).foregroundColor(Tokens.text).rollingNumber()
-                Text("/\(goal)g").sa(13, .regular, mono: true).foregroundColor(Tokens.text2)
+                Text("\(value)").sa(15, .bold, mono: true).foregroundColor(Tokens.text).rollingNumber()
+                Text("/\(goal)g").sa(12, .regular, mono: true).foregroundColor(Tokens.text2)
             }
         }
-        .padding(.vertical, 14).padding(.horizontal, 6)
+        .padding(.vertical, 12).padding(.horizontal, 6)
         .frame(maxWidth: .infinity)
         .glassCard(radius: Radius.card)
         .accessibilityElement(children: .ignore)

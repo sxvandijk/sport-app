@@ -38,7 +38,14 @@ struct OverviewScreen: View {
                 if open { expanded.remove(x.id) } else { expanded.insert(x.id) }
             } label: {
                 HStack(spacing: 12) {
-                    NumberBadge(text: String(number), hue: hue)
+                    ExerciseThumb(name: x.name, size: 52, radius: 14)
+                        .overlay(alignment: .topLeading) {
+                            Text(String(number)).sa(10, .bold).foregroundColor(Tokens.text)
+                                .frame(width: 20, height: 20)
+                                .background(Circle().fill(Tokens.bg.opacity(0.88)))
+                                .overlay(Circle().stroke(Tokens.line, lineWidth: 1))
+                                .offset(x: -5, y: -5)
+                        }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(x.name).sa(17, .medium).foregroundColor(Tokens.text)
                         Text((x.warm != nil ? "\(x.warmCount ?? 1)W + " : "") + OverviewScreen.planLine(x)).sa(13, .regular, mono: true)
@@ -89,7 +96,7 @@ struct OverviewScreen: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.leading, 44).padding(.bottom, 10)
+        .padding(.leading, 64).padding(.bottom, 10)
     }
 
     private func warmupRow(_ x: PlanItem) -> some View {
@@ -580,7 +587,7 @@ struct EditorScreen: View {
             if it.blockKind != 1 {
                 Circle().fill(it.isCooldown ? Tokens.cool : Tokens.warm).frame(width: 10, height: 10).frame(width: 28, height: 28)
             } else {
-                NumberBadge(text: String(number), hue: hue, size: 28)
+                ExerciseThumb(name: it.name, size: 44, radius: 12)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(it.name).sa(16, .semibold).foregroundColor(Tokens.text).lineLimit(1)
@@ -610,7 +617,14 @@ struct EditorScreen: View {
         let info = Catalog.info(it.name)
         let sub = info.muscle + " \u{00B7} " + info.kind.title
         return HStack(alignment: .top, spacing: 10) {
-            NumberBadge(text: String(number), hue: hue, size: 28).padding(.top, 2)
+            ExerciseThumb(name: it.name, size: 52, radius: 14)
+                .overlay(alignment: .topLeading) {
+                    Text(String(number)).sa(10, .bold).foregroundColor(Tokens.text)
+                        .frame(width: 20, height: 20)
+                        .background(Circle().fill(Tokens.bg.opacity(0.88)))
+                        .overlay(Circle().stroke(Tokens.line, lineWidth: 1))
+                        .offset(x: -5, y: -5)
+                }
             VStack(alignment: .leading, spacing: 2) {
                 Text(it.name).sa(17, .semibold).foregroundColor(Tokens.text)
                 Text(sub).sa(13).foregroundColor(Tokens.text2)

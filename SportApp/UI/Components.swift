@@ -225,24 +225,23 @@ enum DateText {
 
 // MARK: - Supersets
 
-/// Elke superset krijgt zijn eigen kleur, zodat je ze uit elkaar houdt.
+/// Supersets zijn strak en kleurloos: een dunne lijn langs de oefeningen en de letters A1, A2, B1, B2.
 enum SupersetStyle {
-    static let hues: [Color] = [
-        Color(.sRGB, red: 0.30, green: 0.55, blue: 1.00, opacity: 1),
-        Color(.sRGB, red: 1.00, green: 0.62, blue: 0.26, opacity: 1),
-        Color(.sRGB, red: 1.00, green: 0.45, blue: 0.66, opacity: 1),
-        Color(.sRGB, red: 0.22, green: 0.78, blue: 0.68, opacity: 1),
-        Color(.sRGB, red: 0.70, green: 0.55, blue: 1.00, opacity: 1)
-    ]
-
-    static func color(_ index: Int) -> Color { hues[((index % hues.count) + hues.count) % hues.count] }
+    /// Neutrale tint voor randen en verbindingen (geen kleur per superset).
+    static var tint: Color { Tokens.text3 }
+    static func color(_ index: Int) -> Color { tint }
+    static func letter(_ index: Int) -> String {
+        let letters = Array("ABCDEFGH")
+        return String(letters[((index % letters.count) + letters.count) % letters.count])
+    }
 }
 
-/// Een blok om oefeningen die samen een superset zijn.
+/// Een blok om oefeningen die samen een superset zijn: een lijn in de accentkleur links, een klein kopje erboven.
 struct SupersetFrame<Content: View>: View {
     let index: Int
     let count: Int
     let content: Content
+    @Environment(\.accentColors) private var ac
 
     init(index: Int, count: Int, @ViewBuilder content: () -> Content) {
         self.index = index
@@ -251,19 +250,22 @@ struct SupersetFrame<Content: View>: View {
     }
 
     var body: some View {
-        let hue = SupersetStyle.color(index)
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 6) {
-                Icon.link(14, 2.4)
-                Text("SUPERSET \(index + 1) \u{00B7} \(count) OEFENINGEN").sa(11, .bold, tracking: 0.66)
+        HStack(alignment: .top, spacing: 12) {
+            Capsule()
+                .fill(LinearGradient(colors: [ac.accentLine, ac.accentLine.opacity(0.25)], startPoint: .top, endPoint: .bottom))
+                .frame(width: 3)
+                .padding(.vertical, 6)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Icon.link(12, 2.4)
+                    Text("SUPERSET \(SupersetStyle.letter(index))").sa(11, .bold, tracking: 0.9)
+                    Text("\u{00B7} \(count) oefeningen").sa(11, .medium)
+                }
+                .foregroundColor(ac.accentText)
+                .padding(.top, 4)
+                content
             }
-            .foregroundColor(hue.opacity(0.75))
-            .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 2)
-            content
         }
-        .padding(.bottom, 6)
-        .background(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).fill(hue.opacity(0.05)))
-        .overlay(RoundedRectangle(cornerRadius: Radius.card, style: .continuous).stroke(hue.opacity(0.28), lineWidth: 1))
         .padding(.vertical, 6)
     }
 }
@@ -275,9 +277,10 @@ struct NumberBadge: View {
     var size: CGFloat = 32
 
     var body: some View {
-        Text(text).sa(12, .bold).foregroundColor(hue == nil ? Tokens.text2 : Color.black.opacity(0.85))
+        Text(text).sa(12, .bold).foregroundColor(hue == nil ? Tokens.text2 : Tokens.text)
             .frame(width: size, height: size)
-            .background(Circle().fill(hue ?? Tokens.raised))
+            .background(Circle().fill(Tokens.raised))
+            .overlay(Circle().stroke(hue == nil ? Color.clear : Tokens.line, lineWidth: 1))
     }
 }
 

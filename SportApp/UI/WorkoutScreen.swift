@@ -291,20 +291,20 @@ private struct WorkoutList: View {
             let idx = supersetIndex(blockIndex: blockIndex, blocks: blocks)
             SupersetFrame(index: idx, count: members.count) {
                 VStack(alignment: .leading, spacing: 0) {
-                    memberViews(members, hue: SupersetStyle.color(idx), openID: openID)
+                    memberViews(members, hue: SupersetStyle.color(idx), ssLetter: SupersetStyle.letter(idx), openID: openID)
                 }
                 .padding(.horizontal, 10)
             }
         } else {
-            memberViews(members, hue: nil, openID: openID)
+            memberViews(members, hue: nil, ssLetter: "", openID: openID)
         }
     }
 
     @ViewBuilder
-    private func memberViews(_ members: [LiveExercise], hue: Color?, openID: UUID?) -> some View {
+    private func memberViews(_ members: [LiveExercise], hue: Color?, ssLetter: String, openID: UUID?) -> some View {
         ForEach(0..<members.count, id: \.self) { mi in
             let e = members[mi]
-            let badge = hue != nil ? String(mi + 1) : ""
+            let badge = hue != nil ? ssLetter + String(mi + 1) : ""
             if e.id == openID {
                 OpenExerciseCard(exercise: e, badge: badge, hue: hue, cur: cur).id(e.id)
                     .background(GeometryReader { g in
@@ -332,18 +332,24 @@ private struct ClosedExerciseRow: View {
             model.focus(exercise.id)
         } label: {
             HStack(spacing: 12) {
-                ZStack {
+                ZStack(alignment: .bottomTrailing) {
+                    ExerciseThumb(name: exercise.name, size: 50, radius: 13).opacity(allDone ? 0.5 : 1)
                     if allDone {
-                        Circle().fill(ac.accentSoft)
-                        Icon.check(16).foregroundColor(ac.accentText)
-                    } else if !badge.isEmpty {
-                        Circle().fill(hue ?? Tokens.raised)
-                        Text(badge).sa(12, .bold).foregroundColor(hue == nil ? Tokens.text2 : Color.black.opacity(0.85))
-                    } else {
-                        Circle().stroke(Tokens.line, lineWidth: 2)
+                        Icon.check(11, 3).foregroundColor(ac.onAccent)
+                            .frame(width: 20, height: 20).background(Circle().fill(ac.accentLine))
+                            .offset(x: 4, y: 4)
                     }
                 }
-                .frame(width: 32, height: 32)
+                .overlay(alignment: .topLeading) {
+                    if !badge.isEmpty && !allDone {
+                        Text(badge).sa(10, .bold).foregroundColor(ac.accentText)
+                            .padding(.horizontal, 5).frame(height: 18)
+                            .background(Capsule().fill(Tokens.bg.opacity(0.85)))
+                            .overlay(Capsule().stroke(ac.accentLine.opacity(0.6), lineWidth: 1))
+                            .offset(x: -4, y: -4)
+                    }
+                }
+                .frame(width: 50, height: 50)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(exercise.name).sa(17, .medium).foregroundColor(allDone ? Tokens.text2 : Tokens.text).lineLimit(1)
@@ -485,11 +491,12 @@ private struct OpenExerciseCard: View {
         let rows: [(set: LiveSet, label: String)] = Array(zip(exercise.sets, labels)).map { (set: $0.0, label: $0.1) }
 
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                ExerciseThumb(name: exercise.name, size: 64, radius: 16)
                 if !badge.isEmpty {
-                    Text(badge).sa(12, .bold).foregroundColor(hue == nil ? Tokens.text2 : Color.black.opacity(0.85))
+                    Text(badge).sa(12, .bold).foregroundColor(ac.accentText)
                         .padding(.horizontal, 8).frame(height: 24)
-                        .card(hue ?? Tokens.raised, radius: Radius.badge)
+                        .card(ac.accentSoft, radius: Radius.badge)
                         .padding(.top, 2)
                 }
                 VStack(alignment: .leading, spacing: 2) {
