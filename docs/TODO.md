@@ -192,3 +192,10 @@ Redesign
 - Supersets: geen gekleurde vakken meer. Een dunne lijn in de accentkleur langs de oefeningen, kopje "SUPERSET A", en nummers A1, A2 (B1, B2 voor de volgende).
 - Oefenfoto's: 74 oefeningen hebben een foto (free-exercise-db, public domain, in de app meegeleverd). Te zien in de open oefening, de lijst in de workout, het schemaoverzicht, de editor, oefening toevoegen/wisselen en de uitleg (die wisselt tussen begin- en eindstand). Eigen oefeningen krijgen een symbool.
 - Nog open: foto's kloppen soms niet 100% bij Basic-Fit-namen (bijv. Cable Deltoid Side Raise); eigen foto per oefening kiezen; foto's op Start en Logboek.
+
+## Ronde 14e (klaargezet, nog geen IPA)
+- Gemini-illustraties: de app laadt ze automatisch (voorrang boven de foto's). Werkwijze: Stan levert PNG's per oefening (naam uit docs/gemini-oefenafbeeldingen.md, bv. `incline-dumbbell-press.png`), Claude draait `python3 tools/import_art.py <map-of-zip>`. Dat snijdt de twee standen los, verwijdert de witte rand en maakt er 640 px JPG's van (~30 kB per stand) in `SportApp/Resources/ExerciseArt`.
+- Als eerste staat "Incline dumbbell press" erin. Oefeningen zonder illustratie houden de foto.
+- Uitleg-scherm toont een illustratie in zijn geheel (niet bijgesneden).
+- GIF/video-animaties: bewust uitgesteld (1,5 MB per GIF; later eventueel als MP4 ~170 kB).
+- Nog niet gebouwd of getest op CI; eerstvolgende IPA bevat dit.

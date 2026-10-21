@@ -1,19 +1,42 @@
 import SwiftUI
 import UIKit
 
-/// Laadt de bijgesloten oefenfoto's (rechtenvrij, zie Resources/ExerciseImages) en houdt ze in het geheugen.
+/// Laadt de oefenafbeeldingen en houdt ze in het geheugen.
+/// Voorrang: eigen illustraties (Resources/ExerciseArt, `art-<slug>_0/1.jpg`, gemaakt met tools/import_art.py),
+/// daarna de rechtenvrije foto's (Resources/ExerciseImages).
 enum ExerciseImageStore {
     private static let cache = NSCache<NSString, UIImage>()
 
-    static func has(_ name: String) -> Bool { ExerciseImageMap.files[name] != nil }
+    /// Bestandsnaam-slug: kleine letters, alles buiten a-z/0-9 wordt een streepje ("Incline Dumbbell Press" -> "incline-dumbbell-press").
+    static func slug(_ name: String) -> String {
+        var out = ""
+        var lastDash = true
+        for ch in name.lowercased() {
+            if ch.isASCII, ch.isLetter || ch.isNumber { out.append(ch); lastDash = false }
+            else if !lastDash { out.append("-"); lastDash = true }
+        }
+        if out.hasSuffix("-") { out.removeLast() }
+        return out
+    }
+
+    private static func artPath(_ name: String, frame: Int) -> String? {
+        Bundle.main.path(forResource: "art-\(slug(name))_\(frame)", ofType: "jpg")
+    }
+
+    /// Is dit een eigen illustratie (vierkant, volledige figuur) in plaats van een foto?
+    static func isArt(_ name: String) -> Bool { artPath(name, frame: 0) != nil }
+
+    static func has(_ name: String) -> Bool { isArt(name) || ExerciseImageMap.files[name] != nil }
 
     /// `frame` 0 = beginstand, 1 = eindstand.
     static func image(_ name: String, frame: Int = 0) -> UIImage? {
-        guard let file = ExerciseImageMap.files[name] else { return nil }
-        let key = "\(file)_\(frame)" as NSString
+        let key = "\(name)_\(frame)" as NSString
         if let hit = cache.object(forKey: key) { return hit }
-        guard let path = Bundle.main.path(forResource: "\(file)_\(frame)", ofType: "jpg"),
-              let img = UIImage(contentsOfFile: path) else { return nil }
+        var path = artPath(name, frame: frame)
+        if path == nil, let file = ExerciseImageMap.files[name] {
+            path = Bundle.main.path(forResource: "\(file)_\(frame)", ofType: "jpg")
+        }
+        guard let path, let img = UIImage(contentsOfFile: path) else { return nil }
         cache.setObject(img, forKey: key)
         return img
     }
@@ -74,7 +97,8 @@ struct ExerciseHero: View {
         let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         Group {
             if let img = ExerciseImageStore.image(name, frame: frame) {
-                Image(uiImage: img).resizable().scaledToFill()
+                Image(uiImage: img).resizable()
+                    .aspectRatio(contentMode: ExerciseImageStore.isArt(name) ? .fit : .fill)
                     .frame(maxWidth: .infinity).frame(height: height).clipped()
                     .background(Color.white)
             } else {
