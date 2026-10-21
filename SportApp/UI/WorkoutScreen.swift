@@ -493,14 +493,18 @@ private struct OpenExerciseCard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 12) {
                 ExerciseThumb(name: exercise.name, size: 64, radius: 16)
-                if !badge.isEmpty {
-                    Text(badge).sa(12, .bold).foregroundColor(ac.accentText)
-                        .padding(.horizontal, 8).frame(height: 24)
-                        .card(ac.accentSoft, radius: Radius.badge)
-                        .padding(.top, 2)
-                }
+                    .overlay(alignment: .topLeading) {
+                        if !badge.isEmpty {
+                            Text(badge).sa(11, .bold).foregroundColor(ac.accentText)
+                                .padding(.horizontal, 6).frame(height: 20)
+                                .background(Capsule().fill(Tokens.bg.opacity(0.88)))
+                                .overlay(Capsule().stroke(ac.accentLine.opacity(0.7), lineWidth: 1))
+                                .offset(x: -5, y: -5)
+                        }
+                    }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(exercise.name).sa(22, .semibold, tracking: -0.3).foregroundColor(Tokens.text)
+                        .lineLimit(3).minimumScaleFactor(0.75).fixedSize(horizontal: false, vertical: true)
                     Text(Catalog.meta(exercise.name) + (exercise.from.map { " · vervangt " + $0 } ?? ""))
                         .sa(13).foregroundColor(Tokens.text2)
                     if let acc = exercise.acc {

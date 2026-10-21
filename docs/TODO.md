@@ -186,3 +186,9 @@ Redesign
 - Start: volgende training in een grote kaart met label.
 - Profiel: weekdoel en totalen in één kaart, daaronder kopjes Verloop, Balans, Prestaties.
 - Nog niet gedaan: oefenfoto's, eigen opmaak per scherm in workout/schema-editor, Logboek en Training verder uitwerken, lichte modus nalopen.
+
+## Ronde 14d (wacht op test, branch ronde-14b)
+- Voeding: halve cirkel is nu een balk; "Voeding" als titel weg; de datum linksboven is een knop die een grote kalender opent; alles compacter zodat de maaltijdvakken al zichtbaar zijn. Water staat onder de maaltijden.
+- Supersets: geen gekleurde vakken meer. Een dunne lijn in de accentkleur langs de oefeningen, kopje "SUPERSET A", en nummers A1, A2 (B1, B2 voor de volgende).
+- Oefenfoto's: 74 oefeningen hebben een foto (free-exercise-db, public domain, in de app meegeleverd). Te zien in de open oefening, de lijst in de workout, het schemaoverzicht, de editor, oefening toevoegen/wisselen en de uitleg (die wisselt tussen begin- en eindstand). Eigen oefeningen krijgen een symbool.
+- Nog open: foto's kloppen soms niet 100% bij Basic-Fit-namen (bijv. Cable Deltoid Side Raise); eigen foto per oefening kiezen; foto's op Start en Logboek.
