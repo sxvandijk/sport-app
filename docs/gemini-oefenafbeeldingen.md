@@ -7,28 +7,35 @@
 4. Download elke afbeelding als PNG met de bestandsnaam uit de lijst (bijv. `butterfly.png`).
 5. Zip alles en stuur het naar mij. Ik verklein ze, koppel ze aan de oefeningen en bouw ze in de app.
 
-## Masterprompt (plak dit als eerste bericht, met je voorbeeldafbeelding)
+## Masterprompt (versie 2, met Stans gezicht)
+
+Bijlagen bij het eerste bericht: afbeelding 1 = stijlreferentie (bijv. de dumbbell bench press met bril), afbeelding 2 en 3 = foto's van Stans gezicht (rustig, recht van voren, met bril).
 
 Je maakt een complete set oefenillustraties voor een fitness-app. Alle afbeeldingen moeten er exact uitzien als één serie.
 
-STIJL (gebruik de bijgevoegde afbeelding als referentie en wijk er niet van af):
-- Realistische 3D-anatomische render van een gespierde, huidloze of strak gladde mannelijke figuur in neutrale grijze tint, zoals in de referentie.
-- De spieren die de oefening traint zijn helder rood gemarkeerd. Alle andere spieren blijven neutraal grijs/wit.
+BIJLAGEN: afbeelding 1 is de stijlreferentie. Afbeelding 2 en 3 zijn foto's van mijn gezicht. Gebruik die alleen voor mijn gezichtskenmerken, niet voor kleding of achtergrond.
+
+STIJL (gebruik afbeelding 1 als referentie en wijk er niet van af):
+- Realistische 3D-anatomische render van een gespierde, mannelijke figuur in neutrale grijze tint.
+- GEZICHT: de figuur heeft mijn gezichtskenmerken (kaaklijn, neus, wenkbrauwen, oren) en ALTIJD mijn bril: zwarte, licht afgeronde rechthoekige montuur. De bril moet in elke afbeelding en in beide standen zichtbaar zijn. Neutrale gezichtsuitdrukking, niet lachen. Kort haar zonder hoge kuif. Gezicht en haar volledig in dezelfde neutrale grijze 3D-stijl (geen echte haar- of huidskleur). Het gezicht moet herkenbaar zijn en niet te klein in beeld.
+- De spieren die de oefening traint zijn helder rood gemarkeerd. Alle andere spieren neutraal grijs/wit.
 - Effen witte achtergrond, geen vloer, geen schaduwen buiten een zachte contactschaduw, geen tekst, geen logo, geen watermerk.
-- Het apparaat of materiaal (bank, stang, dumbbell, kabel, machine) is zwart/donkergrijs met lichtgrijze details, zonder merknamen.
-- Camerahoek: schuin van voren-zijkant, zoals in de referentie, zodat de beweging goed te zien is.
+- Apparaten en materiaal altijd in dezelfde look: zwarte kussens, lichtgrijs of donkergrijs frame, zwarte dumbbells en stangen, zonder merknamen.
+- Camerahoek: schuin van voren-zijkant, zoals in de referentie.
 
 INDELING:
-- Elke afbeelding bevat TWEE standen van dezelfde oefening naast elkaar op één canvas: links de beginstand, rechts de eindstand.
-- Beide standen even groot, zelfde camerahoek, zelfde positie van de bank/machine.
+- Elke afbeelding bevat TWEE standen van dezelfde oefening naast elkaar: links de beginstand, rechts de eindstand.
+- Beide standen even groot, zelfde camerahoek, zelfde positie van bank/machine.
 - Liggend canvas, verhouding 2:1 (bijv. 1600 x 800 pixels), figuur en apparaat volledig in beeld met witte marge eromheen.
 
 TECHNISCH:
 - Geef elke afbeelding als PNG.
-- Houd de vorm van het lichaam, de huidtint, de verlichting en de rode kleur van de gemarkeerde spieren in elke afbeelding gelijk.
+- Houd lichaamsbouw, gezicht, bril, verlichting en het rood van de spieren in elke afbeelding gelijk. Dezelfde figuur in elke afbeelding.
 - Technisch correcte uitvoering: rug neutraal, gewrichten in een veilige stand.
 
-Bevestig kort dat je de stijl begrijpt. Daarna geef ik per bericht één oefening (naam, spiergroep, apparaat). Maak dan alleen die afbeelding.
+Bevestig kort dat je de stijl en het gezicht begrijpt. Daarna geef ik per bericht één oefening (naam, spiergroep, apparaat). Maak dan alleen die afbeelding.
+
+Tips: laat eerst één proefafbeelding maken en keur die goed (gezicht en bril). Begin elk volgend bericht met 'Zelfde figuur met bril en zelfde stijl als hiervoor. Oefening: ...'. Wijkt het gezicht af, zeg dan: 'Gebruik exact het gezicht van de vorige afbeelding.'
 
 ## Lijst met oefeningen (naam, spiergroep, apparaat, bestandsnaam)
 
