@@ -104,23 +104,8 @@ struct ExerciseDetailScreen: View {
         .padding(.horizontal, 4)
     }
 
-    /// "W" voor warming-up, "D" voor dropset, anders het nummer van de werkset.
-    private static func labels(_ sets: [LoggedSet]) -> [String] {
-        var number = 0
-        var out: [String] = []
-        for s in sets {
-            switch s.type {
-            case .warmup: out.append("W")
-            case .drop: out.append("D")
-            case .failure: number += 1; out.append("F")
-            case .work: number += 1; out.append(String(number))
-            }
-        }
-        return out
-    }
-
     private func card(title: String, sub: String, e: LoggedExercise, kind: ExerciseKind, highlight: Bool) -> some View {
-        let labels = Self.labels(e.sets)
+        let labels = e.sets.setLabels
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(title).sa(16, .semibold).foregroundColor(Tokens.text)

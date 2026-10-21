@@ -216,3 +216,13 @@ Redesign
 - Supersets in de workout: geen streep meer, maar een ronde omlijnde kaart met "SUPERSET A · n oefeningen" bovenin. Ook in overzicht en editor.
 - Setrijen: nummer als ronde knop (huidige set in accentkleur), vinkje als gevulde cirkel, huidige rij met gloed.
 - Open: lange oefeningnamen in een superset breken af op 3 regels (info-, klok- en puntjesknop nemen ruimte). Setrijen/invoerbalk verder verfijnen, editorvelden.
+
+## Ronde 14h (wacht op test, branch ronde-14b)
+- Scrollen: na een set blijft de set die je invult in beeld (niet meer naar de bovenkant van de oefening). Scrollen en openen/sluiten van kaarten is nu geanimeerd, ook bij een superset.
+- Oefenkaart: kleinere titel, info-knop uit de kop (staat al onderin bij het invullen), opzetstuk als eigen balk eronder, tekst breekt netter af.
+- Invoerbalk: ronde min/plus-knoppen, groot getal met eenheid eronder, actief veld met gloed. Zelfde stijl in de editor-velden.
+- Cooling-down toevoegen: via de drie puntjes van de workout (knop onderaan is weg).
+- Logboek: foto's in de kaarten en in het detail; drie puntjes met "Training verwijderen"; potloodje achter de naam.
+- Eindscherm: oefeningen zijn klikbaar en openen het detailscherm van die oefening (terug-knop gaat naar het eindscherm).
+- Setnummers in trainingsdetail gefixt (stonden op 4, 5, 6).
+- Niet getest op toestel: of de animaties echt soepel aanvoelen.

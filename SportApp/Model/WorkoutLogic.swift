@@ -95,6 +95,23 @@ struct QueueItem: Hashable {
     var round: Int
 }
 
+extension Array where Element == LoggedSet {
+    /// "W" voor warming-up, "D" voor dropset, "F" voor tot falen, anders het nummer van de werkset.
+    var setLabels: [String] {
+        var number = 0
+        var out: [String] = []
+        for s in self {
+            switch s.type {
+            case .warmup: out.append("W")
+            case .drop: out.append("D")
+            case .failure: number += 1; out.append("F")
+            case .work: number += 1; out.append(String(number))
+            }
+        }
+        return out
+    }
+}
+
 struct SessionSummary: Equatable {
     var title: String
     var note: String

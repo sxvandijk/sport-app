@@ -96,7 +96,7 @@ struct WorkoutDetailScreen: View {
     }
 
     private func exerciseCard(_ e: LoggedExercise) -> some View {
-        var n = 0
+        let labels = e.sets.setLabels
         let kind = Catalog.kind(e.name)
         return VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
@@ -110,14 +110,9 @@ struct WorkoutDetailScreen: View {
                 Spacer(minLength: 0)
             }
             .padding(.bottom, 10)
-            ForEach(Array(e.sets.enumerated()), id: \.offset) { _, s in
-                let label: String = {
-                    if s.type == .warmup { return "W" }
-                    n += 1
-                    return s.type == .work ? "\(n)" : s.type.letter
-                }()
+            ForEach(Array(e.sets.enumerated()), id: \.offset) { idx, s in
                 HStack(spacing: 12) {
-                    Text(label).sa(13, .semibold, mono: true).foregroundColor(Tokens.text2)
+                    Text(labels[idx]).sa(13, .semibold, mono: true).foregroundColor(Tokens.text2)
                         .frame(width: 28, height: 28).background(Circle().fill(Tokens.raised))
                     Text(setText(s, kind)).sa(15, .regular, mono: true).foregroundColor(Tokens.text)
                     Spacer(minLength: 0)
