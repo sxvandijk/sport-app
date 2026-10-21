@@ -924,8 +924,22 @@ struct SummaryScreen: View {
                     }
                     .padding(.horizontal, 24).padding(.top, 48).padding(.bottom, 24)
                 }
-                PrimaryButton(title: "Klaar", height: 58, fontSize: 18) { model.goHome() }
-                    .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 12)
+                VStack(spacing: 4) {
+                    PrimaryButton(title: "Klaar", height: 58, fontSize: 18) { model.goHome() }
+                    if let eid = model.summaryEntryID {
+                        Button {
+                            model.confirm = ConfirmRequest(title: "Training verwijderen?", message: "Per ongeluk gestart? Deze training wordt niet bewaard in je logboek.", confirmTitle: "Verwijder") {
+                                model.deleteHistory(eid)
+                                model.goHome()
+                            }
+                        } label: {
+                            Text("Deze training niet bewaren").sa(14, .medium).foregroundColor(Tokens.text2)
+                                .frame(maxWidth: .infinity).frame(height: 40).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 8)
             }
             .background(AppBackground())
         }

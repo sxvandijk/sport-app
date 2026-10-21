@@ -196,8 +196,8 @@ struct LaunchConfig {
             model.screen = .workout
             model.openSheet(.exmenu, exID: exID)
         case "exhistory":
-            model.screen = .workout
-            model.openSheet(.exhistory, exID: exID)
+            model.exerciseDetailName = model.session?.exercise(exID)?.name ?? "Butterfly"
+            model.screen = .exerciseDetail
         case "cooldown":
             model.screen = .workout
             model.openSheet(.add)

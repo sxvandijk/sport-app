@@ -250,22 +250,20 @@ struct SupersetFrame<Content: View>: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Capsule()
-                .fill(LinearGradient(colors: [ac.accentLine, ac.accentLine.opacity(0.25)], startPoint: .top, endPoint: .bottom))
-                .frame(width: 3)
-                .padding(.vertical, 6)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 6) {
-                    Icon.link(12, 2.4)
-                    Text("SUPERSET \(SupersetStyle.letter(index))").sa(11, .bold, tracking: 0.9)
-                    Text("\u{00B7} \(count) oefeningen").sa(11, .medium)
-                }
-                .foregroundColor(ac.accentText)
-                .padding(.top, 4)
-                content
+        let shape = RoundedRectangle(cornerRadius: 30, style: .continuous)
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Icon.link(12, 2.4)
+                Text("SUPERSET \(SupersetStyle.letter(index))").sa(11, .bold, tracking: 0.9)
+                Text("\u{00B7} \(count) oefeningen").sa(11, .medium)
             }
+            .foregroundColor(ac.accentText)
+            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 4)
+            content
         }
+        .padding(.horizontal, 4).padding(.bottom, 8)
+        .background(shape.fill(LinearGradient(colors: [ac.accent.opacity(0.11), ac.accent.opacity(0.03)], startPoint: .top, endPoint: .bottom)))
+        .overlay(shape.strokeBorder(ac.accentLine.opacity(0.38), lineWidth: 1).allowsHitTesting(false))
         .padding(.vertical, 6)
     }
 }

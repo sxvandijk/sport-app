@@ -4,7 +4,7 @@ import UserNotifications
 import AudioToolbox
 import Combine
 
-enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings, supplement, nutritionSetup }
+enum Screen: String, Codable { case home, workout, overview, editor, summary, records, allWorkouts, creatine, workoutDetail, weekPlan, settings, supplement, nutritionSetup, exerciseDetail }
 /// De tabs, in vaste volgorde. Voeding is optioneel (Instellingen › Functionaliteiten).
 /// Gebruik altijd de case, nooit een index: zonder Voeding schuiven de posities op.
 enum HomeTab: Int, CaseIterable, Identifiable {
@@ -177,7 +177,7 @@ struct Supplement: Codable, Hashable, Identifiable {
 }
 
 enum SheetKind: String {
-    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode, exhistory, customedit
+    case menu, stop, start, explain, swap, change, pref, superset, add, settype, gym, program, tplmenu, exmenu, swapscope, machineadd, machineedit, draftswap, accedit, accpick, accuse, sidemode, customedit
 }
 
 enum SwapScope { case now, schema, prefOnly }
@@ -453,6 +453,10 @@ final class AppModel: ObservableObject {
     /// De Toevoegen-lijst voegt een cooling-down toe aan de lopende workout.
     @Published var addToSessionCooldown = false
     @Published var customEditName: String?
+    /// Oefening waarvan het detailscherm (met geschiedenis) open staat.
+    @Published var exerciseDetailName = ""
+    /// De bewaarde training achter het eindscherm (om hem te kunnen verwijderen).
+    @Published var summaryEntryID: UUID?
     /// Tabblad in Apparaten & oefeningen: 0 apparaten, 1 opzetstukken, 2 oefeningen.
     @Published var gymPage = 0
     @Published var swapScope = SwapScope.now
@@ -768,8 +772,10 @@ final class AppModel: ObservableObject {
             let entry = HistoryEntry(date: now, name: s.name, minutes: minutes, exercises: logged)
             history.insert(entry, at: 0)
             summaryFreeID = s.name == "Vrije training" ? entry.id : nil
+            summaryEntryID = entry.id
         } else {
             summaryFreeID = nil
+            summaryEntryID = nil
         }
         summaryAdded = []
         summaryUnpicked = []
@@ -818,6 +824,7 @@ final class AppModel: ObservableObject {
         screen = .home
         summary = nil
         summaryFreeID = nil
+        summaryEntryID = nil
         summaryAdded = []
         summaryUnpicked = []
         summaryTemplate = nil
@@ -837,6 +844,13 @@ final class AppModel: ObservableObject {
         summaryAdded = []
         summaryUnpicked = []
         summarySaved = true
+        save()
+    }
+
+    /// Verwijdert een bewaarde training (bijvoorbeeld per ongeluk gestart en opgeslagen).
+    func deleteHistory(_ id: UUID) {
+        history.removeAll { $0.id == id }
+        if detailID == id { detailID = nil }
         save()
     }
 

@@ -551,7 +551,10 @@ private struct OpenExerciseCard: View {
                     .padding(.top, -8).padding(.trailing, -14)
                     .accessibilityLabel("Hoe houdt de app dit bij?")
                 }
-                Button { model.openSheet(.exhistory, exID: exercise.id) } label: {
+                Button {
+                    model.exerciseDetailName = exercise.name
+                    model.screen = .exerciseDetail
+                } label: {
                     Icon.clock(21).foregroundColor(Tokens.text2).frame(width: 38, height: 44).contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -667,10 +670,9 @@ private struct SetRow: View {
                 Button {
                     model.openSheet(.settype, exID: exercise.id, setID: set.id)
                 } label: {
-                    Text(label).sa(14, .bold).foregroundColor(labelColor)
-                        .frame(minWidth: 26).frame(height: 26)
-                        .padding(.horizontal, 4)
-                        .card(isCur ? Tokens.surface : Tokens.raised, radius: Radius.badge)
+                    Text(label).sa(14, .bold).foregroundColor(isCur && typeColor == nil ? ac.onAccent : labelColor)
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(isCur && typeColor == nil ? AnyShapeStyle(ac.gradient) : AnyShapeStyle(set.done ? ac.accentSoft : Tokens.raised)))
                         .frame(width: 48, height: 44, alignment: .leading)
                         .contentShape(Rectangle())
                 }
@@ -684,7 +686,9 @@ private struct SetRow: View {
                 Group {
                     if set.done {
                         Button { model.uncompleteSet(exID: exercise.id, setID: set.id) } label: {
-                            Icon.check(20).foregroundColor(ac.accentText)
+                            Icon.check(14, 3).foregroundColor(ac.onAccent)
+                                .frame(width: 26, height: 26)
+                                .background(Circle().fill(ac.gradient))
                                 .frame(width: 44, height: 44).contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -707,7 +711,9 @@ private struct SetRow: View {
             .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
                 .fill(Tokens.text.opacity(isCur ? 0.10 : 0)).allowsHitTesting(false))
             .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
-                .stroke(isCur ? ac.accentLine : Color.clear, lineWidth: 2).allowsHitTesting(false))
+                .strokeBorder(LinearGradient(colors: [ac.accentLine, ac.accentLine.opacity(0.45)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                              lineWidth: isCur ? 1.8 : 0).allowsHitTesting(false))
+            .shadow(color: isCur ? ac.accent.opacity(0.28) : .clear, radius: 10, y: 2)
             .offset(x: dx)
             .contentShape(Rectangle())
             .onTapGesture { model.selectSet(exID: exercise.id, setID: set.id) }

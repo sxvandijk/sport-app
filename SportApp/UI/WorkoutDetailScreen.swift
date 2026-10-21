@@ -52,6 +52,22 @@ struct WorkoutDetailScreen: View {
                         }
                         .buttonStyle(.plain)
 
+                        Button {
+                            let id = h.id
+                            model.confirm = ConfirmRequest(title: "Training verwijderen?", message: h.name + " van " + DateText.short(h.date) + " verdwijnt uit je logboek en je statistieken.", confirmTitle: "Verwijder") {
+                                model.deleteHistory(id)
+                                model.screen = model.detailReturn
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Icon.close(14)
+                                Text("Training verwijderen").sa(15, .semibold)
+                            }
+                            .foregroundColor(Tokens.danger)
+                            .frame(height: 44).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
                         if (h.exercises ?? []).isEmpty {
                             Text("Van deze training is geen detail bewaard.").sa(15).foregroundColor(Tokens.text2).padding(.top, 12)
                         }

@@ -74,7 +74,6 @@ private struct SheetBody: View {
         case .accpick: return ("Opzetstukken", name.isEmpty ? "" : "Welke gebruik je bij \(name)?" + (exercise?.acc.map { " Nu: \($0)." } ?? ""))
         case .accuse: return ("Opzetstuk", exercise?.acc.map { "Nu: \($0). Houd een opzetstuk ingedrukt om het te verwijderen." } ?? "")
         case .sidemode: return ("Hoe houdt de app dit bij?", name)
-        case .exhistory: return ("Vorige keren", name)
         case .customedit: return (model.customEditName ?? "Eigen oefening", "Naam, soort en spiergroep")
         }
     }
@@ -192,7 +191,6 @@ private struct SheetBody: View {
         case .accpick: AccessoryPickSheet()
         case .accuse: AccessoryUseSheet()
         case .sidemode: SideModeSheet()
-        case .exhistory: ExerciseHistorySheet()
         case .customedit: CustomEditSheet()
         case .program: ProgramSheet()
         case .tplmenu: TemplateMenuSheet()
@@ -948,57 +946,6 @@ private struct SearchList: View {
 }
 
 // MARK: - Vorige keren en eigen oefening bewerken
-
-private struct ExerciseHistorySheet: View {
-    @EnvironmentObject private var model: AppModel
-    @Environment(\.accentColors) private var ac
-
-    private func line(_ kind: ExerciseKind, _ s: LoggedSet) -> String {
-        switch kind {
-        case .weights: return Format.weight(s.w) + " \u{00D7} " + s.repsText
-        case .bodyweight: return s.w == 0 ? s.repsText + " reps" : "+" + Format.weight(s.w) + " \u{00D7} " + s.repsText
-        case .cardio, .timed: return Format.setText(kind, s.w, s.r)
-        }
-    }
-
-    var body: some View {
-        let name = model.session?.exercise(model.sheetEx)?.name ?? ""
-        let kind = Catalog.kind(name)
-        let list = LiveSession.performances(of: name, in: model.history)
-        if list.isEmpty {
-            Text("Je hebt deze oefening nog niet eerder gedaan.").sa(15).foregroundColor(Tokens.text2)
-                .padding(.vertical, 18)
-        } else {
-            VStack(spacing: 8) {
-                ForEach(0..<list.count, id: \.self) { i in
-                    let p = list[i]
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(DateText.short(p.date)).sa(15, .semibold).foregroundColor(Tokens.text)
-                            Text(p.workout).sa(13).foregroundColor(Tokens.text2).lineLimit(1)
-                            Spacer(minLength: 0)
-                            if let acc = p.exercise.acc { Text(acc).sa(12, .medium).foregroundColor(ac.accentText) }
-                        }
-                        let sets = p.exercise.sets
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(0..<sets.count, id: \.self) { j in
-                                HStack(spacing: 10) {
-                                    Text(sets[j].type == .warmup ? "W" : (sets[j].type == .drop ? "D" : String(sets[0..<j].filter { $0.type != .warmup && $0.type != .drop }.count + 1)))
-                                        .sa(12, .bold).foregroundColor(Tokens.text3).frame(width: 18, alignment: .leading)
-                                    Text(line(kind, sets[j])).sa(15, .regular, mono: true).foregroundColor(Tokens.text)
-                                }
-                            }
-                        }
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .card(i == 0 ? ac.accentSoft.opacity(0.5) : Tokens.raised, radius: Radius.field)
-                }
-            }
-            .padding(.bottom, 6)
-        }
-    }
-}
 
 private struct CustomEditSheet: View {
     @EnvironmentObject private var model: AppModel
