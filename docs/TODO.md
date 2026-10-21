@@ -173,3 +173,16 @@ Status per 2026-10-20. Minimaal iOS 26 (bouwen op GitHub). Ronde 1 (training log
 - Voeding staat standaard aan. Creatine staat niet meer op Start.
 - Start-tab: alleen de bliksem, geen cirkel. Tab "Progressie" heet weer "Profiel"; kalender eruit (staat op Start en Training).
 - Nog te doen: redesign door de hele app (workout, schema/training instellen, sheets).
+
+## Ronde 14c (wacht op test, branch ronde-14b)
+Voeding
+- Doel instellen: tandwiel op Voeding (of tik op "x van y gegeten") opent "Jouw doel": geslacht, leeftijd, lengte, gewicht, hoe actief, cutten/onderhouden/bulken. De app rekent kcal, eiwit, koolhydraten en vet uit (Mifflin-St Jeor) en je kunt alles daarna nog fijn afstellen.
+- Op je scherm: koolhydraten, vetten, water en supplementen zijn aan/uit te zetten.
+- Nieuw scherm: dagstrook met voortgangsringetjes (pijlen = vorige/volgende week), halve-cirkelmeter met wat je nog mag eten, drie cirkels (koolhydraten, eiwit, vet), optioneel water.
+- Maaltijden per moment (ontbijt, lunch, diner, snacks) met + : invoer met naam, kcal, eiwit, koolhydraten, vet; snel opnieuw toevoegen.
+- Vorige dagen: tik een dag in de strook. "Kopieer dag" of kopieer één maaltijd, ga naar een andere dag en tik "Plak".
+Redesign
+- Basis: kaarten met lichtrand en accentgloed, kleurrijkere achtergrond, hoofdknoppen met kleurverloop. Werkt door in de hele app (workout, sheets, editor, logboek).
+- Start: volgende training in een grote kaart met label.
+- Profiel: weekdoel en totalen in één kaart, daaronder kopjes Verloop, Balans, Prestaties.
+- Nog niet gedaan: oefenfoto's, eigen opmaak per scherm in workout/schema-editor, Logboek en Training verder uitwerken, lichte modus nalopen.

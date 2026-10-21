@@ -154,6 +154,7 @@ struct NutritionSetupScreen: View {
                         Spacer(minLength: 0)
                     }
                     .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+                    .padding(.vertical, 8)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
