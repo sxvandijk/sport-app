@@ -32,6 +32,8 @@ Bevestig kort dat je de stijl begrijpt. Daarna geef ik per bericht één oefenin
 
 ## Lijst met oefeningen (naam, spiergroep, apparaat, bestandsnaam)
 
+Begin met de eerste 5 uit de lijst als proef. Cardio-apparaten (fietsen, roeien, crosstrainer, touwtje springen, loopband, stairmaster) hoeven geen illustratie met spiermarkering; daar mag een simpele stand.
+
 - Incline dumbbell press | Borst | Dumbbells | `incline-dumbbell-press.png`
 - Dumbbell bench press | Borst | Dumbbells | `dumbbell-bench-press.png`
 - Barbell bench press | Borst | Stang | `barbell-bench-press.png`
@@ -90,6 +92,75 @@ Bevestig kort dat je de stijl begrijpt. Daarna geef ik per bericht één oefenin
 - Cable Iron Cross | Borst | Kabel | `cable-iron-cross.png`
 - Cable One Arm Tricep Extension | Triceps | Kabel | `cable-one-arm-tricep-extension.png`
 - Bayesian Bicep Cable Curl | Biceps | Kabel | `bayesian-bicep-cable-curl.png`
+- Incline barbell bench press | Borst | Stang | `incline-barbell-bench-press.png`
+- Dumbbell fly | Borst | Dumbbells | `dumbbell-fly.png`
+- Incline dumbbell fly | Borst | Dumbbells | `incline-dumbbell-fly.png`
+- Push-up | Borst | Vrij | `push-up.png`
+- Chest dips | Borst | Dipstation | `chest-dips.png`
+- Low cable crossover | Borst | Kabel | `low-cable-crossover.png`
+- Incline cable fly | Borst | Kabel | `incline-cable-fly.png`
+- Barbell overhead press | Schouders | Stang | `barbell-overhead-press.png`
+- Seated barbell shoulder press | Schouders | Stang | `seated-barbell-shoulder-press.png`
+- Arnold press | Schouders | Dumbbells | `arnold-press.png`
+- Dumbbell front raise | Schouders | Dumbbells | `dumbbell-front-raise.png`
+- Cable front raise | Schouders | Kabel | `cable-front-raise.png`
+- Reverse pec deck | Schouders | Machine | `reverse-pec-deck.png`
+- Dumbbell rear delt fly | Schouders | Dumbbells | `dumbbell-rear-delt-fly.png`
+- Cable rear delt fly | Schouders | Kabel | `cable-rear-delt-fly.png`
+- Upright row | Schouders | Stang | `upright-row.png`
+- Skullcrusher | Triceps | Stang | `skullcrusher.png`
+- Close-grip bench press | Triceps | Stang | `close-grip-bench-press.png`
+- Dumbbell overhead triceps extension | Triceps | Dumbbells | `dumbbell-overhead-triceps-extension.png`
+- Triceps dips | Triceps | Dipstation | `triceps-dips.png`
+- Bench dips | Triceps | Vrij | `bench-dips.png`
+- Dumbbell triceps kickback | Triceps | Dumbbells | `dumbbell-triceps-kickback.png`
+- Chin-ups | Lats | Rekstok | `chin-ups.png`
+- Close-grip lat pulldown | Lats | Machine | `close-grip-lat-pulldown.png`
+- One arm lat pulldown | Lats | Kabel | `one-arm-lat-pulldown.png`
+- Barbell row | Bovenrug | Stang | `barbell-row.png`
+- One arm dumbbell row | Bovenrug | Dumbbells | `one-arm-dumbbell-row.png`
+- T-bar row | Bovenrug | Stang | `t-bar-row.png`
+- Inverted row | Bovenrug | Vrij | `inverted-row.png`
+- Deadlift | Onderrug | Stang | `deadlift.png`
+- Sumo deadlift | Billen | Stang | `sumo-deadlift.png`
+- Rack pull | Onderrug | Stang | `rack-pull.png`
+- Good morning | Onderrug | Stang | `good-morning.png`
+- Hyperextension | Onderrug | Vrij | `hyperextension.png`
+- Barbell shrug | Traps | Stang | `barbell-shrug.png`
+- Barbell curl | Biceps | Stang | `barbell-curl.png`
+- EZ-bar curl | Biceps | Stang | `ez-bar-curl.png`
+- Hammer curl | Biceps | Dumbbells | `hammer-curl.png`
+- Incline dumbbell curl | Biceps | Dumbbells | `incline-dumbbell-curl.png`
+- Preacher curl | Biceps | Stang | `preacher-curl.png`
+- Concentration curl | Biceps | Dumbbells | `concentration-curl.png`
+- Cable hammer curl | Biceps | Kabel | `cable-hammer-curl.png`
+- Reverse curl | Onderarmen | Stang | `reverse-curl.png`
+- Front squat | Quadriceps | Stang | `front-squat.png`
+- Goblet squat | Quadriceps | Kettlebell | `goblet-squat.png`
+- Bulgarian split squat | Quadriceps | Dumbbells | `bulgarian-split-squat.png`
+- Walking lunge | Quadriceps | Dumbbells | `walking-lunge.png`
+- Dumbbell lunge | Quadriceps | Dumbbells | `dumbbell-lunge.png`
+- Dumbbell step-up | Quadriceps | Dumbbells | `dumbbell-step-up.png`
+- Stiff-leg deadlift | Hamstrings | Stang | `stiff-leg-deadlift.png`
+- Dumbbell Romanian deadlift | Hamstrings | Dumbbells | `dumbbell-romanian-deadlift.png`
+- Glute bridge | Billen | Vrij | `glute-bridge.png`
+- Cable pull-through | Billen | Kabel | `cable-pull-through.png`
+- Cable glute kickback | Billen | Kabel | `cable-glute-kickback.png`
+- Seated calf raise | Kuiten | Machine | `seated-calf-raise.png`
+- Smith machine calf raise | Kuiten | Smith machine | `smith-machine-calf-raise.png`
+- Standing calf raise | Kuiten | Vrij | `standing-calf-raise.png`
+- Plank | Core | Vrij | `plank.png`
+- Side plank | Core | Vrij | `side-plank.png`
+- Crunch | Core | Vrij | `crunch.png`
+- Sit-up | Core | Vrij | `sit-up.png`
+- Russian twist | Core | Vrij | `russian-twist.png`
+- Lying leg raise | Core | Vrij | `lying-leg-raise.png`
+- Hanging knee raise | Core | Rekstok | `hanging-knee-raise.png`
+- Ab wheel | Core | Vrij | `ab-wheel.png`
+- Cable woodchopper | Core | Kabel | `cable-woodchopper.png`
+- Pallof press | Core | Kabel | `pallof-press.png`
+- Wandelen op de loopband | Cardio | Loopband | `wandelen-op-de-loopband.png`
+- Stairmaster | Cardio | Stairmaster | `stairmaster.png`
 - Incline chest press machine | Borst | Machine | `incline-chest-press-machine.png`
 - Biceps curl machine | Biceps | Machine | `biceps-curl-machine.png`
 - Triceps extension machine | Triceps | Machine | `triceps-extension-machine.png`
