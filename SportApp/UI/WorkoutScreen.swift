@@ -6,6 +6,8 @@ import UIKit
 final class ScrollController: ObservableObject {
     weak var scroll: UIScrollView?
     var headY: CGFloat = 0
+    /// Waar de huidige setrij staat (-1 = niet zichtbaar in de open kaart).
+    var curY: CGFloat = -1
     var scrollUntil = Date.distantPast
     var onPill: ((Int) -> Void)?
     private var obs: NSKeyValueObservation?
@@ -20,7 +22,14 @@ final class ScrollController: ObservableObject {
     /// Gewenste scrollstand: het huidige blok bovenaan (of zo ver als kan).
     private func desired(_ sv: UIScrollView) -> CGFloat {
         let maxOff = max(0, sv.contentSize.height - sv.bounds.height + sv.adjustedContentInset.bottom + sv.adjustedContentInset.top)
-        return min(max(0, headY + 18 - 10), maxOff)
+        var target = headY + 18 - 10
+        // Toont de kaart niet alles, dan blijft de set die je invult in beeld in plaats van de bovenkant van de oefening.
+        if curY >= 0 {
+            let viewH = sv.bounds.height - sv.adjustedContentInset.top - sv.adjustedContentInset.bottom
+            let rowBottom = curY + 18 + Size.setRow + 28
+            if rowBottom - target > viewH { target = rowBottom - viewH }
+        }
+        return min(max(0, target), maxOff)
     }
 
     func update() {
@@ -38,17 +47,17 @@ final class ScrollController: ObservableObject {
     func scrollToHead(animated: Bool) {
         guard let sv = scroll else { return }
         let y = desired(sv) - sv.adjustedContentInset.top
-        if abs(sv.contentOffset.y - y) > 0.5 { sv.setContentOffset(CGPoint(x: 0, y: y), animated: animated) }
+        if abs(sv.contentOffset.y - y) > (animated ? 2 : 0.5) { sv.setContentOffset(CGPoint(x: 0, y: y), animated: animated) }
         update()
     }
 
     /// Na een set of een andere oefening: een paar keer proberen, omdat de lijst eerst van vorm verandert.
-    func followHead() {
-        scrollUntil = Date().addingTimeInterval(0.8)
-        for delay in [0.02, 0.15, 0.4, 0.75] {
+    func followHead(animated: Bool = true) {
+        scrollUntil = Date().addingTimeInterval(1.0)
+        for delay in [0.03, 0.25, 0.5, 0.85] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 guard let self = self, Date() < self.scrollUntil else { return }
-                self.scrollToHead(animated: false)
+                self.scrollToHead(animated: animated)
             }
         }
     }
@@ -81,6 +90,12 @@ private struct ScrollBridge: UIViewRepresentable {
     }
 }
 
+/// Waar de huidige setrij staat in de lijst (voor het meescrollen).
+private struct CurSetYKey: PreferenceKey {
+    static var defaultValue: CGFloat = -1
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
 /// Waar het blok van de huidige oefening begint (in de lijst zelf, dus onafhankelijk van het scrollen).
 private struct HeadYKey: PreferenceKey {
     static var defaultValue: CGFloat = -1
@@ -106,12 +121,15 @@ struct WorkoutScreen: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 18)
                         .padding(.bottom, 84)
-                        .animation(nil, value: openID)
+                        .animation(Motion.card, value: openID)
                 }
                 .onPreferenceChange(HeadYKey.self) { y in
                     guard y >= 0 else { return }
                     scroller.headY = y
-                    if Date() < scroller.scrollUntil { scroller.scrollToHead(animated: false) } else { scroller.update() }
+                    scroller.update()
+                }
+                .onPreferenceChange(CurSetYKey.self) { y in
+                    scroller.curY = y
                 }
                 .overlay(alignment: .bottom) {
                     if info.cur != nil && pill != 0 {
@@ -129,7 +147,7 @@ struct WorkoutScreen: View {
                 }
                 .onAppear {
                     scroller.onPill = { pill = $0 }
-                    scroller.followHead()
+                    scroller.followHead(animated: false)
                 }
                 .onChange(of: info.cur?.setID) { _ in scroller.followHead() }
                 .onChange(of: openID) { _ in scroller.followHead() }
@@ -243,33 +261,16 @@ private struct WorkoutList: View {
                 blockView(members, blockIndex: bi, blocks: blocks, openID: openID)
             }
             if !session.exercises.isEmpty {
-                HStack(spacing: 8) {
-                    Button { model.openSheet(.add) } label: {
-                        HStack(spacing: 6) {
-                            Icon.plus(18, 2.4)
-                            Text("Oefening").sa(16, .semibold)
-                        }
-                        .foregroundColor(ac.accentText)
-                        .frame(maxWidth: .infinity).frame(height: 52)
-                        .card(Tokens.raised, radius: Radius.button)
+                Button { model.openSheet(.add) } label: {
+                    HStack(spacing: 6) {
+                        Icon.plus(18, 2.4)
+                        Text("Oefening toevoegen").sa(16, .semibold)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Oefening toevoegen")
-                    Button {
-                        model.openSheet(.add)
-                        model.addToSessionCooldown = true
-                    } label: {
-                        HStack(spacing: 6) {
-                            Icon.plus(18, 2.4)
-                            Text("Cooling-down").sa(16, .semibold)
-                        }
-                        .foregroundColor(Tokens.cool)
-                        .frame(maxWidth: .infinity).frame(height: 52)
-                        .card(Tokens.raised, radius: Radius.button)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Cooling-down toevoegen")
+                    .foregroundColor(ac.accentText)
+                    .frame(maxWidth: .infinity).frame(height: 52)
+                    .card(Tokens.raised, radius: Radius.button)
                 }
+                .buttonStyle(.plain)
                 .padding(.top, 14)
             }
         }
@@ -325,12 +326,14 @@ private struct WorkoutList: View {
             let badge = hue != nil ? ssLetter + String(mi + 1) : ""
             if e.id == openID {
                 OpenExerciseCard(exercise: e, badge: badge, hue: hue, cur: cur).id(e.id)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
                     .background(GeometryReader { g in
                         // In een superset scrolt de lijst naar de open oefening zelf, niet naar het begin van het blok.
                         Color.clear.preference(key: HeadYKey.self, value: hue != nil ? g.frame(in: .named("wlist")).minY : -1)
                     })
             } else {
                 ClosedExerciseRow(exercise: e, badge: badge, hue: hue).id(e.id)
+                    .transition(.opacity)
             }
         }
     }
@@ -510,7 +513,7 @@ private struct OpenExerciseCard: View {
 
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 12) {
-                ExerciseThumb(name: exercise.name, size: 64, radius: 16)
+                ExerciseThumb(name: exercise.name, size: 60, radius: 16)
                     .overlay(alignment: .topLeading) {
                         if !badge.isEmpty {
                             Text(badge).sa(11, .bold).foregroundColor(ac.accentText)
@@ -520,40 +523,18 @@ private struct OpenExerciseCard: View {
                                 .offset(x: -5, y: -5)
                         }
                     }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(exercise.name).sa(22, .semibold, tracking: -0.3).foregroundColor(Tokens.text)
-                        .lineLimit(3).minimumScaleFactor(0.75).fixedSize(horizontal: false, vertical: true)
-                    Text(Catalog.meta(exercise.name) + (exercise.from.map { " · vervangt " + $0 } ?? ""))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(exercise.name).sa(20, .semibold, tracking: -0.3).foregroundColor(Tokens.text)
+                        .lineLimit(3).minimumScaleFactor(0.8).fixedSize(horizontal: false, vertical: true)
+                    Text(Catalog.meta(exercise.name) + (exercise.from.map { " \u{00B7} vervangt " + $0 } ?? ""))
                         .sa(13).foregroundColor(Tokens.text2)
-                    if let acc = exercise.acc {
-                        HStack(spacing: 8) {
-                            Text("Opzetstuk:").sa(13).foregroundColor(Tokens.text2)
-                            Button { model.openSheet(.accuse, exID: exercise.id) } label: {
-                                HStack(spacing: 6) {
-                                    Text(acc).sa(13, .semibold)
-                                    Icon.chevronDown(11, 2.4)
-                                }
-                                .foregroundColor(ac.accentText)
-                                .padding(.horizontal, 12).frame(height: 30)
-                                .background(Capsule().fill(ac.accentSoft))
-                                .frame(minHeight: 40).contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Opzetstuk \(acc), tik om te wisselen")
-                        }
-                    }
+                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 }
+                .padding(.top, 2)
                 Spacer(minLength: 0)
-                if Catalog.sidesAmbiguous(exercise.name) {
-                    Button { model.openSheet(.sidemode, exID: exercise.id) } label: {
-                        Icon.info(22).foregroundColor(Tokens.text2).frame(width: 44, height: 44).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, -8).padding(.trailing, -14)
-                    .accessibilityLabel("Hoe houdt de app dit bij?")
-                }
                 Button {
                     model.exerciseDetailName = exercise.name
+                    model.exerciseDetailReturn = .workout
                     model.screen = .exerciseDetail
                 } label: {
                     Icon.clock(21).foregroundColor(Tokens.text2).frame(width: 38, height: 44).contentShape(Rectangle())
@@ -569,6 +550,23 @@ private struct OpenExerciseCard: View {
                 .accessibilityLabel("Opties voor \(exercise.name)")
             }
             .padding(.horizontal, 16)
+
+            if let acc = exercise.acc {
+                Button { model.openSheet(.accuse, exID: exercise.id) } label: {
+                    HStack(spacing: 8) {
+                        Text("Opzetstuk").sa(13).foregroundColor(Tokens.text2)
+                        Spacer(minLength: 0)
+                        Text(acc).sa(14, .semibold).foregroundColor(ac.accentText).lineLimit(1)
+                        Icon.chevronDown(12, 2.4).foregroundColor(ac.accentText)
+                    }
+                    .padding(.horizontal, 14).frame(height: 42)
+                    .background(Capsule().fill(ac.accentSoft))
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16).padding(.top, 12)
+                .accessibilityLabel("Opzetstuk \(acc), tik om te wisselen")
+            }
 
             HStack(spacing: 8) {
                 ChipButton(icon: Icon.explain(18), title: "Uitleg") { model.openSheet(.explain, exID: exercise.id) }
@@ -708,6 +706,9 @@ private struct SetRow: View {
             }
             .padding(.leading, 16).padding(.trailing, 8)
             .frame(height: Size.setRow)
+            .background(GeometryReader { g in
+                Color.clear.preference(key: CurSetYKey.self, value: isCur ? g.frame(in: .named("wlist")).minY : -1)
+            })
             .card(rowFill, radius: Radius.field)
             .overlay(RoundedRectangle(cornerRadius: Radius.field, style: .continuous)
                 .fill(Tokens.text.opacity(isCur ? 0.10 : 0)).allowsHitTesting(false))
@@ -1059,34 +1060,42 @@ private struct Dock: View {
     private func valueBox(field: EditField, text: String, unit: String, minus: String, plus: String,
                           onMinus: @escaping () -> Void, onPlus: @escaping () -> Void) -> some View {
         let active = model.editField == field
+        let shape = RoundedRectangle(cornerRadius: Radius.row, style: .continuous)
         return HStack(spacing: 0) {
-            Button(action: onMinus) {
-                Icon.minus(20).foregroundColor(Tokens.text).frame(width: Size.stepperButtonWidth, height: Size.stepperBar)
-                    .contentShape(Rectangle())
+            stepButton(Icon.minus(18), label: minus, action: onMinus)
+            VStack(spacing: -1) {
+                Text(text).sa(28, .semibold, tracking: -0.6, mono: true).foregroundColor(Tokens.text)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                Text(unit.trimmingCharacters(in: .whitespaces).uppercased()).sa(10, .semibold, tracking: 0.8)
+                    .foregroundColor(active ? ac.accentText : Tokens.text3)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(minus)
-            HStack(spacing: 0) {
-                Text(text).sa(26, .semibold, tracking: -0.5, mono: true).foregroundColor(Tokens.text)
-                Text(unit).sa(13, .medium).foregroundColor(Tokens.text2)
-            }
-            .lineLimit(1).minimumScaleFactor(0.7)
-            .frame(maxWidth: .infinity).frame(height: Size.stepperBar)
+            .frame(maxWidth: .infinity).frame(height: Size.stepperBar + 8)
             .contentShape(Rectangle())
             .onTapGesture { model.editField = field }
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Vul in met het toetsenblok")
-            Button(action: onPlus) {
-                Icon.plus(20, 2.4).foregroundColor(Tokens.text).frame(width: Size.stepperButtonWidth, height: Size.stepperBar)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(plus)
+            stepButton(Icon.plus(18, 2.6), label: plus, action: onPlus)
         }
+        .padding(.horizontal, 6)
         .frame(maxWidth: .infinity)
-        .frame(height: Size.stepperBar)
+        .frame(height: Size.stepperBar + 8)
         .card(Tokens.raised, radius: Radius.row)
-        .overlay(RoundedRectangle(cornerRadius: Radius.row, style: .continuous).stroke(active ? ac.accentLine : Color.clear, lineWidth: 2))
+        .overlay(shape.strokeBorder(LinearGradient(colors: [ac.accentLine, ac.accentLine.opacity(0.4)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                                    lineWidth: active ? 1.8 : 0))
+        .shadow(color: active ? ac.accent.opacity(0.25) : .clear, radius: 8, y: 1)
+    }
+
+    private func stepButton(_ icon: Icon, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            icon.foregroundColor(Tokens.text)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(Tokens.surface))
+                .overlay(Circle().stroke(Tokens.line.opacity(0.6), lineWidth: 0.5))
+                .frame(width: 46, height: Size.stepperBar + 8)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(PressScaleStyle(scale: 0.9))
+        .accessibilityLabel(label)
     }
 }
 

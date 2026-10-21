@@ -21,14 +21,42 @@ struct WorkoutDetailScreen: View {
                 }
                 .buttonStyle(.plain)
                 Spacer()
+                if let h = model.history.first(where: { $0.id == model.detailID }) {
+                    Menu {
+                        Button(role: .destructive) {
+                            let id = h.id
+                            model.confirm = ConfirmRequest(title: "Training verwijderen?", message: h.name + " van " + DateText.short(h.date) + " verdwijnt uit je logboek en je statistieken.", confirmTitle: "Verwijder") {
+                                model.deleteHistory(id)
+                                model.screen = model.detailReturn
+                            }
+                        } label: {
+                            Label("Training verwijderen", systemImage: "trash")
+                        }
+                    } label: {
+                        Icon.more(24).foregroundColor(Tokens.text).frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Opties")
+                }
             }
             .padding(.horizontal, 6).frame(height: 52)
 
             if let h = model.history.first(where: { $0.id == model.detailID }) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(h.name).sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text)
-                            .accessibilityAddTraits(.isHeader)
+                        HStack(spacing: 4) {
+                            Text(h.name).sa(30, .bold, tracking: -0.5).foregroundColor(Tokens.text)
+                                .lineLimit(2).minimumScaleFactor(0.7)
+                                .accessibilityAddTraits(.isHeader)
+                            Button {
+                                model.nameEdit = NameEdit(title: "Naam van de training", subtitle: DateText.short(h.date),
+                                                          placeholder: "Naam", text: h.name, confirmTitle: "Bewaar") { model.renameHistory(h.id, to: $0) }
+                            } label: {
+                                Icon.edit(16).foregroundColor(ac.accentText).frame(width: 40, height: 40).contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Naam wijzigen")
+                            Spacer(minLength: 0)
+                        }
                         Text(DateText.long(h.date).prefix(1).uppercased() + DateText.long(h.date).dropFirst() + " \u{00B7} \(h.minutes) min")
                             .sa(15).foregroundColor(Tokens.text2).padding(.top, 4)
 
@@ -38,35 +66,6 @@ struct WorkoutDetailScreen: View {
                             stat("\((h.exercises ?? []).count)", "oefeningen")
                         }
                         .padding(.top, 20).padding(.bottom, 8)
-
-                        Button {
-                            model.nameEdit = NameEdit(title: "Naam van de training", subtitle: DateText.short(h.date),
-                                                      placeholder: "Naam", text: h.name, confirmTitle: "Bewaar") { model.renameHistory(h.id, to: $0) }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Icon.edit(14)
-                                Text("Naam wijzigen").sa(15, .semibold)
-                            }
-                            .foregroundColor(ac.accentText)
-                            .frame(height: 44).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-
-                        Button {
-                            let id = h.id
-                            model.confirm = ConfirmRequest(title: "Training verwijderen?", message: h.name + " van " + DateText.short(h.date) + " verdwijnt uit je logboek en je statistieken.", confirmTitle: "Verwijder") {
-                                model.deleteHistory(id)
-                                model.screen = model.detailReturn
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Icon.close(14)
-                                Text("Training verwijderen").sa(15, .semibold)
-                            }
-                            .foregroundColor(Tokens.danger)
-                            .frame(height: 44).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
 
                         if (h.exercises ?? []).isEmpty {
                             Text("Van deze training is geen detail bewaard.").sa(15).foregroundColor(Tokens.text2).padding(.top, 12)
@@ -100,10 +99,17 @@ struct WorkoutDetailScreen: View {
         var n = 0
         let kind = Catalog.kind(e.name)
         return VStack(alignment: .leading, spacing: 0) {
-            Text(e.name).sa(17, .semibold).foregroundColor(Tokens.text)
-            Text(Catalog.info(e.name).muscle + (e.acc.map { " \u{00B7} " + $0 } ?? "")
-                 + (e.uni == true ? " \u{00B7} links en rechts apart" : (e.two == true ? " \u{00B7} twee tegelijk" : "")))
-                .sa(13).foregroundColor(Tokens.text2).padding(.top, 2).padding(.bottom, 8)
+            HStack(spacing: 12) {
+                ExerciseThumb(name: e.name, size: 52, radius: 14)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(e.name).sa(17, .semibold).foregroundColor(Tokens.text).lineLimit(2)
+                    Text(Catalog.info(e.name).muscle + (e.acc.map { " \u{00B7} " + $0 } ?? "")
+                         + (e.uni == true ? " \u{00B7} links en rechts apart" : (e.two == true ? " \u{00B7} twee tegelijk" : "")))
+                        .sa(13).foregroundColor(Tokens.text2).lineLimit(2)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.bottom, 10)
             ForEach(Array(e.sets.enumerated()), id: \.offset) { _, s in
                 let label: String = {
                     if s.type == .warmup { return "W" }

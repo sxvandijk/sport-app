@@ -690,25 +690,18 @@ struct EditorScreen: View {
 
     private func warmupSwitch(_ i: Int, _ it: DraftItem) -> some View {
         HStack(spacing: 0) {
-            Button { edit(i) { $0.warmSets = max(0, $0.warmSets - 1) } } label: {
-                Text("\u{2212}").sa(20, .medium).foregroundColor(Tokens.text).frame(width: 40, height: 44).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Minder warming-upsets")
-            VStack(spacing: 0) {
-                Text(it.warmSets == 0 ? "Uit" : String(it.warmSets)).sa(18, .semibold, mono: true)
+            editorStep("minus", "Minder warming-upsets") { edit(i) { $0.warmSets = max(0, $0.warmSets - 1) } }
+            VStack(spacing: -1) {
+                Text(it.warmSets == 0 ? "Uit" : String(it.warmSets)).sa(21, .semibold, mono: true)
                     .foregroundColor(it.warmSets == 0 ? Tokens.text3 : Tokens.warm)
-                Text("warming-up").sa(11, .medium).foregroundColor(Tokens.text2)
+                Text("WARMING-UP").sa(10, .semibold, tracking: 0.8).foregroundColor(Tokens.text3)
             }
             .frame(maxWidth: .infinity)
             .lineLimit(1).minimumScaleFactor(0.8)
-            Button { edit(i) { $0.warmSets = min(5, $0.warmSets + 1) } } label: {
-                Text("+").sa(20, .medium).foregroundColor(Tokens.text).frame(width: 40, height: 44).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Meer warming-upsets")
+            editorStep("plus", "Meer warming-upsets") { edit(i) { $0.warmSets = min(5, $0.warmSets + 1) } }
         }
-        .frame(maxWidth: .infinity).frame(height: 44)
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity).frame(height: 56)
         .card(Tokens.raised, radius: Radius.field)
     }
 
@@ -749,6 +742,7 @@ struct EditorScreen: View {
                 .foregroundColor(text)
                 .padding(.horizontal, 12).frame(height: 32)
                 .background(Capsule().fill(fill))
+                .overlay(Capsule().stroke(on ? ac.accentLine.opacity(0.6) : Color.clear, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -756,24 +750,31 @@ struct EditorScreen: View {
     private func counter(value: String, unit: String, minus: String, plus: String,
                          onMinus: @escaping () -> Void, onPlus: @escaping () -> Void) -> some View {
         HStack(spacing: 0) {
-            Button(action: onMinus) {
-                Text("−").sa(20, .medium).foregroundColor(Tokens.text).frame(width: 40, height: 44).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(minus)
-            HStack(spacing: 0) {
-                Text(value).sa(18, .semibold, mono: true).foregroundColor(Tokens.text)
-                Text(unit).sa(13).foregroundColor(Tokens.text2)
+            editorStep("minus", minus, onMinus)
+            VStack(spacing: -1) {
+                Text(value).sa(21, .semibold, tracking: -0.3, mono: true).foregroundColor(Tokens.text)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Text(unit.trimmingCharacters(in: .whitespaces).uppercased()).sa(10, .semibold, tracking: 0.8).foregroundColor(Tokens.text3)
             }
             .frame(maxWidth: .infinity)
-            Button(action: onPlus) {
-                Text("+").sa(20, .medium).foregroundColor(Tokens.text).frame(width: 40, height: 44).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(plus)
+            editorStep("plus", plus, onPlus)
         }
-        .frame(maxWidth: .infinity).frame(height: 44)
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity).frame(height: 56)
         .card(Tokens.raised, radius: Radius.field)
+    }
+
+    private func editorStep(_ kind: String, _ label: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            (kind == "minus" ? Icon.minus(16) : Icon.plus(16, 2.6)).foregroundColor(Tokens.text)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(Tokens.surface))
+                .overlay(Circle().stroke(Tokens.line.opacity(0.6), lineWidth: 0.5))
+                .frame(width: 42, height: 56)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(PressScaleStyle(scale: 0.9))
+        .accessibilityLabel(label)
     }
 
     private func moveUp(_ i: Int) {
@@ -906,16 +907,25 @@ struct SummaryScreen: View {
                             SectionLabel(text: "Wat je deed").padding(.top, 28).padding(.bottom, 10)
                             VStack(spacing: 0) {
                                 ForEach(sm.lines) { ln in
-                                    HStack(spacing: 12) {
-                                        ExerciseThumb(name: ln.name, size: 46, radius: 12)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(ln.name).sa(16, .medium).foregroundColor(Tokens.text).lineLimit(2)
-                                            Text(ln.summary).sa(13, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
+                                    Button {
+                                        model.exerciseDetailName = ln.name
+                                        model.exerciseDetailReturn = .summary
+                                        model.screen = .exerciseDetail
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            ExerciseThumb(name: ln.name, size: 46, radius: 12)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(ln.name).sa(16, .medium).foregroundColor(Tokens.text).lineLimit(2)
+                                                Text(ln.summary).sa(13, .regular, mono: true).foregroundColor(Tokens.text2).lineLimit(1)
+                                            }
+                                            Spacer(minLength: 0)
+                                            Icon.chevronRight(14).foregroundColor(Tokens.text3)
                                         }
-                                        Spacer(minLength: 0)
+                                        .padding(.horizontal, 14).padding(.vertical, 10)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .contentShape(Rectangle())
                                     }
-                                    .padding(.horizontal, 14).padding(.vertical, 10)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .buttonStyle(.plain)
                                     if ln.id != sm.lines.last?.id { Divider().background(Tokens.line).padding(.leading, 72) }
                                 }
                             }

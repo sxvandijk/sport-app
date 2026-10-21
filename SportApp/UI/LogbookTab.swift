@@ -211,7 +211,8 @@ struct LogbookCard: View {
             if !exercises.isEmpty {
                 VStack(spacing: 6) {
                     ForEach(Array(exercises.prefix(3).enumerated()), id: \.offset) { _, e in
-                        HStack(spacing: 6) {
+                        HStack(spacing: 10) {
+                            ExerciseThumb(name: e.name, size: 38, radius: 10)
                             if prNames.contains(e.name) {
                                 Icon.starFilled(12).foregroundColor(ac.accentText)
                                     .accessibilityLabel("Record")

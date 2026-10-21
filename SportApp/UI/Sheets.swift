@@ -261,6 +261,21 @@ private struct MenuSheet: View {
             .foregroundColor(Tokens.text)
             .padding(.horizontal, 16).frame(minHeight: 52)
         }
+        SheetRowButton(action: {
+            model.openSheet(.add)
+            model.addToSessionCooldown = true
+        }) {
+            HStack(spacing: 12) {
+                Icon.plus(20).foregroundColor(Tokens.cool)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Cooling-down toevoegen").sa(17, .medium).foregroundColor(Tokens.text)
+                    Text("Komt achteraan in je workout").sa(13).foregroundColor(Tokens.text2)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16).frame(minHeight: 60)
+        }
+        .padding(.top, 6)
         SectionLabel(text: "Instellingen").padding(.top, 22).padding(.bottom, 8)
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {

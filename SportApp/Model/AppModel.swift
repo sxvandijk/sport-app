@@ -455,6 +455,7 @@ final class AppModel: ObservableObject {
     @Published var customEditName: String?
     /// Oefening waarvan het detailscherm (met geschiedenis) open staat.
     @Published var exerciseDetailName = ""
+    @Published var exerciseDetailReturn: Screen = .workout
     /// De bewaarde training achter het eindscherm (om hem te kunnen verwijderen).
     @Published var summaryEntryID: UUID?
     /// Tabblad in Apparaten & oefeningen: 0 apparaten, 1 opzetstukken, 2 oefeningen.

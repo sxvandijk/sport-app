@@ -36,10 +36,10 @@ struct ExerciseDetailScreen: View {
         let all = LiveSession.performances(of: name, in: model.history, limit: 10_000)
         VStack(spacing: 0) {
             HStack {
-                Button { model.screen = model.session == nil ? .home : .workout } label: {
+                Button { model.screen = model.exerciseDetailReturn } label: {
                     HStack(spacing: 2) {
                         Icon.chevronLeft(22)
-                        Text("Workout").sa(17)
+                        Text(model.exerciseDetailReturn == .summary ? "Terug" : "Workout").sa(17)
                     }
                     .foregroundColor(ac.accentText)
                     .padding(.leading, 4).padding(.trailing, 10).frame(height: 44)
