@@ -104,8 +104,23 @@ struct ExerciseDetailScreen: View {
         .padding(.horizontal, 4)
     }
 
+    /// "W" voor warming-up, "D" voor dropset, anders het nummer van de werkset.
+    private static func labels(_ sets: [LoggedSet]) -> [String] {
+        var number = 0
+        var out: [String] = []
+        for s in sets {
+            switch s.type {
+            case .warmup: out.append("W")
+            case .drop: out.append("D")
+            case .failure: number += 1; out.append("F")
+            case .work: number += 1; out.append(String(number))
+            }
+        }
+        return out
+    }
+
     private func card(title: String, sub: String, e: LoggedExercise, kind: ExerciseKind, highlight: Bool) -> some View {
-        var n = 0
+        let labels = Self.labels(e.sets)
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(title).sa(16, .semibold).foregroundColor(Tokens.text)
@@ -113,14 +128,9 @@ struct ExerciseDetailScreen: View {
                 Spacer(minLength: 0)
                 if let acc = e.acc { Text(acc).sa(12, .medium).foregroundColor(ac.accentText) }
             }
-            ForEach(Array(e.sets.enumerated()), id: \.offset) { _, s in
-                let label: String = {
-                    if s.type == .warmup { return "W" }
-                    n += 1
-                    return s.type == .work ? "\(n)" : s.type.letter
-                }()
+            ForEach(Array(e.sets.enumerated()), id: \.offset) { idx, s in
                 HStack(spacing: 12) {
-                    Text(label).sa(12, .semibold, mono: true).foregroundColor(Tokens.text2)
+                    Text(labels[idx]).sa(12, .semibold, mono: true).foregroundColor(Tokens.text2)
                         .frame(width: 26, height: 26).background(Circle().fill(Tokens.raised))
                     Text(setText(s, kind)).sa(15, .regular, mono: true).foregroundColor(Tokens.text)
                     Spacer(minLength: 0)

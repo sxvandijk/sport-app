@@ -310,8 +310,9 @@ private struct WorkoutList: View {
                 VStack(alignment: .leading, spacing: 0) {
                     memberViews(members, hue: SupersetStyle.color(idx), ssLetter: SupersetStyle.letter(idx), openID: openID)
                 }
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 8)
             }
+            .padding(.horizontal, -8)
         } else {
             memberViews(members, hue: nil, ssLetter: "", openID: openID)
         }
