@@ -1,11 +1,10 @@
 /Users/runner/work/sport-app/sport-app/SportApp/Resources/Assets.xcassets:.: warning: The minimum deployment target is set to 26.0, but the platform only knows how to compile for iOS 18.5
-/Users/runner/work/sport-app/sport-app/SportApp/Design/Tokens.swift:146:28: error: value of type 'S' has no member 'strokeBorder'
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:134:18: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:135:18: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:136:18: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:931:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
-/Users/runner/work/sport-app/sport-app/SportApp/UI/WorkoutScreen.swift:932:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
-/Users/runner/work/sport-app/sport-app/SportApp.xcodeproj: warning: The iOS Simulator deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 26.0, but the range of supported deployment target versions is 12.0 to 18.5.99. (in target 'SportAppTests' from project 'SportApp')
+/Users/runner/work/sport-app/sport-app/SportApp/UI/Components.swift:408:14: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+/Users/runner/work/sport-app/sport-app/SportApp/Model/LiveActivityManager.swift:35:27: error: cannot specialize non-generic type 'Activity'
+/Users/runner/work/sport-app/sport-app/SportApp/Model/LiveActivityManager.swift:44:38: error: type 'Activity' has no member 'request'
+/Users/runner/work/sport-app/sport-app/SportApp/Model/LiveActivityManager.swift:45:74: error: 'nil' requires a contextual type
+/Users/runner/work/sport-app/sport-app/SportApp/Model/LiveActivityManager.swift:55:29: error: cannot specialize non-generic type 'Activity'
 /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj: warning: The iOS Simulator deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 26.0, but the range of supported deployment target versions is 12.0 to 18.5.99. (in target 'SportApp' from project 'SportApp')
+/Users/runner/work/sport-app/sport-app/SportApp.xcodeproj: warning: The iOS Simulator deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 26.0, but the range of supported deployment target versions is 12.0 to 18.5.99. (in target 'SportAppTests' from project 'SportApp')
 /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj: warning: The iOS Simulator deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 26.0, but the range of supported deployment target versions is 12.0 to 18.5.99. (in target 'SetWidgets' from project 'SportApp')
 ** TEST FAILED **
