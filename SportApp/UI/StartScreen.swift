@@ -36,24 +36,33 @@ struct StartTab: View {
             .frame(maxWidth: .infinity)
         } else if let name = next {
             let info = model.planSummary(name)
-            VStack(spacing: 8) {
+            VStack(spacing: 14) {
                 if let done = model.plannedDoneToday() {
                     Text("Je hebt vandaag \(done) afgerond. Dit is de volgende.").sa(13, .medium).foregroundColor(Tokens.text2)
                         .multilineTextAlignment(.center).padding(.horizontal, 12)
                 }
-                Text(model.plannedWorkout() == name && model.plannedDoneToday() == nil ? "Gepland voor vandaag" : "Volgende training").sa(13, .semibold).foregroundColor(ac.accentText)
-                Text(name).sa(52, .bold, tracking: -1.2).foregroundColor(Tokens.text)
-                    .minimumScaleFactor(0.6).lineLimit(1)
-                Text(info.sub).sa(15, .medium).foregroundColor(Tokens.text2)
-                Text(info.muscles).sa(14).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
-                PrimaryButton(title: "Start \(name)", height: 64, fontSize: 19, icon: Icon.play(18)) {
-                    model.ovName = name
-                    model.screen = .overview
+                VStack(spacing: 12) {
+                    Text(model.plannedWorkout() == name && model.plannedDoneToday() == nil ? "Gepland voor vandaag" : "Volgende training")
+                        .sa(13, .bold).foregroundColor(ac.accentText)
+                        .padding(.horizontal, 14).frame(height: 30)
+                        .background(Capsule().fill(ac.accentSoft))
+                    Text(name).sa(56, .bold, tracking: -1.4).foregroundColor(Tokens.text)
+                        .minimumScaleFactor(0.6).lineLimit(1)
+                    Text(info.sub).sa(15, .semibold, mono: true).foregroundColor(Tokens.text)
+                    Text(info.muscles).sa(14).foregroundColor(Tokens.text2).multilineTextAlignment(.center)
+                    PrimaryButton(title: "Start \(name)", height: 64, fontSize: 19, icon: Icon.play(18)) {
+                        model.ovName = name
+                        model.screen = .overview
+                    }
+                    .padding(.top, 8)
                 }
-                .padding(.top, 20)
-                secondary("Andere training kiezen") { model.tab = .training }
-                    .padding(.top, 4)
-                secondary("Vrije training zonder schema") { model.askStart("") }
+                .padding(.horizontal, 20).padding(.vertical, 24)
+                .frame(maxWidth: .infinity)
+                .glassCard(radius: 32)
+                VStack(spacing: 8) {
+                    secondary("Andere training kiezen") { model.tab = .training }
+                    secondary("Vrije training zonder schema") { model.askStart("") }
+                }
             }
             .frame(maxWidth: .infinity)
         } else {

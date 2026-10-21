@@ -89,7 +89,7 @@ enum Sex: String, Codable, CaseIterable, Identifiable {
     var title: String { self == .male ? "Man" : "Vrouw" }
 }
 
-enum Activity: Int, Codable, CaseIterable, Identifiable {
+enum ActivityLevel: Int, Codable, CaseIterable, Identifiable {
     case low = 0, light, moderate, high
     var id: Int { rawValue }
     var title: String {
@@ -117,7 +117,7 @@ struct NutritionProfile: Codable, Hashable {
     var age: Int = 25
     var heightCm: Int = 180
     var weightKg: Double = 75
-    var activity: Activity = .light
+    var activity: ActivityLevel = .light
 }
 
 /// Welke onderdelen je op het Voeding-scherm wilt zien.

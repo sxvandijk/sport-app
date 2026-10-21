@@ -134,7 +134,7 @@ struct NutritionSetupScreen: View {
 
     private var activityCard: some View {
         VStack(spacing: 0) {
-            ForEach(Activity.allCases) { a in
+            ForEach(ActivityLevel.allCases) { a in
                 let on = profile.activity == a
                 Button {
                     Haptics.selection()
@@ -158,7 +158,7 @@ struct NutritionSetupScreen: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(on ? .isSelected : [])
-                if a != Activity.allCases.last { Divider().background(Tokens.line) }
+                if a != ActivityLevel.allCases.last { Divider().background(Tokens.line) }
             }
         }
         .padding(.horizontal, 16)
