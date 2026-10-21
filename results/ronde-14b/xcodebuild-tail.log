@@ -1,64 +1,62 @@
-SwiftMergeGeneratedHeaders /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/SportAppTests-Swift.h /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-Swift.h (in target 'SportAppTests' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Bent-Arm_Dumbbell_Pullover_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Bent-Arm_Dumbbell_Pullover_0.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-swiftHeaderTool -arch arm64 /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-Swift.h -o /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/SportAppTests-Swift.h
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Bent-Arm_Dumbbell_Pullover_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-SwiftDriverJobDiscovery normal arm64 Compiling RoundOneTests.swift, RoundThreeTests.swift (in target 'SportAppTests' from project 'SportApp')
-
-Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftmodule (in target 'SportAppTests' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Barbell_Squat_1.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Squat_1.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftmodule /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Squat_1.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftdoc (in target 'SportAppTests' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Barbell_Squat_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Squat_0.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftdoc /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Squat_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.abi.json (in target 'SportAppTests' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Barbell_Hip_Thrust_1.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Hip_Thrust_1.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.abi.json /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/arm64-apple-ios-simulator.abi.json
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Hip_Thrust_1.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftsourceinfo (in target 'SportAppTests' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Barbell_Hip_Thrust_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Hip_Thrust_0.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftsourceinfo /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportAppTests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Hip_Thrust_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-SwiftDriver\ Compilation SportApp normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SportApp' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Barbell_Bench_Press_-_Medium_Grip_1.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Bench_Press_-_Medium_Grip_1.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-Swift-Compilation -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SportApp -Onone -enforce-exclusivity\=checked @/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -swift-version 5 -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -c -j3 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp-Swift.h -working-directory /Users/runner/work/sport-app/sport-app -experimental-emit-module-separately -disable-cmo
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Bench_Press_-_Medium_Grip_1.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-ExtractAppIntentsMetadata (in target 'SetWidgets' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Barbell_Bench_Press_-_Medium_Grip_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Bench_Press_-_Medium_Grip_0.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SetWidgets --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 26.0 --bundle-identifier com.sxvandijk.sportapp.widgets --output /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex --target-triple arm64-apple-ios26.0-simulator --binary-file /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex/SetWidgets --dependency-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/Objects-normal/arm64/SetWidgets_dependency_info.dat --stringsdata-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/Objects-normal/arm64/SetWidgets.SwiftFileList --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/SetWidgets.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/SetWidgets.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/Objects-normal/arm64/SetWidgets.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-10-21 07:40:13.925 appintentsmetadataprocessor[3048:13417] Starting appintentsmetadataprocessor export
-2026-10-21 07:40:13.995 appintentsmetadataprocessor[3048:13417] Extracted no relevant App Intents symbols, skipping writing output
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Barbell_Bench_Press_-_Medium_Grip_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-SwiftDriverJobDiscovery normal arm64 Compiling RoundTwoTests.swift, StoreTests.swift (in target 'SportAppTests' from project 'SportApp')
-
-SwiftDriverJobDiscovery normal arm64 Compiling DesignTests.swift, DomainTests.swift (in target 'SportAppTests' from project 'SportApp')
-
-SwiftDriver\ Compilation SportAppTests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'SportAppTests' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Band_Pull_Apart_1.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Pull_Apart_1.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-Swift-Compilation -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SportAppTests -Onone -enforce-exclusivity\=checked @/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftFileList -DDEBUG -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/work/sport-app/sport-app/build/Index.noindex/DataStore -swift-version 5 -I /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk/Developer/Library/Frameworks -c -j3 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/work/sport-app/sport-app/build/SDKStatCaches.noindex/iphonesimulator18.5-22F76-96ae0914227b19deccb34b33ba7b5dea.sdkstatcache -output-file-map /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/sport-app/sport-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-generated-files.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-own-target-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests-project-headers.hmap -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests-Swift.h -working-directory /Users/runner/work/sport-app/sport-app -experimental-emit-module-separately -disable-cmo
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Pull_Apart_1.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-AppIntentsSSUTraining (in target 'SetWidgets' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Band_Pull_Apart_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Pull_Apart_0.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex/Info.plist --temp-dir-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/ssu --bundle-id com.sxvandijk.sportapp.widgets --product-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex --extracted-metadata-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex/Metadata.appintents --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SetWidgets.build/SetWidgets.DependencyMetadataFileList --archive-ssu-assets
-2026-10-21 07:40:14.034 appintentsnltrainingprocessor[3051:13425] Parsing options for appintentsnltrainingprocessor
-2026-10-21 07:40:14.035 appintentsnltrainingprocessor[3051:13425] No AppShortcuts found - Skipping.
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Pull_Apart_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-RegisterExecutionPolicyException /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex (in target 'SetWidgets' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Band_Assisted_Pull-Up_1.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Assisted_Pull-Up_1.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    builtin-RegisterExecutionPolicyException /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Assisted_Pull-Up_1.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-Touch /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex (in target 'SetWidgets' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Band_Assisted_Pull-Up_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Assisted_Pull-Up_0.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    /usr/bin/touch -c /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SetWidgets.appex
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Band_Assisted_Pull-Up_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-Ld /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/__preview.dylib normal (in target 'SportApp' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Arm_Circles_1.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Arm_Circles_1.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios26.0-simulator -dynamiclib -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -O0 -L/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -install_name @rpath/SportApp.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -dependency_info -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_dependency_info.dat -o /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/__preview.dylib
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Arm_Circles_1.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
-Ld /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp.debug.dylib normal (in target 'SportApp' from project 'SportApp')
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Arm_Circles_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Arm_Circles_0.jpg (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios26.0-simulator -dynamiclib -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -O0 -L/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -L/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -F/Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator -filelist /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.LinkFileList -install_name @rpath/SportApp.debug.dylib -Xlinker -rpath -Xlinker @executable_path/Frameworks -dead_strip -Xlinker -object_path_lto -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -dependency_info -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.swiftmodule -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -o /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp.debug.dylib
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Arm_Circles_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
+
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Ab_Crunch_Machine_1.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Ab_Crunch_Machine_1.jpg (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Ab_Crunch_Machine_1.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
+
+CpResource /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Ab_Crunch_Machine_0.jpg /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Ab_Crunch_Machine_0.jpg (in target 'SportApp' from project 'SportApp')
+    cd /Users/runner/work/sport-app/sport-app
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /Users/runner/work/sport-app/sport-app/SportApp/Resources/ExerciseImages/Ab_Crunch_Machine_0.jpg /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app
 
 Copy /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Frameworks/libXCTestSwiftSupport.dylib /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
@@ -116,8 +114,8 @@ ProcessInfoPlistFile /Users/runner/work/sport-app/sport-app/build/Build/Products
 ExtractAppIntentsMetadata (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SportApp --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 26.0 --bundle-identifier com.sxvandijk.sportapp --output /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app --target-triple arm64-apple-ios26.0-simulator --binary-file /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/SportApp --dependency-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp_dependency_info.dat --stringsdata-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftFileList --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/Objects-normal/arm64/SportApp.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-10-21 07:40:14.734 appintentsmetadataprocessor[3060:13455] Starting appintentsmetadataprocessor export
-2026-10-21 07:40:14.737 appintentsmetadataprocessor[3060:13455] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-21 08:14:53.214 appintentsmetadataprocessor[3240:13133] Starting appintentsmetadataprocessor export
+2026-10-21 08:14:53.216 appintentsmetadataprocessor[3240:13133] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 CopySwiftLibs /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
@@ -131,8 +129,8 @@ ValidateEmbeddedBinary /Users/runner/work/sport-app/sport-app/build/Build/Produc
 AppIntentsSSUTraining (in target 'SportApp' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Info.plist --temp-dir-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/ssu --bundle-id com.sxvandijk.sportapp --product-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app --extracted-metadata-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/Metadata.appintents --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportApp.build/SportApp.DependencyMetadataFileList --archive-ssu-assets
-2026-10-21 07:40:14.767 appintentsnltrainingprocessor[3062:13457] Parsing options for appintentsnltrainingprocessor
-2026-10-21 07:40:14.768 appintentsnltrainingprocessor[3062:13457] No AppShortcuts found - Skipping.
+2026-10-21 08:14:53.238 appintentsnltrainingprocessor[3242:13135] Parsing options for appintentsnltrainingprocessor
+2026-10-21 08:14:53.239 appintentsnltrainingprocessor[3242:13135] No AppShortcuts found - Skipping.
 
 Ld /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest/SportAppTests normal (in target 'SportAppTests' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
@@ -145,8 +143,8 @@ ProcessInfoPlistFile /Users/runner/work/sport-app/sport-app/build/Build/Products
 ExtractAppIntentsMetadata (in target 'SportAppTests' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SportAppTests --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 26.0 --bundle-identifier com.sxvandijk.sportapp.tests --output /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest --target-triple arm64-apple-ios26.0-simulator --binary-file /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest/SportAppTests --dependency-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests_dependency_info.dat --stringsdata-file /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftFileList --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/Objects-normal/arm64/SportAppTests.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-10-21 07:40:15.284 appintentsmetadataprocessor[3097:13567] Starting appintentsmetadataprocessor export
-2026-10-21 07:40:15.288 appintentsmetadataprocessor[3097:13567] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+2026-10-21 08:14:53.582 appintentsmetadataprocessor[3245:13155] Starting appintentsmetadataprocessor export
+2026-10-21 08:14:53.583 appintentsmetadataprocessor[3245:13155] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 CopySwiftLibs /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest (in target 'SportAppTests' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
@@ -156,8 +154,8 @@ Ignoring --strip-bitcode because --sign was not passed
 AppIntentsSSUTraining (in target 'SportAppTests' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
     /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest/Info.plist --temp-dir-path /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/ssu --bundle-id com.sxvandijk.sportapp.tests --product-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest --extracted-metadata-path /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest/Metadata.appintents --metadata-file-list /Users/runner/work/sport-app/sport-app/build/Build/Intermediates.noindex/SportApp.build/Debug-iphonesimulator/SportAppTests.build/SportAppTests.DependencyMetadataFileList --archive-ssu-assets
-2026-10-21 07:40:15.317 appintentsnltrainingprocessor[3102:13578] Parsing options for appintentsnltrainingprocessor
-2026-10-21 07:40:15.318 appintentsnltrainingprocessor[3102:13578] No AppShortcuts found - Skipping.
+2026-10-21 08:14:53.607 appintentsnltrainingprocessor[3246:13156] Parsing options for appintentsnltrainingprocessor
+2026-10-21 08:14:53.608 appintentsnltrainingprocessor[3246:13156] No AppShortcuts found - Skipping.
 
 RegisterExecutionPolicyException /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesimulator/SportApp.app/PlugIns/SportAppTests.xctest (in target 'SportAppTests' from project 'SportApp')
     cd /Users/runner/work/sport-app/sport-app
@@ -183,94 +181,96 @@ Touch /Users/runner/work/sport-app/sport-app/build/Build/Products/Debug-iphonesi
 /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj: warning: The iOS Simulator deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 26.0, but the range of supported deployment target versions is 12.0 to 18.5.99. (in target 'SportAppTests' from project 'SportApp')
 /Users/runner/work/sport-app/sport-app/SportApp.xcodeproj: warning: The iOS Simulator deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 26.0, but the range of supported deployment target versions is 12.0 to 18.5.99. (in target 'SetWidgets' from project 'SportApp')
 IOSurfaceClientSetSurfaceNotify failed e00002c7
-2026-10-21 07:43:13.759474+0000 SportApp[4572:19651] fopen failed for data file: errno = 2 (No such file or directory)
-2026-10-21 07:43:13.759758+0000 SportApp[4572:19651] Errors found! Invalidating cache...
-2026-10-21 07:43:14.103033+0000 SportApp[4572:19651] fopen failed for data file: errno = 2 (No such file or directory)
-2026-10-21 07:43:14.103210+0000 SportApp[4572:19651] Errors found! Invalidating cache...
-Test Suite 'All tests' started at 2026-10-21 07:43:23.324.
-Test Suite 'SportAppTests.xctest' started at 2026-10-21 07:43:23.324.
-Test Suite 'AccentPaletteTests' started at 2026-10-21 07:43:23.324.
+2026-10-21 08:17:07.467276+0000 SportApp[4679:18857] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-21 08:17:07.467384+0000 SportApp[4679:18857] Errors found! Invalidating cache...
+2026-10-21 08:17:07.959041+0000 SportApp[4679:18857] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-21 08:17:07.959159+0000 SportApp[4679:18857] Errors found! Invalidating cache...
+2026-10-21 08:17:07.994836+0000 SportApp[4679:18857] [error] building pipeline stroke_lines-oaca5pa8feba4 took 0.527578 seconds
+Test Suite 'All tests' started at 2026-10-21 08:17:11.894.
+Test Suite 'SportAppTests.xctest' started at 2026-10-21 08:17:11.894.
+Test Suite 'AccentPaletteTests' started at 2026-10-21 08:17:11.894.
 Test Case '-[SportAppTests.AccentPaletteTests testContrastReferenceValues]' started.
-Test Case '-[SportAppTests.AccentPaletteTests testContrastReferenceValues]' passed (0.003 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testContrastReferenceValues]' passed (0.002 seconds).
 Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInDarkModeGetsLighterText]' started.
-Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInDarkModeGetsLighterText]' passed (0.003 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInDarkModeGetsLighterText]' passed (0.001 seconds).
 Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInLightMode]' started.
-Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInLightMode]' passed (0.001 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testDarkAccentInLightMode]' passed (0.000 seconds).
 Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInDarkMode]' started.
-Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInDarkMode]' passed (0.614 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInDarkMode]' passed (0.009 seconds).
 Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInLightModeGetsDarkerText]' started.
-Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInLightModeGetsDarkerText]' passed (0.002 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testLightAccentInLightModeGetsDarkerText]' passed (0.000 seconds).
 Test Case '-[SportAppTests.AccentPaletteTests testTextOnAccentHasEnoughContrast]' started.
-Test Case '-[SportAppTests.AccentPaletteTests testTextOnAccentHasEnoughContrast]' passed (0.002 seconds).
+Test Case '-[SportAppTests.AccentPaletteTests testTextOnAccentHasEnoughContrast]' passed (0.001 seconds).
 Test Case '-[SportAppTests.AccentPaletteTests testWhichAccentsCountAsDark]' started.
-Test Case '-[SportAppTests.AccentPaletteTests testWhichAccentsCountAsDark]' passed (0.002 seconds).
-Test Suite 'AccentPaletteTests' passed at 2026-10-21 07:43:23.953.
-	 Executed 7 tests, with 0 failures (0 unexpected) in 0.626 (0.629) seconds
-Test Suite 'AlternativesAndHistoryTests' started at 2026-10-21 07:43:23.953.
+Test Case '-[SportAppTests.AccentPaletteTests testWhichAccentsCountAsDark]' passed (0.001 seconds).
+Test Suite 'AccentPaletteTests' passed at 2026-10-21 08:17:11.909.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.014 (0.015) seconds
+Test Suite 'AlternativesAndHistoryTests' started at 2026-10-21 08:17:11.909.
 Test Case '-[SportAppTests.AlternativesAndHistoryTests testExcludedExercisesAreSkipped]' started.
-Test Case '-[SportAppTests.AlternativesAndHistoryTests testExcludedExercisesAreSkipped]' passed (0.021 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testExcludedExercisesAreSkipped]' passed (0.013 seconds).
 Test Case '-[SportAppTests.AlternativesAndHistoryTests testExerciseNamesAreEnglish]' started.
-Test Case '-[SportAppTests.AlternativesAndHistoryTests testExerciseNamesAreEnglish]' passed (0.003 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testExerciseNamesAreEnglish]' passed (0.004 seconds).
 Test Case '-[SportAppTests.AlternativesAndHistoryTests testMockDataIsConsistent]' started.
-Test Case '-[SportAppTests.AlternativesAndHistoryTests testMockDataIsConsistent]' passed (0.009 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testMockDataIsConsistent]' passed (0.006 seconds).
 Test Case '-[SportAppTests.AlternativesAndHistoryTests testPlaceholdersComeFromTheLastSessionOnTheSameMachine]' started.
-Test Case '-[SportAppTests.AlternativesAndHistoryTests testPlaceholdersComeFromTheLastSessionOnTheSameMachine]' passed (0.005 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testPlaceholdersComeFromTheLastSessionOnTheSameMachine]' passed (0.001 seconds).
 Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsCuratedFirst]' started.
-Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsCuratedFirst]' passed (0.003 seconds).
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsCuratedFirst]' passed (0.001 seconds).
 Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsOnlyContainWhatYourGymHas]' started.
-Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsOnlyContainWhatYourGymHas]' passed (0.001 seconds).
-Test Suite 'AlternativesAndHistoryTests' passed at 2026-10-21 07:43:25.345.
-	 Executed 6 tests, with 0 failures (0 unexpected) in 0.041 (1.391) seconds
-Test Suite 'DesignTokenTests' started at 2026-10-21 07:43:25.345.
+Test Case '-[SportAppTests.AlternativesAndHistoryTests testSuggestionsOnlyContainWhatYourGymHas]' passed (0.004 seconds).
+Test Suite 'AlternativesAndHistoryTests' passed at 2026-10-21 08:17:16.521.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.029 (4.612) seconds
+Test Suite 'DesignTokenTests' started at 2026-10-21 08:17:16.522.
 Test Case '-[SportAppTests.DesignTokenTests testTextStylesFollowTheDesign]' started.
-Test Case '-[SportAppTests.DesignTokenTests testTextStylesFollowTheDesign]' passed (0.001 seconds).
+Test Case '-[SportAppTests.DesignTokenTests testTextStylesFollowTheDesign]' passed (0.002 seconds).
 Test Case '-[SportAppTests.DesignTokenTests testTouchTargetsAreAtLeast44]' started.
-Test Case '-[SportAppTests.DesignTokenTests testTouchTargetsAreAtLeast44]' passed (9.509 seconds).
-Test Suite 'DesignTokenTests' passed at 2026-10-21 07:43:34.855.
-	 Executed 2 tests, with 0 failures (0 unexpected) in 9.510 (9.511) seconds
-Test Suite 'DurationEstimatorTests' started at 2026-10-21 07:43:34.856.
+Test Case '-[SportAppTests.DesignTokenTests testTouchTargetsAreAtLeast44]' passed (0.002 seconds).
+Test Suite 'DesignTokenTests' passed at 2026-10-21 08:17:16.528.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'DurationEstimatorTests' started at 2026-10-21 08:17:16.601.
 Test Case '-[SportAppTests.DurationEstimatorTests testCalibrationNeedsEnoughData]' started.
-Test Case '-[SportAppTests.DurationEstimatorTests testCalibrationNeedsEnoughData]' passed (0.003 seconds).
+Test Case '-[SportAppTests.DurationEstimatorTests testCalibrationNeedsEnoughData]' passed (0.002 seconds).
 Test Case '-[SportAppTests.DurationEstimatorTests testFinishedWorkoutHasNothingLeft]' started.
 Test Case '-[SportAppTests.DurationEstimatorTests testFinishedWorkoutHasNothingLeft]' passed (0.002 seconds).
 Test Case '-[SportAppTests.DurationEstimatorTests testSingleExercise]' started.
-Test Case '-[SportAppTests.DurationEstimatorTests testSingleExercise]' passed (0.020 seconds).
+Test Case '-[SportAppTests.DurationEstimatorTests testSingleExercise]' passed (0.002 seconds).
 Test Case '-[SportAppTests.DurationEstimatorTests testSupersetRestsOncePerRound]' started.
-Test Case '-[SportAppTests.DurationEstimatorTests testSupersetRestsOncePerRound]' passed (0.001 seconds).
+Test Case '-[SportAppTests.DurationEstimatorTests testSupersetRestsOncePerRound]' passed (0.002 seconds).
 Test Case '-[SportAppTests.DurationEstimatorTests testWarmupSetCountsWithHalfRest]' started.
 Test Case '-[SportAppTests.DurationEstimatorTests testWarmupSetCountsWithHalfRest]' passed (0.001 seconds).
-Test Suite 'DurationEstimatorTests' passed at 2026-10-21 07:43:34.883.
-	 Executed 5 tests, with 0 failures (0 unexpected) in 0.025 (0.027) seconds
-Test Suite 'FormatTests' started at 2026-10-21 07:43:34.883.
+Test Suite 'DurationEstimatorTests' passed at 2026-10-21 08:17:16.683.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.008 (0.082) seconds
+Test Suite 'FormatTests' started at 2026-10-21 08:17:16.683.
 Test Case '-[SportAppTests.FormatTests testClock]' started.
-Test Case '-[SportAppTests.FormatTests testClock]' passed (0.001 seconds).
+Test Case '-[SportAppTests.FormatTests testClock]' passed (0.000 seconds).
 Test Case '-[SportAppTests.FormatTests testDutchNumberFormatting]' started.
-Test Case '-[SportAppTests.FormatTests testDutchNumberFormatting]' passed (9.307 seconds).
-Test Suite 'FormatTests' passed at 2026-10-21 07:43:44.191.
-	 Executed 2 tests, with 0 failures (0 unexpected) in 9.308 (9.308) seconds
-Test Suite 'PersonalRecordTests' started at 2026-10-21 07:43:44.192.
+Test Case '-[SportAppTests.FormatTests testDutchNumberFormatting]' passed (0.001 seconds).
+Test Suite 'FormatTests' passed at 2026-10-22026-10-21 08:17:20.799562+0000 SportApp[4679:19844] [Client] XPC connection interrupted
+1 08:17:16.685.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'PersonalRecordTests' started at 2026-10-21 08:17:25.818.
 Test Case '-[SportAppTests.PersonalRecordTests testEpley]' started.
-Test Case '-[SportAppTests.PersonalRecordTests testEpley]' passed (0.001 seconds).
+Test Case '-[SportAppTests.PersonalRecordTests testEpley]' passed (0.002 seconds).
 Test Case '-[SportAppTests.PersonalRecordTests testFirstTimeAndWarmupsAreNoRecords]' started.
-Test Case '-[SportAppTests.PersonalRecordTests testFirstTimeAndWarmupsAreNoRecords]' passed (0.002 seconds).
+Test Case '-[SportAppTests.PersonalRecordTests testFirstTimeAndWarmupsAreNoRecords]' passed (0.001 seconds).
 Test Case '-[SportAppTests.PersonalRecordTests testNewRecordDetection]' started.
-Test Case '-[SportAppTests.PersonalRecordTests testNewRecordDetection]' passed (0.001 seconds).
+Test Case '-[SportAppTests.PersonalRecordTests testNewRecordDetection]' passed (0.000 seconds).
 Test Case '-[SportAppTests.PersonalRecordTests testRecordsPickHeaviestAndBestEstimate]' started.
-Test Case '-[SportAppTests.PersonalRecordTests testRecordsPickHeaviestAndBestEstimate]' passed (0.350 seconds).
-Test Suite 'PersonalRecordTests' passed at 2026-10-21 07:43:44.546.
-	 Executed 4 tests, with 0 failures (0 unexpected) in 0.353 (0.354) seconds
-Test Suite 'ProgramTests' started at 2026-10-21 07:43:44.546.
+Test Case '-[SportAppTests.PersonalRecordTests testRecordsPickHeaviestAndBestEstimate]' passed (0.158 seconds).
+Test Suite 'PersonalRecordTests' passed at 2026-10-21 08:17:25.980.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.161 (0.162) seconds
+Test Suite 'ProgramTests' started at 2026-10-21 08:17:25.980.
 Test Case '-[SportAppTests.ProgramTests testEmptyProgramHasNoNextWorkout]' started.
 Test Case '-[SportAppTests.ProgramTests testEmptyProgramHasNoNextWorkout]' passed (0.001 seconds).
 Test Case '-[SportAppTests.ProgramTests testFirstWorkoutIsNextWhenNothingIsDone]' started.
 Test Case '-[SportAppTests.ProgramTests testFirstWorkoutIsNextWhenNothingIsDone]' passed (0.000 seconds).
 Test Case '-[SportAppTests.ProgramTests testNextFollowsTheLastDoneWorkoutAndWrapsAround]' started.
-Test Case '-[SportAppTests.ProgramTests testNextFollowsTheLastDoneWorkoutAndWrapsAround]' passed (0.002 seconds).
+Test Case '-[SportAppTests.ProgramTests testNextFollowsTheLastDoneWorkoutAndWrapsAround]' passed (0.001 seconds).
 Test Case '-[SportAppTests.ProgramTests testWorkoutsOutsideTheProgramAreIgnored]' started.
-Test Case '-[SportAppTests.ProgramTests testWorkoutsOutsideTheProgramAreIgnored]' passed (0.000 seconds).
-Test Suite 'ProgramTests' passed at 2026-10-21 07:43:44.549.
-	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
-Test Suite 'RoundOneTests' started at 2026-10-21 07:43:44.549.
+Test Case '-[SportAppTests.ProgramTests testWorkoutsOutsideTheProgramAreIgnored]' passed (0.001 seconds).
+Test Suite 'ProgramTests' passed at 2026-10-21 08:17:26.153.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.173) seconds
+Test Suite 'RoundOneTests' started at 2026-10-21 08:17:26.153.
 Test Case '-[SportAppTests.RoundOneTests testCardioAndBodyweightText]' started.
 Test Case '-[SportAppTests.RoundOneTests testCardioAndBodyweightText]' passed (0.002 seconds).
 Test Case '-[SportAppTests.RoundOneTests testChosenSetIsCompletedAndFlowReturnsToTheFirstOpenSet]' started.
@@ -282,35 +282,35 @@ Test Case '-[SportAppTests.RoundOneTests testDeleteProgramRemovesItsTrainings]' 
 Test Case '-[SportAppTests.RoundOneTests testMultipleWarmupSetsRampUp]' started.
 Test Case '-[SportAppTests.RoundOneTests testMultipleWarmupSetsRampUp]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundOneTests testPreferenceOnlyDoesNotSwap]' started.
-Test Case '-[SportAppTests.RoundOneTests testPreferenceOnlyDoesNotSwap]' passed (0.004 seconds).
+Test Case '-[SportAppTests.RoundOneTests testPreferenceOnlyDoesNotSwap]' passed (0.003 seconds).
 Test Case '-[SportAppTests.RoundOneTests testPreviousTimeComesFromHistory]' started.
-Test Case '-[SportAppTests.RoundOneTests testPreviousTimeComesFromHistory]' passed (0.002 seconds).
+Test Case '-[SportAppTests.RoundOneTests testPreviousTimeComesFromHistory]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundOneTests testProgressStatsRecordsAndVolume]' started.
 Test Case '-[SportAppTests.RoundOneTests testProgressStatsRecordsAndVolume]' passed (0.003 seconds).
 Test Case '-[SportAppTests.RoundOneTests testSeedHasFourSchemasAndNoHistory]' started.
 Test Case '-[SportAppTests.RoundOneTests testSeedHasFourSchemasAndNoHistory]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundOneTests testSwapInScheduleChangesTheTemplate]' started.
-Test Case '-[SportAppTests.RoundOneTests testSwapInScheduleChangesTheTemplate]' passed (0.002 seconds).
+Test Case '-[SportAppTests.RoundOneTests testSwapInScheduleChangesTheTemplate]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundOneTests testWarmupBlockIsNotAWorkSet]' started.
-Test Case '-[SportAppTests.RoundOneTests testWarmupBlockIsNotAWorkSet]' passed (0.866 seconds).
-Test Suite 'RoundOneTests' passed at 2026-10-21 07:43:45.520.
-	 Executed 11 tests, with 0 failures (0 unexpected) in 0.887 (0.971) seconds
-Test Suite 'RoundThreeTests' started at 2026-10-21 07:43:45.521.
+Test Case '-[SportAppTests.RoundOneTests testWarmupBlockIsNotAWorkSet]' passed (0.001 seconds).
+Test Suite 'RoundOneTests' passed at 2026-10-21 08:17:27.049.
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.020 (0.896) seconds
+Test Suite 'RoundThreeTests' started at 2026-10-21 08:17:27.149.
 Test Case '-[SportAppTests.RoundThreeTests testLinksEnRechtsAppartTeltBeideKanten]' started.
-Test Case '-[SportAppTests.RoundThreeTests testLinksEnRechtsAppartTeltBeideKanten]' passed (0.000 seconds).
+Test Case '-[SportAppTests.RoundThreeTests testLinksEnRechtsAppartTeltBeideKanten]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundThreeTests testOneArmStaatStandaardOpLinksEnRechtsApart]' started.
-Test Case '-[SportAppTests.RoundThreeTests testOneArmStaatStandaardOpLinksEnRechtsApart]' passed (0.000 seconds).
+Test Case '-[SportAppTests.RoundThreeTests testOneArmStaatStandaardOpLinksEnRechtsApart]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundThreeTests testRechteStangTeltEenKeer]' started.
-Test Case '-[SportAppTests.RoundThreeTests testRechteStangTeltEenKeer]' passed (0.717 seconds).
+Test Case '-[SportAppTests.RoundThreeTests testRechteStangTeltEenKeer]' passed (0.000 seconds).
 Test Case '-[SportAppTests.RoundThreeTests testVolumeVanEenSetMetRechteStang]' started.
-Test Case '-[SportAppTests.RoundThreeTests testVolumeVanEenSetMetRechteStang]' passed (0.002 seconds).
-Test Suite 'RoundThreeTests' passed at 2026-10-21 07:43:46.241.
-	 Executed 4 tests, with 0 failures (0 unexpected) in 0.719 (0.721) seconds
-Test Suite 'RoundTwoTests' started at 2026-10-21 07:43:46.242.
+Test Case '-[SportAppTests.RoundThreeTests testVolumeVanEenSetMetRechteStang]' passed (0.000 seconds).
+Test Suite 'RoundThreeTests' passed at 2026-10-21 08:17:27.429.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.279) seconds
+Test Suite 'RoundTwoTests' started at 2026-10-21 08:17:27.429.
 Test Case '-[SportAppTests.RoundTwoTests testAddMachineOnlyOnceAndRemove]' started.
-Test Case '-[SportAppTests.RoundTwoTests testAddMachineOnlyOnceAndRemove]' passed (0.003 seconds).
+Test Case '-[SportAppTests.RoundTwoTests testAddMachineOnlyOnceAndRemove]' passed (0.004 seconds).
 Test Case '-[SportAppTests.RoundTwoTests testAddOnPlateAddsExtraWeights]' started.
-Test Case '-[SportAppTests.RoundTwoTests testAddOnPlateAddsExtraWeights]' passed (0.001 seconds).
+Test Case '-[SportAppTests.RoundTwoTests testAddOnPlateAddsExtraWeights]' passed (0.002 seconds).
 Test Case '-[SportAppTests.RoundTwoTests testDatabaseHasMainBrandsAndKnownExercises]' started.
 Test Case '-[SportAppTests.RoundTwoTests testDatabaseHasMainBrandsAndKnownExercises]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundTwoTests testGymCreateRenameDelete]' started.
@@ -318,79 +318,79 @@ Test Case '-[SportAppTests.RoundTwoTests testGymCreateRenameDelete]' passed (0.0
 Test Case '-[SportAppTests.RoundTwoTests testGymMachineStepsOverrideDefaultSteps]' started.
 Test Case '-[SportAppTests.RoundTwoTests testGymMachineStepsOverrideDefaultSteps]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundTwoTests testMachineLabelShowsBrandInExerciseMeta]' started.
-Test Case '-[SportAppTests.RoundTwoTests testMachineLabelShowsBrandInExerciseMeta]' passed (0.003 seconds).
+Test Case '-[SportAppTests.RoundTwoTests testMachineLabelShowsBrandInExerciseMeta]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundTwoTests testMachineRoundTrip]' started.
-Test Case '-[SportAppTests.RoundTwoTests testMachineRoundTrip]' passed (0.126 seconds).
+Test Case '-[SportAppTests.RoundTwoTests testMachineRoundTrip]' passed (0.005 seconds).
 Test Case '-[SportAppTests.RoundTwoTests testOldMachineDataStillDecodes]' started.
 Test Case '-[SportAppTests.RoundTwoTests testOldMachineDataStillDecodes]' passed (0.001 seconds).
 Test Case '-[SportAppTests.RoundTwoTests testReplaceDraftExerciseKeepsPositionAndSets]' started.
 Test Case '-[SportAppTests.RoundTwoTests testReplaceDraftExerciseKeepsPositionAndSets]' passed (0.001 seconds).
-Test Suite 'RoundTwoTests' passed at 2026-10-21 07:43:46.481.
-	 Executed 9 tests, with 0 failures (0 unexpected) in 0.138 (0.239) seconds
-Test Suite 'WeekWorkoutsTests' started at 2026-10-21 07:43:46.481.
+Test Suite 'RoundTwoTests' passed at 2026-10-21 08:17:28.403.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.015 (0.974) seconds
+Test Suite 'WeekWorkoutsTests' started at 2026-10-21 08:17:28.404.
 Test Case '-[SportAppTests.WeekWorkoutsTests testWorkoutsInWeekAndVolume]' started.
 Test Case '-[SportAppTests.WeekWorkoutsTests testWorkoutsInWeekAndVolume]' passed (0.001 seconds).
-Test Suite 'WeekWorkoutsTests' passed at 2026-10-21 07:43:46.697.
-	 Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.216) seconds
-Test Suite 'WeightScaleTests' started at 2026-10-21 07:43:46.697.
+Test Suite 'WeekWorkoutsTests' passed at 2026-10-21 08:17:28.405.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'WeightScaleTests' started at 2026-10-21 08:17:28.405.
 Test Case '-[SportAppTests.WeightScaleTests testAddOnPlateCreatesHalfSteps]' started.
 Test Case '-[SportAppTests.WeightScaleTests testAddOnPlateCreatesHalfSteps]' passed (0.001 seconds).
 Test Case '-[SportAppTests.WeightScaleTests testBarbellNeverGoesBelowTheEmptyBar]' started.
-Test Case '-[SportAppTests.WeightScaleTests testBarbellNeverGoesBelowTheEmptyBar]' passed (0.002 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testBarbellNeverGoesBelowTheEmptyBar]' passed (0.001 seconds).
 Test Case '-[SportAppTests.WeightScaleTests testCodableRoundTrip]' started.
-Test Case '-[SportAppTests.WeightScaleTests testCodableRoundTrip]' passed (0.005 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testCodableRoundTrip]' passed (0.003 seconds).
 Test Case '-[SportAppTests.WeightScaleTests testFallbackScaleIsUnbounded]' started.
 Test Case '-[SportAppTests.WeightScaleTests testFallbackScaleIsUnbounded]' passed (0.001 seconds).
 Test Case '-[SportAppTests.WeightScaleTests testInferIncrementFromScannedNumbers]' started.
-Test Case '-[SportAppTests.WeightScaleTests testInferIncrementFromScannedNumbers]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testInferIncrementFromScannedNumbers]' passed (0.326 seconds).
 Test Case '-[SportAppTests.WeightScaleTests testIrregularStackUsesTheList]' started.
-Test Case '-[SportAppTests.WeightScaleTests testIrregularStackUsesTheList]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WeightScaleTests testIrregularStackUsesTheList]' passed (0.000 seconds).
 Test Case '-[SportAppTests.WeightScaleTests testRegularStackSnapsAndSteps]' started.
-Test Case '-[SportAppTests.WeightScaleTests testRegularStackSnapsAndSteps]' passed (0.001 seconds).
-Test Suite 'WeightScaleTests' passed at 2026-10-21 07:43:46.708.
-	 Executed 7 tests, with 0 failures (0 unexpected) in 0.010 (0.011) seconds
-Test Suite 'WorkoutSessionTests' started at 2026-10-21 07:43:46.812.
+Test Case '-[SportAppTests.WeightScaleTests testRegularStackSnapsAndSteps]' passed (0.000 seconds).
+Test Suite 'WeightScaleTests' passed at 2026-10-21 08:17:28.898.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.332 (0.493) seconds
+Test Suite 'WorkoutSessionTests' started at 2026-10-21 08:17:28.898.
 Test Case '-[SportAppTests.WorkoutSessionTests testAddWarmupSetGoesBeforeTheWorkingSets]' started.
-Test Case '-[SportAppTests.WorkoutSessionTests testAddWarmupSetGoesBeforeTheWorkingSets]' passed (0.002 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testAddWarmupSetGoesBeforeTheWorkingSets]' passed (0.000 seconds).
 Test Case '-[SportAppTests.WorkoutSessionTests testLinkAndUnlinkSuperset]' started.
 Test Case '-[SportAppTests.WorkoutSessionTests testLinkAndUnlinkSuperset]' passed (0.002 seconds).
 Test Case '-[SportAppTests.WorkoutSessionTests testMakeFromTemplate]' started.
 Test Case '-[SportAppTests.WorkoutSessionTests testMakeFromTemplate]' passed (0.002 seconds).
 Test Case '-[SportAppTests.WorkoutSessionTests testNormalExerciseAlwaysRests]' started.
-Test Case '-[SportAppTests.WorkoutSessionTests testNormalExerciseAlwaysRests]' passed (0.002 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testNormalExerciseAlwaysRests]' passed (0.001 seconds).
 Test Case '-[SportAppTests.WorkoutSessionTests testOnlyWarmupsAreLeftOutOfSetsAndVolume]' started.
 Test Case '-[SportAppTests.WorkoutSessionTests testOnlyWarmupsAreLeftOutOfSetsAndVolume]' passed (0.001 seconds).
 Test Case '-[SportAppTests.WorkoutSessionTests testSupersetTimerFiresAfterTheLastExercise]' started.
-Test Case '-[SportAppTests.WorkoutSessionTests testSupersetTimerFiresAfterTheLastExercise]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testSupersetTimerFiresAfterTheLastExercise]' passed (7.504 seconds).
 Test Case '-[SportAppTests.WorkoutSessionTests testSwapKeepsCompletedSetsAndSnapsOpenWeights]' started.
-Test Case '-[SportAppTests.WorkoutSessionTests testSwapKeepsCompletedSetsAndSnapsOpenWeights]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutSessionTests testSwapKeepsCompletedSetsAndSnapsOpenWeights]' passed (0.002 seconds).
 Test Case '-[SportAppTests.WorkoutSessionTests testWarmupSetOnlyWhenTheTemplateAsksForIt]' started.
-Test Case '-[SportAppTests.WorkoutSessionTests testWarmupSetOnlyWhenTheTemplateAsksForIt]' passed (0.001 seconds).
-Test Suite 'WorkoutSessionTests' passed at 2026-10-21 07:43:46.824.
-	 Executed 8 tests, with 0 failures (0 unexpected) in 0.010 (0.011) seconds
-Test Suite 'WorkoutStoreTests' started at 2026-10-21 07:43:46.824.
+Test Case '-[SportAppTests.WorkoutSessionTests testWarmupSetOnlyWhenTheTemplateAsksForIt]' passed (0.002 seconds).
+Test Suite 'WorkoutSessionTests' passed at 2026-10-21 08:17:36.658.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 7.514 (7.759) seconds
+Test Suite 'WorkoutStoreTests' started at 2026-10-21 08:17:36.658.
 Test Case '-[SportAppTests.WorkoutStoreTests testCurrentProgramAndGymComeFromSettings]' started.
-Test Case '-[SportAppTests.WorkoutStoreTests testCurrentProgramAndGymComeFromSettings]' passed (0.003 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testCurrentProgramAndGymComeFromSettings]' passed (0.501 seconds).
 Test Case '-[SportAppTests.WorkoutStoreTests testDefaultSettingsFollowTheDesign]' started.
-Test Case '-[SportAppTests.WorkoutStoreTests testDefaultSettingsFollowTheDesign]' passed (0.001 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testDefaultSettingsFollowTheDesign]' passed (0.003 seconds).
 Test Case '-[SportAppTests.WorkoutStoreTests testRunningWorkoutSurvivesRestart]' started.
-Test Case '-[SportAppTests.WorkoutStoreTests testRunningWorkoutSurvivesRestart]' passed (0.074 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testRunningWorkoutSurvivesRestart]' passed (0.080 seconds).
 Test Case '-[SportAppTests.WorkoutStoreTests testSettingsAreSavedAndReloaded]' started.
-Test Case '-[SportAppTests.WorkoutStoreTests testSettingsAreSavedAndReloaded]' passed (0.006 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testSettingsAreSavedAndReloaded]' passed (0.005 seconds).
 Test Case '-[SportAppTests.WorkoutStoreTests testStartAndFinishWorkout]' started.
-Test Case '-[SportAppTests.WorkoutStoreTests testStartAndFinishWorkout]' passed (0.002 seconds).
+Test Case '-[SportAppTests.WorkoutStoreTests testStartAndFinishWorkout]' passed (0.003 seconds).
 Test Case '-[SportAppTests.WorkoutStoreTests testUnreadableFileIsKeptAndReplacedBySeed]' started.
-⚠️ Data niet leesbaar, bewaard als sportapp-test-0521883E-C5C2-44AA-82CD-F64F7068BAE4.broken-1792568627.json: dataCorrupted(Swift.DecodingError.Context(codingPath: [], debugDescription: "The given data was not valid JSON.", underlyingError: Optional(Error Domain=NSCocoaErrorDomain Code=3840 "Unexpected character 'd' around line 1, column 1." UserInfo={NSDebugDescription=Unexpected character 'd' around line 1, column 1., NSJSONSerializationErrorIndex=0})))
-Test Case '-[SportAppTests.WorkoutStoreTests testUnreadableFileIsKeptAndReplacedBySeed]' passed (0.022 seconds).
-Test Suite 'WorkoutStoreTests' passed at 2026-10-21 07:43:47.536.
-	 Executed 6 tests, with 0 failures (0 unexpected) in 0.107 (0.712) seconds
-Test Suite 'SportAppTests.xctest' passed at 2026-10-21 07:43:47.536.
-	 Executed 76 tests, with 0 failures (0 unexpected) in 21.736 (24.212) seconds
-Test Suite 'All tests' passed at 2026-10-21 07:43:47.537.
-	 Executed 76 tests, with 0 failures (0 unexpected) in 21.736 (24.213) seconds
-2026-10-21 07:43:49.392 xcodebuild[2302:10927] [MT] IDETestOperationsObserverDebug: 212.489 elapsed -- Testing started completed.
-2026-10-21 07:43:49.392 xcodebuild[2302:10927] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
-2026-10-21 07:43:49.392 xcodebuild[2302:10927] [MT] IDETestOperationsObserverDebug: 212.490 sec, +212.490 sec -- end
+⚠️ Data niet leesbaar, bewaard als sportapp-test-350C1AB8-3E22-4109-AB62-9C9C226B9DCD.broken-1792570716.json: dataCorrupted(Swift.DecodingError.Context(codingPath: [], debugDescription: "The given data was not valid JSON.", underlyingError: Optional(Error Domain=NSCocoaErrorDomain Code=3840 "Unexpected character 'd' around line 1, column 1." UserInfo={NSDebugDescription=Unexpected character 'd' around line 1, column 1., NSJSONSerializationErrorIndex=0})))
+Test Case '-[SportAppTests.WorkoutStoreTests testUnreadableFileIsKeptAndReplacedBySeed]' passed (0.092 seconds).
+Test Suite 'WorkoutStoreTests' passed at 2026-10-21 08:18:36.224.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.684 (59.566) seconds
+Test Suite 'SportAppTests.xctest' passed at 2026-10-21 08:18:36.224.
+	 Executed 76 tests, with 0 failures (0 unexpected) in 8.787 (84.330) seconds
+Test Suite 'All tests' passed at 2026-10-21 08:18:36.224.
+	 Executed 76 tests, with 0 failures (0 unexpected) in 8.787 (84.331) seconds
+2026-10-21 08:18:45.813 xcodebuild[1740:8531] [MT] IDETestOperationsObserverDebug: 230.717 elapsed -- Testing started completed.
+2026-10-21 08:18:45.814 xcodebuild[1740:8531] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-21 08:18:45.814 xcodebuild[1740:8531] [MT] IDETestOperationsObserverDebug: 230.718 sec, +230.718 sec -- end
 
 Test session results, code coverage, and logs:
 	/Users/runner/work/sport-app/sport-app/ci-results/tests.xcresult
