@@ -141,7 +141,7 @@ struct CardRim: ViewModifier {
 
 extension View {
     /// Hoofdknop-achtergrond: kleurverloop met een zachte gloed.
-    func primaryFill<S: Shape>(_ shape: S, _ ac: AccentColors) -> some View {
+    func primaryFill<S: InsettableShape>(_ shape: S, _ ac: AccentColors) -> some View {
         background(ac.gradient, in: shape)
             .overlay(shape.strokeBorder(Color.white.opacity(0.22), lineWidth: 0.8))
             .shadow(color: ac.accent.opacity(0.35), radius: 14, y: 6)

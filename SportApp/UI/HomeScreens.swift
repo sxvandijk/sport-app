@@ -417,16 +417,12 @@ struct ProgressTab: View {
 
             goalCard(stats).padding(.top, 20)
 
-            HStack(alignment: .top, spacing: 8) {
-                statTile(shown ? Double(stats.trainings) : 0, "trainingen")
-                statTile(shown ? stats.volume : 0, "kg volume")
-                statTile(shown ? Double(stats.newRecords) : 0, "nieuwe PR\u{2019}s")
-            }
-            .padding(.top, 12)
-
-            volumeCard(stats).padding(.top, 16)
-            radarCard(stats).padding(.top, 16)
-            recordsSection(stats).padding(.top, 16)
+            SectionLabel(text: "Verloop").padding(.top, 28).padding(.bottom, 10)
+            volumeCard(stats)
+            SectionLabel(text: "Balans").padding(.top, 28).padding(.bottom, 10)
+            radarCard(stats)
+            SectionLabel(text: "Prestaties").padding(.top, 28).padding(.bottom, 10)
+            recordsSection(stats)
         }
         .onAppear {
             guard !shown else { return }
@@ -455,7 +451,8 @@ struct ProgressTab: View {
         let done = stats.trainingsThisWeek
         let goal = weeklyGoal
         let fraction = min(Double(done) / Double(goal), 1)
-        return HStack(spacing: 20) {
+        return VStack(spacing: 0) {
+        HStack(spacing: 20) {
             ZStack {
                 Circle().stroke(Tokens.track, lineWidth: 12)
                 Circle()
@@ -486,21 +483,28 @@ struct ProgressTab: View {
             }
             Spacer(minLength: 0)
         }
+        .padding(.bottom, 16)
+        Divider().background(Tokens.line)
+        HStack(alignment: .top, spacing: 0) {
+            statCell(shown ? Double(stats.trainings) : 0, "trainingen")
+            statCell(shown ? stats.volume : 0, "kg volume")
+            statCell(shown ? Double(stats.newRecords) : 0, "nieuwe PR\u{2019}s")
+        }
+        .padding(.top, 14)
+        }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard(radius: Radius.card)
     }
 
-    private func statTile(_ value: Double, _ label: String) -> some View {
+    private func statCell(_ value: Double, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(Format.thousands(value)).sa(22, .semibold, tracking: -0.4, mono: true).foregroundColor(Tokens.text)
                 .lineLimit(1).minimumScaleFactor(0.6)
                 .rollingNumber()
             Text(label).sa(12).foregroundColor(Tokens.text2).lineLimit(1)
         }
-        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard(radius: Radius.button)
     }
 
     private func volumeCard(_ stats: ProgressStats) -> some View {
