@@ -11,6 +11,8 @@
 
 Bijlagen bij het eerste bericht: afbeelding 1 = stijlreferentie (de goedgekeurde Cable Deltoid Side Raise, met bril en haar), afbeelding 2 en 3 = selfies van Stan. Per oefening geeft de checklist (`docs/gemini-checklist.html`) een kant-en-klare prompt met uitvoering (opstelling, begin- en eindstand). Begin na 8 tot 10 afbeeldingen een nieuwe chat (masterprompt + beste afbeelding als referentie), want lange chats drijven af.
 
+Kleurregel (v3.1): hoofdspieren helder rood, ondersteunende spieren lichter rood/zalmroze, de rest grijs/wit. Per schema-oefening staat dit in de checklist, samen met een gedetailleerde uitvoering.
+
 Kernpunten t.o.v. v2: positieve haarbeschrijving (dik kort haar, bovenop iets langer en naar voren gekamd, zijkanten korter, duidelijke haarlijn) in plaats van "niet kaal"; apparaat op dezelfde plek en dezelfde arm/been in beide standen; de uitvoering per oefening letterlijk volgen.
 
 ## Lijst met oefeningen (naam, spiergroep, apparaat, bestandsnaam)
