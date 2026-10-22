@@ -226,3 +226,10 @@ Redesign
 - Eindscherm: oefeningen zijn klikbaar en openen het detailscherm van die oefening (terug-knop gaat naar het eindscherm).
 - Setnummers in trainingsdetail gefixt (stonden op 4, 5, 6).
 - Niet getest op toestel: of de animaties echt soepel aanvoelen.
+
+## Ronde 14i: oefenillustraties (Gemini)
+- [x] 15 illustraties met Stans gezicht ingebouwd (`ExerciseArt`), IPA gebouwd uit bcaa483.
+- [x] Checklist `docs/gemini-checklist.html` met uitvoering en spiermarkering per schema-oefening (26).
+- [ ] Resterende 11 schema-oefeningen: Calf Press, Seated Leg Curl, Ab Crunch Machine, Abductor, Adductor, Single-Arm Machine Rear Delt Fly, Palms-Down Dumbbell Wrist Curl, Seated Palms-Down Barbell Wrist Curl, Hardlopen op de loopband, Muscle Up, Bayesian Bicep Cable Curl.
+- [ ] Oude `incline-dumbbell-press` (zonder gezicht) vervangen of weghalen.
+- [ ] Overige 114 oefeningen: uitvoering en spiermarkering uitwerken, later.
